@@ -5,15 +5,22 @@ using TMPro;
 public class POIController : MonoBehaviour
 {
     [Header("Configuración del POI")]
-    public string nombreEdificio = "Edificio Central";
+    public string nombreEdificio = "Edificio 12";
     public string[] dependencias = {
-        "Bienestar Universitario",
-        "Relaciones Internacionales (DIRI)",
-        "Rectoría",
-        "Cafetería",
-        "Hall de Artes",
-        "CENSEI"
+        "Entrada Edificio 12",
+        "Interior Primer Piso",
+        "Piso 4",
+        "Piso 5",
+        "Piso 7 Entrada",
+        "Piso 7 Interior",
+        "Piso 10",
+        "Piso 10 Interior",
+        "Aula Magna",
+        "Entrada 2 Edificio 12"
     };
+
+    [Header("Materiales Skybox")]
+    public Material[] skyboxes;
 
     [Header("Referencias UI")]
     public GameObject panelMenu;
@@ -32,21 +39,37 @@ public class POIController : MonoBehaviour
 
     void GenerarBotonesDependencias()
     {
-        foreach (string dependencia in dependencias)
+        for (int i = 0; i < dependencias.Length; i++)
         {
             GameObject boton = Instantiate(prefabBotonDependencia,
                                            contenedorDependencias);
             TextMeshProUGUI texto = boton.GetComponentInChildren
                                         <TextMeshProUGUI>();
             if (texto != null)
-                texto.text = dependencia;
+                texto.text = dependencias[i];
 
-            string nombreDep = dependencia;
+            int indice = i;
             boton.GetComponent<Button>().onClick.AddListener(() =>
             {
-                SeleccionarDependencia(nombreDep);
+                SeleccionarDependencia(indice);
             });
         }
+    }
+
+    void SeleccionarDependencia(int indice)
+    {
+        if (indice < skyboxes.Length && skyboxes[indice] != null)
+        {
+            FadeController.Instance.CambiarSkybox(skyboxes[indice]);
+            gameObject.SetActive(false);
+        }
+        else
+        {
+            Debug.LogWarning("No hay skybox asignado para: "
+                           + dependencias[indice]);
+        }
+
+        CerrarMenu();
     }
 
     public void ToggleMenu()
@@ -54,13 +77,6 @@ public class POIController : MonoBehaviour
         menuAbierto = !menuAbierto;
         if (panelMenu != null)
             panelMenu.SetActive(menuAbierto);
-    }
-
-    void SeleccionarDependencia(string nombre)
-    {
-        Debug.Log("Navegando a: " + nombre);
-        // Aquí después conectaremos el cambio de imagen 360°
-        CerrarMenu();
     }
 
     public void CerrarMenu()
