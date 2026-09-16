@@ -20,7 +20,6 @@ public class FadeController : MonoBehaviour
 
     IEnumerator TransicionSkybox(Material nuevoSkybox)
     {
-        // Fade a negro
         float alpha = 0f;
         while (alpha < 1f)
         {
@@ -29,11 +28,9 @@ public class FadeController : MonoBehaviour
             yield return null;
         }
 
-        // Cambiar el skybox
         RenderSettings.skybox = nuevoSkybox;
         DynamicGI.UpdateEnvironment();
 
-        // Fade de vuelta
         while (alpha > 0f)
         {
             alpha -= Time.deltaTime * velocidadFade;
