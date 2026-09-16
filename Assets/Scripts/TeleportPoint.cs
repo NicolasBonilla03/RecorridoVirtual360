@@ -1,6 +1,4 @@
 using UnityEngine;
-using UnityEngine.UI;
-using TMPro;
 
 public class TeleportPoint : MonoBehaviour
 {
@@ -8,35 +6,15 @@ public class TeleportPoint : MonoBehaviour
     public string nombreDestino = "Destino";
     public Material skyboxDestino;
 
-    [Header("Referencias UI")]
-    public GameObject panelConfirmacion;
-    public TextMeshProUGUI textoDestino;
-
-    private bool panelAbierto = false;
-
-    void Start()
-    {
-        if (panelConfirmacion != null)
-        {
-            panelConfirmacion.SetActive(false);
-            if (textoDestino != null)
-                textoDestino.text = "¿Ir a " + nombreDestino + "?";
-        }
-    }
-
     public void AlHacerClick()
-    {
-        panelAbierto = !panelAbierto;
-        if (panelConfirmacion != null)
-            panelConfirmacion.SetActive(panelAbierto);
-    }
-
-    public void Confirmar()
     {
         if (skyboxDestino != null)
         {
+            // Cambiar skybox con fade
             FadeController.Instance.CambiarSkybox(skyboxDestino);
-            CerrarPanel();
+
+            // Ocultar todos los TPs y POIs de la escena
+            OcultarTodos();
         }
         else
         {
@@ -45,10 +23,16 @@ public class TeleportPoint : MonoBehaviour
         }
     }
 
-    public void CerrarPanel()
+    void OcultarTodos()
     {
-        panelAbierto = false;
-        if (panelConfirmacion != null)
-            panelConfirmacion.SetActive(false);
+        // Ocultar todos los TeleportPoints
+        GameObject[] tps = GameObject.FindGameObjectsWithTag("TP");
+        foreach (GameObject tp in tps)
+            tp.SetActive(false);
+
+        // Ocultar todos los POIs
+        GameObject[] pois = GameObject.FindGameObjectsWithTag("POI");
+        foreach (GameObject poi in pois)
+            poi.SetActive(false);
     }
 }

@@ -11,6 +11,8 @@ public class FadeController : MonoBehaviour
     void Awake()
     {
         Instance = this;
+        if (panelFade != null)
+            panelFade.raycastTarget = false;
     }
 
     public void CambiarSkybox(Material nuevoSkybox)
@@ -20,6 +22,8 @@ public class FadeController : MonoBehaviour
 
     IEnumerator TransicionSkybox(Material nuevoSkybox)
     {
+        panelFade.raycastTarget = true;
+
         float alpha = 0f;
         while (alpha < 1f)
         {
@@ -31,6 +35,9 @@ public class FadeController : MonoBehaviour
         RenderSettings.skybox = nuevoSkybox;
         DynamicGI.UpdateEnvironment();
 
+        // Activar TPs correspondientes al nuevo skybox
+        GestorTeleports.Instance.ActivarTeleports(nuevoSkybox);
+
         while (alpha > 0f)
         {
             alpha -= Time.deltaTime * velocidadFade;
@@ -39,5 +46,6 @@ public class FadeController : MonoBehaviour
         }
 
         panelFade.color = new Color(0, 0, 0, 0);
+        panelFade.raycastTarget = false;
     }
 }

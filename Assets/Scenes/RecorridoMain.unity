@@ -158,6 +158,292 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: -20, y: -20}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &182618194
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 182618196}
+  - component: {fileID: 182618195}
+  m_Layer: 0
+  m_Name: GestorTeleports
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &182618195
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 182618194}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 305f7def90aa1ec478df494319ab3f3a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  configuraciones:
+  - nombreSkybox: AulaMagna
+    skybox: {fileID: 2100000, guid: feb0eb9954d03544eaa624f12075be6c, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+    - {fileID: 0}
+  - nombreSkybox: Bienestar Universitario
+    skybox: {fileID: 2100000, guid: 45ffb834bfe3ec640a21412d0e0969ec, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+    - {fileID: 0}
+  - nombreSkybox: Buho
+    skybox: {fileID: 2100000, guid: dc8758a92d8f3d543a20e84ce23753da, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+  - nombreSkybox: Cafeteria
+    skybox: {fileID: 2100000, guid: ab505ead6ce21344db117083f74d897a, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+    - {fileID: 0}
+  - nombreSkybox: Canchas
+    skybox: {fileID: 2100000, guid: dfc5283ff0b64d14089e99ae1bef26f6, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+    - {fileID: 0}
+  - nombreSkybox: Censei
+    skybox: {fileID: 2100000, guid: 82e06f5eb89705e4e91712a7b30b2a93, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+    - {fileID: 0}
+  - nombreSkybox: Diri
+    skybox: {fileID: 2100000, guid: 80f73487c23cdba4ea1cbffe735dfaee, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+  - nombreSkybox: Edificio 1
+    skybox: {fileID: 2100000, guid: 3b3cba6f7293bfe468f94ec9d3b76b61, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+    - {fileID: 0}
+  - nombreSkybox: 'Edificio 10 '
+    skybox: {fileID: 2100000, guid: 60a1b89bcb62c6041a886a125bbbe84e, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+  - nombreSkybox: Edificio11
+    skybox: {fileID: 2100000, guid: 6c7135d84ac6b04458873d289da0f4b1, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+    - {fileID: 0}
+  - nombreSkybox: Entrada2
+    skybox: {fileID: 2100000, guid: 9a2a4322223a18e4c9664b90c3fd5f8f, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+  - nombreSkybox: Entrada12
+    skybox: {fileID: 2100000, guid: 0ad46ca4051514b42b7722710339cc1c, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+  - nombreSkybox: Coliseo
+    skybox: {fileID: 2100000, guid: a83741989d1affc439e5af252bcc3122, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+  - nombreSkybox: Interior 12
+    skybox: {fileID: 2100000, guid: e595fe43aeb41964192b5276465ad9e4, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+  - nombreSkybox: EntradaCentral
+    skybox: {fileID: 2100000, guid: e828dc6c82dad764780aa5b34bbbaf52, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+  - nombreSkybox: Entrada principal Uni
+    skybox: {fileID: 2100000, guid: de63823fbe77a4b47a1c241ea02c2f60, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+  - nombreSkybox: Escalerasa4
+    skybox: {fileID: 2100000, guid: 0084708aa229e074899fa05c5185978f, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+    - {fileID: 0}
+  - nombreSkybox: EscalerasParaOrigen
+    skybox: {fileID: 2100000, guid: 9ec5d5380802ad44d9146c3997f0f4b7, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+    - {fileID: 0}
+  - nombreSkybox: Hall de artes
+    skybox: {fileID: 2100000, guid: 0e3ff15b7c8d109408391e97fd220e8a, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+    - {fileID: 0}
+  - nombreSkybox: Interior 3 Inicio
+    skybox: {fileID: 2100000, guid: df5a435931e318e4c9d766c7da2c2167, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+    - {fileID: 0}
+  - nombreSkybox: InteriorCentral
+    skybox: {fileID: 2100000, guid: 2cc33ca4090161441b7918fb2287f581, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+  - nombreSkybox: Laboratorios Multiple
+    skybox: {fileID: 2100000, guid: c8de52af3c5250245abbf4fbc74e8105, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+  - nombreSkybox: Macub7
+    skybox: {fileID: 2100000, guid: 58b3b456d07823e47af9b381f0f71a46, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+    - {fileID: 0}
+  - nombreSkybox: Macub10
+    skybox: {fileID: 2100000, guid: 9e6f5949c531c7c43b3e68a3fcc444f1, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+  - nombreSkybox: Canchasarriba
+    skybox: {fileID: 2100000, guid: 89fda65382b35a74bb9af554d9b7b4be, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+  - nombreSkybox: 'Fondo 3 '
+    skybox: {fileID: 2100000, guid: 6d0221f90b3b01a42af2e9a61d824efe, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+  - nombreSkybox: Origen
+    skybox: {fileID: 2100000, guid: 9bdd636efd579f74f8141202c16f2c1c, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+    - {fileID: 0}
+  - nombreSkybox: Escaleras Multiple
+    skybox: {fileID: 2100000, guid: ad83991c391e1504784f3f217b6b833c, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+  - nombreSkybox: EscalerasPolitecaArriba
+    skybox: {fileID: 2100000, guid: d433694dd7c2b314481eff43ea8dd49e, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+  - nombreSkybox: Paraninfo
+    skybox: {fileID: 2100000, guid: b1c63c7759c1baa42af26bb1ddc501c3, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+    - {fileID: 0}
+  - nombreSkybox: DerechaCentral
+    skybox: {fileID: 2100000, guid: 08c4b41587fd27a40b325c884c4d8b8b, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+  - nombreSkybox: PasilloEdificio2
+    skybox: {fileID: 2100000, guid: ec9882a524ecafb4c865669ef17034ad, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+    - {fileID: 0}
+  - nombreSkybox: Piso1Multiple
+    skybox: {fileID: 2100000, guid: acfabc33f5da5804b83529f0947abbe8, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+  - nombreSkybox: Piso2Multiple
+    skybox: {fileID: 2100000, guid: f349e7a45163d234c9758e4913b262f9, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+    - {fileID: 0}
+  - nombreSkybox: Piso3Multiple
+    skybox: {fileID: 2100000, guid: 7652df7d0368a2f4e8c45f16fe038cc7, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+    - {fileID: 0}
+  - nombreSkybox: Piso4Ed12
+    skybox: {fileID: 2100000, guid: ecd0c7df7e7a65448adabec6cdd65470, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+    - {fileID: 0}
+  - nombreSkybox: Piso4Multiple
+    skybox: {fileID: 2100000, guid: f9c0eb2b77a5b98458b483c4cae4f8d9, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+    - {fileID: 0}
+  - nombreSkybox: Piso5Ed12
+    skybox: {fileID: 2100000, guid: 52b7c90e2dd85ba418b7028d600d1ba7, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+    - {fileID: 0}
+  - nombreSkybox: PolitecaDebajo
+    skybox: {fileID: 2100000, guid: 8ac1832f057e3ca43828204d659c86f8, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+    - {fileID: 0}
+  - nombreSkybox: PolitecaBienestar
+    skybox: {fileID: 2100000, guid: d3de0881cb16a5447926732ebe106188, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+    - {fileID: 0}
+  - nombreSkybox: PrincipalCentral
+    skybox: {fileID: 2100000, guid: db0035fb70333fc40814893accbd9140, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+  - nombreSkybox: Rectoria
+    skybox: {fileID: 2100000, guid: 93f65058aed7711439b9891d04caf89e, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+  - nombreSkybox: Piso5Central
+    skybox: {fileID: 2100000, guid: ae0c63de6adb0744d9586f1755ce2e3a, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+    - {fileID: 0}
+  - nombreSkybox: Doctoradooalgo
+    skybox: {fileID: 2100000, guid: 4d5eb343ee5fb3442bc96e60122f13e6, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+  - nombreSkybox: TunelAMultiple
+    skybox: {fileID: 2100000, guid: ae6bd52a1ee8b814180b4fcac5a49153, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+  - nombreSkybox: EntradaEd3
+    skybox: {fileID: 2100000, guid: 07f43ee4884bf0b469b39a766d6f66f5, type: 2}
+    teleportsVisibles:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+--- !u!4 &182618196
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 182618194}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.59182024, y: 21.751108, z: -724.99677}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &201861209
 GameObject:
   m_ObjectHideFlags: 0
@@ -289,13 +575,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 201861209}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.27479318, y: -0.24748212, z: 0.07342502, w: 0.92620194}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 33.05, y: -29.92, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &201861214
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -344,7 +630,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: -0.000030517578}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &257273516
@@ -415,7 +701,7 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 40}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 874468988}
   - {fileID: 391383274}
@@ -424,7 +710,7 @@ RectTransform:
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: -160, y: -250}
-  m_SizeDelta: {x: 300, y: 500}
+  m_SizeDelta: {x: 350, y: 600}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &371039918
 MonoBehaviour:
@@ -1239,7 +1525,7 @@ GameObject:
   - component: {fileID: 1021428738}
   - component: {fileID: 1021428737}
   m_Layer: 5
-  m_Name: Canvas
+  m_Name: CanvasUI
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1321,7 +1607,6 @@ RectTransform:
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 1234576767}
-  - {fileID: 1925001114}
   - {fileID: 1484468441}
   - {fileID: 1950355374}
   - {fileID: 371039917}
@@ -1729,14 +2014,14 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_Sprite: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 0
+  m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
-  m_UseSpriteMesh: 0
+  m_UseSpriteMesh: 1
   m_PixelsPerUnitMultiplier: 1
 --- !u!222 &1234576766
 CanvasRenderer:
@@ -1764,6 +2049,108 @@ RectTransform:
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: -0.00024414062, y: 0}
   m_SizeDelta: {x: 0.00051403046, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &1352985833
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1352985837}
+  - component: {fileID: 1352985836}
+  - component: {fileID: 1352985835}
+  - component: {fileID: 1352985834}
+  m_Layer: 5
+  m_Name: CanvasWorld
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1352985834
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1352985833}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_IgnoreReversedGraphics: 1
+  m_BlockingObjects: 0
+  m_BlockingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+--- !u!114 &1352985835
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1352985833}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_UiScaleMode: 0
+  m_ReferencePixelsPerUnit: 100
+  m_ScaleFactor: 1
+  m_ReferenceResolution: {x: 800, y: 600}
+  m_ScreenMatchMode: 0
+  m_MatchWidthOrHeight: 0
+  m_PhysicalUnit: 3
+  m_FallbackScreenDPI: 96
+  m_DefaultSpriteDPI: 96
+  m_DynamicPixelsPerUnit: 1
+  m_PresetInfoIsWorld: 1
+--- !u!223 &1352985836
+Canvas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1352985833}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_RenderMode: 2
+  m_Camera: {fileID: 201861212}
+  m_PlaneDistance: 100
+  m_PixelPerfect: 0
+  m_ReceivesEvents: 1
+  m_OverrideSorting: 0
+  m_OverridePixelPerfect: 0
+  m_SortingBucketNormalizedSize: 0
+  m_VertexColorAlwaysGammaSpace: 0
+  m_AdditionalShaderChannelsFlag: 25
+  m_UpdateRectTransformForStandalone: 0
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+  m_TargetDisplay: 0
+--- !u!224 &1352985837
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1352985833}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0.01, y: 0.01, z: 0.01}
+  m_ConstrainProportionsScale: 1
+  m_Children:
+  - {fileID: 1925001114}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 1280, y: 720}
+  m_SizeDelta: {x: 2560, y: 1440}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &1408325424 stripped
 RectTransform:
@@ -1966,7 +2353,7 @@ GameObject:
   - component: {fileID: 1925001118}
   m_Layer: 5
   m_Name: POI_Edificio12
-  m_TagString: Untagged
+  m_TagString: POI
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1978,18 +2365,18 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1925001113}
-  m_LocalRotation: {x: 0.014815711, y: -0.05058745, z: 0.0007505326, w: 0.9986095}
-  m_LocalPosition: {x: 0, y: 0, z: -1.6}
+  m_LocalRotation: {x: 0.22457878, y: -0.32615134, z: 0.0800724, w: 0.9147558}
+  m_LocalPosition: {x: 0, y: 0, z: 845.9985}
   m_LocalScale: {x: 3.08, y: 3.08, z: 3.08}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 1878591808}
   - {fileID: 946425223}
-  m_Father: {fileID: 1021428740}
-  m_LocalEulerAnglesHint: {x: 1.7, y: -5.8, z: 0}
+  m_Father: {fileID: 1352985837}
+  m_LocalEulerAnglesHint: {x: 27.587, y: -39.247, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 1.9, y: -2.7}
+  m_AnchoredPosition: {x: -128575, y: -72631}
   m_SizeDelta: {x: 60, y: 60}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1925001115
@@ -2137,13 +2524,14 @@ GameObject:
   - component: {fileID: 1950355377}
   - component: {fileID: 1950355376}
   - component: {fileID: 1950355375}
+  - component: {fileID: 1950355378}
   m_Layer: 5
   m_Name: BotonTP
-  m_TagString: Untagged
+  m_TagString: TP
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1950355374
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2207,7 +2595,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1950355376}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1950355378}
+        m_TargetAssemblyTypeName: TeleportPoint, Assembly-CSharp
+        m_MethodName: AlHacerClick
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1950355376
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2246,6 +2646,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1950355373}
   m_CullTransparentMesh: 1
+--- !u!114 &1950355378
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1950355373}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a67022b77ed66f041b62d63d53ba7401, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  nombreDestino: Destino
+  skyboxDestino: {fileID: 2100000, guid: 4d5eb343ee5fb3442bc96e60122f13e6, type: 2}
 --- !u!1 &1967834204
 GameObject:
   m_ObjectHideFlags: 0
@@ -2925,6 +3339,8 @@ SceneRoots:
   - {fileID: 410087041}
   - {fileID: 832575519}
   - {fileID: 201861213}
+  - {fileID: 1352985837}
   - {fileID: 1021428740}
-  - {fileID: 2017478463}
   - {fileID: 531337675}
+  - {fileID: 2017478463}
+  - {fileID: 182618196}

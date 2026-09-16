@@ -93,6 +93,11 @@ public class MenuNavegacion : MonoBehaviour
                         else
                             Debug.LogWarning("Sin skybox: " + punto.nombre);
 
+                        // Ocultar todos los POI de la escena
+                        GameObject[] pois = GameObject.FindGameObjectsWithTag("POI");
+                        foreach (GameObject poi in pois)
+                            poi.SetActive(false);
+
                         ToggleMenu();
                     });
                 }
