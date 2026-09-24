@@ -13,18 +13,31 @@ public class GestorTeleports : MonoBehaviour
 {
     public static GestorTeleports Instance;
 
-    [Header("Configuración de Skyboxes y sus TPs")]
+    [Header("Inicio del recorrido")]
+    [Tooltip("Skybox con el que arranca siempre el recorrido (vista general).")]
+    public Material skyboxInicial;
+
+    [Header("ConfiguraciÃ³n de Skyboxes y sus TPs")]
     public List<ConfiguracionSkybox> configuraciones;
 
     void Awake()
     {
         Instance = this;
+
+        // El recorrido siempre arranca en el skybox inicial, aunque en el editor
+        // se haya dejado otro skybox puesto en la ventana Lighting.
+        if (skyboxInicial != null)
+        {
+            RenderSettings.skybox = skyboxInicial;
+            DynamicGI.UpdateEnvironment();
+        }
     }
 
     void Start()
     {
-        // Ocultar todos los TPs al inicio
+        // Ocultar todos los TPs y mostrar solo los del skybox con el que se arranca
         OcultarTodos();
+        ActivarTeleports(RenderSettings.skybox);
     }
 
     public void ActivarTeleports(Material skyboxActual)
@@ -32,11 +45,14 @@ public class GestorTeleports : MonoBehaviour
         // Ocultar todos primero
         OcultarTodos();
 
+        if (configuraciones == null) return;
+
         // Activar solo los que corresponden al skybox actual
         foreach (ConfiguracionSkybox config in configuraciones)
         {
-            if (config.skybox == skyboxActual)
+            if (config != null && config.skybox == skyboxActual)
             {
+                if (config.teleportsVisibles == null) break;
                 foreach (GameObject tp in config.teleportsVisibles)
                 {
                     if (tp != null)
