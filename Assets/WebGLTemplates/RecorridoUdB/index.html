@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#1d1d1b">
+  <meta name="description" content="Recorrido virtual 360° de la Universidad de Boyacá. Funciona en computador y en móvil, sin instalar nada.">
+  <title>{{{ PRODUCT_NAME }}} · Universidad de Boyacá</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Raleway:wght@700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --udb-rojo: #d02e26;
+      --udb-rojo-fuerte: #a8241e;
+      --udb-negro: #1d1d1b;
+      --surface-100: #ffffff;
+      --surface-300: #eceae4;
+      --ink: #1d1d1b;
+      --ink-muted: #5f5d57;
+      --foco: #0a58d0;
+      --font-texto: Lato, "Segoe UI", Arial, sans-serif;
+      --font-display: Raleway, "Trebuchet MS", sans-serif;
+    }
+    html, body {
+      margin: 0; padding: 0; width: 100%; height: 100%;
+      background: var(--surface-100); overflow: hidden;
+      overscroll-behavior: none; -webkit-text-size-adjust: 100%;
+    }
+    #unity-canvas {
+      position: fixed; inset: 0; width: 100%; height: 100%;
+      display: block; background: var(--surface-100);
+      touch-action: none; outline: none; -webkit-tap-highlight-color: transparent;
+    }
+    #carga {
+      position: fixed; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 24px;
+      padding: 24px; box-sizing: border-box;
+      background: var(--surface-100); color: var(--ink);
+      font-family: var(--font-texto);
+      transition: opacity 240ms ease-out;
+    }
+    #carga img { width: min(320px, 72vw); height: auto; }
+    #carga h1 {
+      font-family: var(--font-display); font-weight: 700;
+      font-size: 22px; line-height: 28px; margin: 0; text-align: center;
+    }
+    .barra { width: min(320px, 72vw); height: 6px; border-radius: 999px; background: var(--surface-300); overflow: hidden; }
+    .barra span { display: block; width: 0; height: 100%; border-radius: 999px; background: var(--udb-rojo); transition: width 120ms ease-out; }
+    #estado { margin: 0; font-size: 15px; line-height: 24px; color: var(--ink-muted); text-align: center; max-width: 36em; }
+    #reintentar {
+      display: none; min-height: 44px; padding: 12px 24px; border: 0; border-radius: 8px;
+      background: var(--udb-rojo); color: #fff; font: 700 15px/20px var(--font-texto); cursor: pointer;
+    }
+    #reintentar:hover { background: var(--udb-rojo-fuerte); }
+    #reintentar:focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; }
+    #vigilada {
+      position: fixed; left: 16px; bottom: calc(16px + env(safe-area-inset-bottom));
+      margin: 0; font-size: 13px; line-height: 20px; color: var(--ink-muted);
+    }
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+  </style>
+</head>
+<body>
+  <canvas id="unity-canvas" tabindex="-1" aria-label="Recorrido virtual 360° de la Universidad de Boyacá"></canvas>
+
+  <div id="carga" role="status" aria-live="polite">
+    <img src="logo-udb.jpg" alt="Universidad de Boyacá">
+    <h1>Recorrido virtual 360°</h1>
+    <div class="barra" aria-hidden="true"><span id="progreso"></span></div>
+    <p id="estado">Armando el campus…</p>
+    <button id="reintentar" type="button" onclick="location.reload()">Reintentar</button>
+    <p id="vigilada">Vigilada Mineducación</p>
+  </div>
+
+  <script>
+    var canvas = document.querySelector("#unity-canvas");
+    var carga = document.querySelector("#carga");
+    var progreso = document.querySelector("#progreso");
+    var estado = document.querySelector("#estado");
+    var reintentar = document.querySelector("#reintentar");
+    var esMovil = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
+                  (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+    // Errores y avisos: el error explica y ofrece salida, sin códigos
+    function mostrarAviso(mensaje, tipo) {
+      if (tipo === "error") {
+        estado.textContent = "No pudimos cargar el recorrido. Revisa tu conexión y vuelve a intentarlo.";
+        reintentar.style.display = "inline-block";
+        console.error(mensaje);
+      } else {
+        console.warn(mensaje);
+      }
+    }
+
+    var buildUrl = "Build";
+    var loaderUrl = buildUrl + "/{{{ LOADER_FILENAME }}}";
+    var config = {
+      dataUrl: buildUrl + "/{{{ DATA_FILENAME }}}",
+      frameworkUrl: buildUrl + "/{{{ FRAMEWORK_FILENAME }}}",
+#if USE_THREADS
+      workerUrl: buildUrl + "/{{{ WORKER_FILENAME }}}",
+#endif
+#if USE_WASM
+      codeUrl: buildUrl + "/{{{ CODE_FILENAME }}}",
+#endif
+#if MEMORY_FILENAME
+      memoryUrl: buildUrl + "/{{{ MEMORY_FILENAME }}}",
+#endif
+#if SYMBOLS_FILENAME
+      symbolsUrl: buildUrl + "/{{{ SYMBOLS_FILENAME }}}",
+#endif
+      streamingAssetsUrl: "StreamingAssets",
+      companyName: {{{ JSON.stringify(COMPANY_NAME) }}},
+      productName: {{{ JSON.stringify(PRODUCT_NAME) }}},
+      productVersion: {{{ JSON.stringify(PRODUCT_VERSION) }}},
+      showBanner: mostrarAviso,
+    };
+
+    // En móvil se limita la densidad de píxeles: se ve nítido y no se come la batería
+    if (esMovil) {
+      config.devicePixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+    }
+
+    var script = document.createElement("script");
+    script.src = loaderUrl;
+    script.onload = function () {
+      createUnityInstance(canvas, config, function (p) {
+        progreso.style.width = Math.round(100 * p) + "%";
+        if (p >= 0.9) estado.textContent = "Ya casi…";
+      }).then(function (instancia) {
+        window.recorrido = instancia;
+        carga.style.opacity = "0";
+        setTimeout(function () { carga.remove(); canvas.focus(); }, 260);
+      }).catch(function (mensaje) {
+        mostrarAviso(mensaje, "error");
+      });
+    };
+    script.onerror = function () { mostrarAviso("No se encontró el cargador de Unity.", "error"); };
+    document.body.appendChild(script);
+
+    // Evita el zoom del navegador con doble toque y el rebote de la página en iOS
+    document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
+    document.addEventListener("touchmove", function (e) { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+  </script>
+</body>
+</html>

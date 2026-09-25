@@ -192,6 +192,108 @@ public static class HerramientasRecorrido
         SceneVisibilityManager.instance.ShowAll();
     }
 
+    // ------------------------------------------------------------------ web y móvil
+
+    [MenuItem("Recorrido/Web y móvil/1. Preparar ajustes para web (plantilla UdB, Gzip)", false, 80)]
+    static void PrepararWeb()
+    {
+        // Plantilla con la marca y adaptada a móvil (Assets/WebGLTemplates/RecorridoUdB)
+        PlayerSettings.WebGL.template = "PROJECT:RecorridoUdB";
+        // Gzip con respaldo de descompresión: funciona en cualquier servidor (GitHub Pages, itch.io, Live Server)
+        PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Gzip;
+        PlayerSettings.WebGL.decompressionFallback = true;
+        PlayerSettings.WebGL.dataCaching = true;
+        // Pantalla de inicio de Unity sobre blanco, para que empalme con la carga de la página
+        // y con la pantalla de carga del recorrido (fondo blanco con el logotipo)
+        PlayerSettings.SplashScreen.backgroundColor = Color.white;
+        PlayerSettings.SplashScreen.unityLogoStyle = PlayerSettings.SplashScreen.UnityLogoStyle.DarkOnLight;
+        AssetDatabase.SaveAssets();
+
+        EditorUtility.DisplayDialog(Titulo,
+            "Listo: plantilla RecorridoUdB, compresión Gzip, respaldo de descompresión y pantalla de inicio sobre blanco.\n\n" +
+            "Para probar en celular, en File > Build Settings > WebGL pon «Texture Compression» en ASTC " +
+            "(los celulares no leen el formato de escritorio).", "OK");
+    }
+
+    [MenuItem("Recorrido/Web y móvil/2. Panorámicas para web: 1024 por cara (móvil)", false, 81)]
+    static void PanoramicasMovil() { AjustarPanoramicasWeb(1024); }
+
+    [MenuItem("Recorrido/Web y móvil/2. Panorámicas para web: 2048 por cara (escritorio)", false, 82)]
+    static void PanoramicasEscritorio() { AjustarPanoramicasWeb(2048); }
+
+    [MenuItem("Recorrido/Web y móvil/2. Panorámicas para web: quitar ajuste", false, 83)]
+    static void PanoramicasSinAjuste() { AjustarPanoramicasWeb(0); }
+
+    // Solo toca el ajuste de la plataforma WebGL de las texturas cubemap: el editor y Windows no cambian
+    static void AjustarPanoramicasWeb(int tamano)
+    {
+        string[] guids = AssetDatabase.FindAssets("t:Texture", new[] { "Assets/Textures" });
+        int n = 0;
+        try
+        {
+            AssetDatabase.StartAssetEditing();
+            foreach (string g in guids)
+            {
+                string ruta = AssetDatabase.GUIDToAssetPath(g);
+                TextureImporter imp = AssetImporter.GetAtPath(ruta) as TextureImporter;
+                if (imp == null || imp.textureShape != TextureImporterShape.TextureCube) continue;
+
+                TextureImporterPlatformSettings web = imp.GetPlatformTextureSettings("WebGL");
+                web.name = "WebGL";
+                web.overridden = tamano > 0;
+                if (tamano > 0)
+                {
+                    web.maxTextureSize = tamano;
+                    web.format = TextureImporterFormat.Automatic;
+                    web.textureCompression = TextureImporterCompression.Compressed;
+                }
+                imp.SetPlatformTextureSettings(web);
+                imp.SaveAndReimport();
+                n++;
+            }
+        }
+        finally
+        {
+            AssetDatabase.StopAssetEditing();
+        }
+
+        EditorUtility.DisplayDialog(Titulo, n + " panorámicas ajustadas para WebGL" +
+            (tamano > 0 ? " a " + tamano + " px por cara." : " (sin ajuste propio).") +
+            "\n\nSe nota al construir o al cambiar la plataforma a WebGL.", "OK");
+    }
+
+    [MenuItem("Recorrido/Web y móvil/3. Construir para web en Builds/WebGL", false, 84)]
+    static void ConstruirWeb()
+    {
+        if (EditorUserBuildSettings.activeBuildTarget != BuildTarget.WebGL &&
+            !EditorUtility.DisplayDialog(Titulo,
+                "La plataforma activa no es WebGL. Unity la cambiará y reimportará las texturas (puede tardar). ¿Seguimos?",
+                "Sí, construir", "Cancelar"))
+            return;
+
+        List<string> escenas = new List<string>();
+        foreach (EditorBuildSettingsScene e in EditorBuildSettings.scenes)
+            if (e.enabled) escenas.Add(e.path);
+
+        BuildPlayerOptions opciones = new BuildPlayerOptions();
+        opciones.scenes = escenas.ToArray();
+        opciones.locationPathName = "Builds/WebGL";
+        opciones.target = BuildTarget.WebGL;
+        opciones.options = BuildOptions.None;
+
+        UnityEditor.Build.Reporting.BuildReport reporte = BuildPipeline.BuildPlayer(opciones);
+        if (reporte.summary.result == UnityEditor.Build.Reporting.BuildResult.Succeeded)
+        {
+            EditorUtility.RevealInFinder("Builds/WebGL/index.html");
+            EditorUtility.DisplayDialog(Titulo, "Build listo en Builds/WebGL (" +
+                (reporte.summary.totalSize / (1024 * 1024)) + " MB). Sírvelo con Live Server o Python y ábrelo desde el celular.", "OK");
+        }
+        else
+        {
+            EditorUtility.DisplayDialog(Titulo, "El build no terminó: " + reporte.summary.result + ". Revisa la consola.", "OK");
+        }
+    }
+
     // ------------------------------------------------------------------ internos
 
     static void VerSkybox(Material mat)

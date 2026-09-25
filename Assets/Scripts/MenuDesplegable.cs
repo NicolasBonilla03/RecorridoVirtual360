@@ -9,7 +9,9 @@ using UnityEngine.UI;
 /// Menú lateral desplegable para navegar el recorrido.
 /// Construye su propia interfaz al iniciar (no necesita prefabs) y toma los
 /// edificios y puntos de la lista "Edificios" del componente MenuNavegacion.
-/// Abrir / cerrar: botón "Menú" arriba a la izquierda, tecla M, Esc o clic fuera del panel.
+/// Abrir / cerrar: botón "Menú" arriba a la izquierda, tecla M, Esc o tocando fuera del panel.
+/// Cada edificio lleva su color de zona (ver MarcaUdB y AplicarMarcaUdB).
+/// Se adapta a móvil: área segura, versión compacta en pantallas angostas.
 /// </summary>
 public class MenuDesplegable : MonoBehaviour
 {
@@ -36,55 +38,92 @@ public class MenuDesplegable : MonoBehaviour
     public string tituloMenu = "Recorrido virtual 360°";
     public string textoInicio = "Inicio · Vista general";
 
-    [Header("Apariencia")]
-    public float anchoPanel = 480f;
-    public float altoEdificio = 64f;
-    public float altoPunto = 56f;
-    public float tamTextoTitulo = 30f;
-    public float tamTextoEdificio = 26f;
-    public float tamTextoPunto = 24f;
-    public int ordenCanvas = 50;
-    public Color colorFondo = new Color(0.07f, 0.08f, 0.10f, 0.94f);
-    public Color colorEdificio = new Color(0.15f, 0.17f, 0.21f, 1f);
-    public Color colorPunto = new Color(0.10f, 0.11f, 0.14f, 1f);
-    public Color colorResaltado = new Color(0.98f, 0.74f, 0.20f, 1f);
-    public Color colorTexto = new Color(0.95f, 0.96f, 0.98f, 1f);
-    public Color colorTextoSecundario = new Color(0.64f, 0.69f, 0.77f, 1f);
+    // Medidas del Sistema UdB Digital
+    const float AnchoPanel = 400f;
+    const float AltoControl = 48f;       // botón de menú, chip, fila de inicio (≥ 44 px de área táctil)
+    const float AnchoBotonMenu = 124f;
+    const float AltoEdificio = 52f;
+    const float AltoPunto = 44f;
+    const float MargenAncho = MarcaUdB.Space8;     // 48 px al borde del visor
+    const float MargenCompacto = MarcaUdB.Space4;  // 16 px en móvil vertical
+    const float MargenPanel = MarcaUdB.Space4;
+    const float AltoEncabezado = 112f;
+    const float AnchoBarra = 8f;          // barra de la lista: toma el color del edificio que se está viendo
+    const int OrdenCanvas = 50;
 
     class FilaPunto
     {
         public PuntoRecorrido punto;
         public Image acento;
+        public Button boton;
         public TextMeshProUGUI texto;
     }
 
     class Seccion
     {
         public EdificioRecorrido edificio;
-        public TextMeshProUGUI textoEncabezado;
+        public Color zona;
         public RectTransform chevron;
+        public RectTransform encabezado;
         public GameObject contenedor;
         public bool abierta;
         public List<FilaPunto> filas = new List<FilaPunto>();
     }
 
     readonly List<Seccion> secciones = new List<Seccion>();
+    Scrollbar barraLista;
+    ScrollRect scrollLista;
+    Color colorBarra = MarcaUdB.Negro;
+    bool colorBarraIniciado;
     RectTransform canvasRT;
-    RectTransform panel;
+    RectTransform zonaSegura;
+    RectTransform panelRaiz;
+    RectTransform botonMenuRT;
+    RectTransform chipRT;
     GameObject fondoOscuro;
     GameObject botonMenu;
+    GameObject botonMenuSombra;
+    Vector2 desfaseSombra;
     GameObject chipUbicacion;
+    Image puntoZonaChip;
+    TextMeshProUGUI etiquetaChip;
     TextMeshProUGUI textoChip;
     TextMeshProUGUI textoUbicacionPanel;
     TextMeshProUGUI textoFilaInicio;
     Image acentoInicio;
+    Button botonInicio;
     GameObject[] pois = new GameObject[0];
     Material skyboxInicio;
     Material ultimoSkybox;
     bool abierto;
+    bool compacto;
+    Vector2 ultimoTamano;
+    Rect ultimaAreaSegura;
     Coroutine animacion;
 
     // ------------------------------------------------------------------ ciclo de vida
+
+    static MenuDesplegable instancia;
+
+    /// <summary>Cierra el menú lateral si está abierto (lo usan los puntos de información al abrirse).</summary>
+    public static void CerrarSiAbierto()
+    {
+        if (instancia != null) instancia.Cerrar();
+    }
+
+    void OnDestroy()
+    {
+        if (instancia == this) instancia = null;
+    }
+
+    void Awake()
+    {
+        instancia = this;
+
+        // La marca institucional se aplica siempre, aunque nadie haya añadido el componente a mano
+        if (FindObjectOfType<AplicarMarcaUdB>() == null)
+            gameObject.AddComponent<AplicarMarcaUdB>();
+    }
 
     void Start()
     {
@@ -108,10 +147,20 @@ public class MenuDesplegable : MonoBehaviour
 
     void Update()
     {
+        if (abierto) ActualizarColorBarra();
+
         if (Input.GetKeyDown(teclaMenu))
             Alternar();
         else if (abierto && Input.GetKeyDown(KeyCode.Escape))
             Cerrar();
+
+        // Rotación del teléfono, cambio de tamaño de la ventana o de área segura
+        if (canvasRT != null && (canvasRT.rect.size != ultimoTamano || Screen.safeArea != ultimaAreaSegura))
+        {
+            ultimoTamano = canvasRT.rect.size;
+            ultimaAreaSegura = Screen.safeArea;
+            AplicarLayout();
+        }
 
         // Se detecta el cambio de skybox venga de donde venga (menú, botón TP o POI)
         if (RenderSettings.skybox != ultimoSkybox)
@@ -132,11 +181,11 @@ public class MenuDesplegable : MonoBehaviour
 
     public void Abrir()
     {
-        if (abierto || panel == null) return;
+        if (abierto || panelRaiz == null) return;
+        POIController.CerrarAbierto(); // un solo menú a la vez
         abierto = true;
 
-        float ancho = Mathf.Min(anchoPanel, canvasRT.rect.width - 32f);
-        panel.sizeDelta = new Vector2(ancho, 0f);
+        AjustarAnchoPanel();
 
         if (abrirEdificioActual)
         {
@@ -148,9 +197,8 @@ public class MenuDesplegable : MonoBehaviour
         }
 
         fondoOscuro.SetActive(true);
-        botonMenu.SetActive(false);
-        chipUbicacion.SetActive(false);
-        Animar(0f);
+        MostrarControles(false);
+        Animar(MargenPanel);
     }
 
     public void Cerrar()
@@ -159,9 +207,8 @@ public class MenuDesplegable : MonoBehaviour
         abierto = false;
 
         fondoOscuro.SetActive(false);
-        botonMenu.SetActive(true);
-        chipUbicacion.SetActive(true);
-        Animar(-panel.sizeDelta.x - 40f);
+        MostrarControles(true);
+        Animar(-panelRaiz.sizeDelta.x - 80f);
     }
 
     public void Alternar()
@@ -173,6 +220,13 @@ public class MenuDesplegable : MonoBehaviour
     public void IrAlInicio()
     {
         IrA(skyboxInicio);
+    }
+
+    void MostrarControles(bool visibles)
+    {
+        botonMenu.SetActive(visibles);
+        if (botonMenuSombra != null) botonMenuSombra.SetActive(visibles);
+        chipUbicacion.SetActive(visibles);
     }
 
     // ------------------------------------------------------------------ navegación
@@ -230,33 +284,51 @@ public class MenuDesplegable : MonoBehaviour
         Material sky = RenderSettings.skybox;
         bool enInicio = sky != null && sky == skyboxInicio;
         string lugar = null;
+        bool tieneZona = false;
+        Color zonaActual = MarcaUdB.InkMuted;
 
         foreach (Seccion s in secciones)
         {
-            bool contiene = false;
             foreach (FilaPunto f in s.filas)
             {
                 bool actual = sky != null && f.punto.skybox == sky;
-                f.acento.gameObject.SetActive(actual);
-                f.texto.color = actual ? colorResaltado : colorTexto;
-                f.texto.fontStyle = actual ? FontStyles.Bold : FontStyles.Normal;
-                if (actual)
+                MarcarPunto(f, s.zona, actual);
+                if (actual && lugar == null)
                 {
-                    contiene = true;
-                    if (lugar == null) lugar = s.edificio.nombreEdificio + " · " + f.punto.nombre;
+                    lugar = s.edificio.nombreEdificio + " · " + f.punto.nombre;
+                    zonaActual = s.zona;
+                    tieneZona = true;
                 }
             }
-            s.textoEncabezado.color = contiene ? colorResaltado : colorTexto;
         }
 
+        // Inicio: botón primario en rojo; cuando es el lugar actual lleva la barra blanca
         acentoInicio.gameObject.SetActive(enInicio);
-        textoFilaInicio.color = enInicio ? colorResaltado : colorTexto;
 
-        if (enInicio) lugar = "Inicio";
+        if (enInicio)
+        {
+            lugar = "Inicio";
+            zonaActual = MarcaUdB.Rojo;
+            tieneZona = true;
+        }
         if (lugar == null) lugar = NombreDesdeGestor(sky);
 
-        textoChip.text = "Estás en: <b>" + lugar + "</b>";
+        puntoZonaChip.color = tieneZona ? zonaActual : MarcaUdB.InkMuted;
+        textoChip.color = tieneZona && !enInicio ? MarcaUdB.TintaLegible(zonaActual) : MarcaUdB.Ink;
+        textoChip.text = lugar;
         textoUbicacionPanel.text = "Estás en: " + lugar;
+        AjustarChip();
+    }
+
+    // El lugar actual se marca con tres señales, no solo color: barra de acento, relleno y peso
+    void MarcarPunto(FilaPunto f, Color zona, bool actual)
+    {
+        f.acento.gameObject.SetActive(actual);
+        f.acento.color = zona;
+        if (MarcaUdB.TextoBold != null && MarcaUdB.Texto != null)
+            f.texto.font = actual ? MarcaUdB.TextoBold : MarcaUdB.Texto;
+        Color normal = actual ? MarcaUdB.Tenue(zona, 0.18f) : Color.clear;
+        MarcaUdB.ColoresBoton(f.boton, normal, MarcaUdB.Tenue(zona, actual ? 0.24f : 0.10f), MarcaUdB.Tenue(zona, 0.30f));
     }
 
     static string NombreDesdeGestor(Material sky)
@@ -270,29 +342,72 @@ public class MenuDesplegable : MonoBehaviour
         return sky.name.Replace("Skybox_", "");
     }
 
+    // ------------------------------------------------------------------ disposición (escritorio / móvil)
+
+    float Margen { get { return compacto ? MargenCompacto : MargenAncho; } }
+
+    void AplicarLayout()
+    {
+        MarcaUdB.AjustarAreaSegura(zonaSegura);
+        compacto = MarcaUdB.EsCompacto(canvasRT);
+
+        botonMenuRT.anchoredPosition = new Vector2(Margen, -Margen);
+        if (botonMenuSombra != null)
+            ((RectTransform)botonMenuSombra.transform).anchoredPosition = botonMenuRT.anchoredPosition + desfaseSombra;
+
+        // En móvil vertical el chip baja debajo del botón para no chocar con el logotipo
+        chipRT.anchoredPosition = compacto
+            ? new Vector2(Margen, -Margen - AltoControl - MarcaUdB.Space2)
+            : new Vector2(Margen + AnchoBotonMenu + MarcaUdB.Space2, -Margen);
+
+        AjustarChip();
+        AjustarAnchoPanel();
+        if (!abierto) panelRaiz.anchoredPosition = new Vector2(-panelRaiz.sizeDelta.x - 80f, 0f);
+    }
+
+    void AjustarAnchoPanel()
+    {
+        if (panelRaiz == null || zonaSegura == null) return;
+        float disponible = zonaSegura.rect.width > 0f ? zonaSegura.rect.width : canvasRT.rect.width;
+        float ancho = Mathf.Min(AnchoPanel, disponible - MargenPanel * 2f);
+        panelRaiz.sizeDelta = new Vector2(ancho, -MargenPanel * 2f);
+    }
+
+    void AjustarChip()
+    {
+        if (chipRT == null || textoChip == null) return;
+        float pad = MarcaUdB.Space4;
+        float ancho = pad * 2f + 10f + MarcaUdB.Space2
+                      + etiquetaChip.GetPreferredValues(etiquetaChip.text).x + MarcaUdB.Space2
+                      + textoChip.GetPreferredValues(textoChip.text).x + 4f;
+
+        float disponible = zonaSegura != null && zonaSegura.rect.width > 0f ? zonaSegura.rect.width : canvasRT.rect.width;
+        float maximo = compacto
+            ? disponible - Margen * 2f
+            : disponible - (Margen + AnchoBotonMenu + MarcaUdB.Space2) - 360f; // deja sitio al logotipo
+        maximo = Mathf.Max(160f, maximo);
+        chipRT.sizeDelta = new Vector2(Mathf.Min(Mathf.Ceil(ancho), maximo), AltoControl);
+    }
+
     // ------------------------------------------------------------------ construcción de la interfaz
 
     void ConstruirInterfaz()
     {
-        // Canvas propio, siempre por encima del resto de la interfaz
         GameObject goCanvas = new GameObject("MenuDesplegable_UI",
             typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
         goCanvas.transform.SetParent(transform, false);
         Canvas canvas = goCanvas.GetComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        canvas.sortingOrder = ordenCanvas;
+        canvas.sortingOrder = OrdenCanvas;
         CanvasScaler escalador = goCanvas.GetComponent<CanvasScaler>();
         escalador.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        escalador.referenceResolution = new Vector2(1920f, 1080f);
+        escalador.referenceResolution = MarcaUdB.ResolucionReferencia;
         escalador.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
         escalador.matchWidthOrHeight = 0.5f;
         canvasRT = (RectTransform)goCanvas.transform;
 
-        ConstruirBotonMenu();
-        ConstruirChipUbicacion();
-
-        // Fondo oscuro: bloquea la cámara mientras el menú está abierto y lo cierra al tocarlo
-        Image fondo = CrearImagen("FondoOscuro", canvasRT, new Color(0f, 0f, 0f, 0.45f));
+        // velo-escena a pantalla completa: aísla la lectura del panel, bloquea la cámara y cierra al tocarlo
+        Image fondo = CrearImagen("VeloEscena", canvasRT, MarcaUdB.VeloEscena);
         Estirar((RectTransform)fondo.transform, 0f, 0f);
         Button botonFondo = fondo.gameObject.AddComponent<Button>();
         botonFondo.transition = Selectable.Transition.None;
@@ -301,119 +416,149 @@ public class MenuDesplegable : MonoBehaviour
         fondoOscuro = fondo.gameObject;
         fondoOscuro.SetActive(false);
 
+        // Todo lo demás vive dentro del área segura (muescas, barra de gestos)
+        GameObject goSegura = new GameObject("AreaSegura", typeof(RectTransform));
+        zonaSegura = (RectTransform)goSegura.transform;
+        zonaSegura.SetParent(canvasRT, false);
+        MarcaUdB.AjustarAreaSegura(zonaSegura);
+
+        ConstruirBotonMenu();
+        ConstruirChipUbicacion();
         ConstruirPanel();
+
+        // El velo va debajo del panel pero encima del botón y el chip
+        fondo.transform.SetParent(zonaSegura, false);
+        fondo.transform.SetSiblingIndex(panelRaiz.GetSiblingIndex());
+        Estirar((RectTransform)fondo.transform, 0f, 0f);
+        ((RectTransform)fondo.transform).offsetMin = new Vector2(-4000f, -4000f);
+        ((RectTransform)fondo.transform).offsetMax = new Vector2(4000f, 4000f);
     }
 
     void ConstruirBotonMenu()
     {
+        // Negro institucional: el rojo queda para los hotspots y la acción principal
         Image img;
-        Button boton = CrearBoton("BotonMenu", canvasRT, colorFondo, out img);
+        Button boton = CrearBoton("BotonMenu", zonaSegura, out img);
         RectTransform rt = (RectTransform)boton.transform;
         rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0f, 1f);
-        rt.anchoredPosition = new Vector2(24f, -24f);
-        rt.sizeDelta = new Vector2(180f, 64f);
+        rt.anchoredPosition = new Vector2(MargenAncho, -MargenAncho);
+        rt.sizeDelta = new Vector2(AnchoBotonMenu, AltoControl);
+        MarcaUdB.Redondear(img, MarcaUdB.RadiusMd);
+        MarcaUdB.ColoresBoton(boton, MarcaUdB.Negro, MarcaUdB.Hex("#3a3a36"), MarcaUdB.Hex("#4a4a45"));
 
-        // Ícono de hamburguesa (tres barras)
+        // Ícono de menú (tres trazos de 2 px, como Lucide «menu»)
         for (int i = 0; i < 3; i++)
         {
-            Image barra = CrearImagen("Barra" + i, rt, colorTexto);
+            Image barra = CrearImagen("Trazo" + i, rt, MarcaUdB.InkInverso);
             barra.raycastTarget = false;
             RectTransform rb = (RectTransform)barra.transform;
             rb.anchorMin = rb.anchorMax = new Vector2(0f, 0.5f);
             rb.pivot = new Vector2(0f, 0.5f);
-            rb.sizeDelta = new Vector2(28f, 4f);
-            rb.anchoredPosition = new Vector2(22f, 10f - i * 10f);
+            rb.sizeDelta = new Vector2(18f, 2f);
+            rb.anchoredPosition = new Vector2(MarcaUdB.Space4, 6f - i * 6f);
+            MarcaUdB.Redondear(barra, 1f);
         }
 
-        TextMeshProUGUI texto = CrearTexto("Texto", rt, "Menú", tamTextoEdificio, colorTexto, FontStyles.Bold);
-        Estirar((RectTransform)texto.transform, 64f, 12f);
+        TextMeshProUGUI texto = CrearTexto("Texto", rt, "Menú", MarcaUdB.TextoBold, MarcaUdB.UIControl, MarcaUdB.InkInverso);
+        Estirar((RectTransform)texto.transform, MarcaUdB.Space4 + 18f + MarcaUdB.Space2, MarcaUdB.Space2);
 
         boton.onClick.AddListener(Alternar);
         botonMenu = boton.gameObject;
+        botonMenuRT = rt;
+
+        Image sombra = MarcaUdB.SombraFlotante(rt);
+        if (sombra != null)
+        {
+            botonMenuSombra = sombra.gameObject;
+            desfaseSombra = ((RectTransform)sombra.transform).anchoredPosition - rt.anchoredPosition;
+        }
     }
 
     void ConstruirChipUbicacion()
     {
-        Color c = colorFondo;
-        c.a = 0.8f;
-        Image chip = CrearImagen("ChipUbicacion", canvasRT, c);
+        Image chip = CrearImagen("ChipUbicacion", zonaSegura, MarcaUdB.VidrioPanel);
         chip.raycastTarget = false;
-        RectTransform rt = (RectTransform)chip.transform;
-        rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0f, 1f);
-        rt.anchoredPosition = new Vector2(216f, -24f);
-        rt.sizeDelta = new Vector2(0f, 64f);
+        MarcaUdB.Redondear(chip, MarcaUdB.RadiusMd);
+        chipRT = (RectTransform)chip.transform;
+        chipRT.anchorMin = chipRT.anchorMax = chipRT.pivot = new Vector2(0f, 1f);
+        chipRT.sizeDelta = new Vector2(240f, AltoControl);
 
         HorizontalLayoutGroup hl = chip.gameObject.AddComponent<HorizontalLayoutGroup>();
-        hl.padding = new RectOffset(20, 20, 0, 0);
+        hl.padding = new RectOffset((int)MarcaUdB.Space4, (int)MarcaUdB.Space4, 0, 0);
+        hl.spacing = MarcaUdB.Space2;
         hl.childAlignment = TextAnchor.MiddleLeft;
         hl.childControlWidth = true;
         hl.childControlHeight = true;
         hl.childForceExpandWidth = false;
-        hl.childForceExpandHeight = true;
-        ContentSizeFitter ajuste = chip.gameObject.AddComponent<ContentSizeFitter>();
-        ajuste.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+        hl.childForceExpandHeight = false;
 
-        textoChip = CrearTexto("Texto", rt, "", tamTextoPunto, colorTexto, FontStyles.Normal);
+        // Punto con el color de la zona actual
+        puntoZonaChip = CrearImagen("Zona", chipRT, MarcaUdB.InkMuted);
+        puntoZonaChip.raycastTarget = false;
+        MarcaUdB.Redondear(puntoZonaChip, 5f);
+        LayoutElement lp = puntoZonaChip.gameObject.AddComponent<LayoutElement>();
+        lp.minWidth = lp.preferredWidth = 10f;
+        lp.minHeight = lp.preferredHeight = 10f;
+        lp.flexibleWidth = 0f;
+
+        etiquetaChip = CrearTexto("Etiqueta", chipRT, "Estás en", MarcaUdB.Texto, MarcaUdB.Cuerpo, MarcaUdB.InkMuted);
+        LayoutElement le = etiquetaChip.gameObject.AddComponent<LayoutElement>();
+        le.flexibleWidth = 0f;
+
+        textoChip = CrearTexto("Lugar", chipRT, "", MarcaUdB.TextoBold, MarcaUdB.Cuerpo, MarcaUdB.Ink);
+        LayoutElement ll = textoChip.gameObject.AddComponent<LayoutElement>();
+        ll.minWidth = 40f;
+        ll.flexibleWidth = 1f;
+
         chipUbicacion = chip.gameObject;
     }
 
     void ConstruirPanel()
     {
-        Image imgPanel = CrearImagen("Panel", canvasRT, colorFondo);
-        panel = (RectTransform)imgPanel.transform;
-        panel.anchorMin = new Vector2(0f, 0f);
-        panel.anchorMax = new Vector2(0f, 1f);
-        panel.pivot = new Vector2(0f, 0.5f);
-        panel.sizeDelta = new Vector2(anchoPanel, 0f);
-        panel.anchoredPosition = new Vector2(-anchoPanel - 40f, 0f);
+        // Raíz que se desliza: lleva la sombra y el panel juntos
+        GameObject goRaiz = new GameObject("PanelRaiz", typeof(RectTransform));
+        panelRaiz = (RectTransform)goRaiz.transform;
+        panelRaiz.SetParent(zonaSegura, false);
+        panelRaiz.anchorMin = new Vector2(0f, 0f);
+        panelRaiz.anchorMax = new Vector2(0f, 1f);
+        panelRaiz.pivot = new Vector2(0f, 0.5f);
+        panelRaiz.sizeDelta = new Vector2(AnchoPanel, -MargenPanel * 2f);
+        panelRaiz.anchoredPosition = new Vector2(-AnchoPanel - 80f, 0f);
+
+        Image imgPanel = CrearImagen("Panel", panelRaiz, MarcaUdB.VidrioPanel);
+        RectTransform panel = (RectTransform)imgPanel.transform;
+        Estirar(panel, 0f, 0f);
+        MarcaUdB.Redondear(imgPanel, MarcaUdB.RadiusLg);
+        MarcaUdB.SombraPanel(panel);
 
         VerticalLayoutGroup vl = imgPanel.gameObject.AddComponent<VerticalLayoutGroup>();
-        vl.padding = new RectOffset(24, 24, 28, 24);
-        vl.spacing = 14f;
+        int pad = (int)MarcaUdB.Space4;
+        vl.padding = new RectOffset(pad, pad, pad, pad);
+        vl.spacing = MarcaUdB.Space3;
         vl.childControlWidth = true;
         vl.childControlHeight = true;
         vl.childForceExpandWidth = true;
         vl.childForceExpandHeight = false;
 
-        // --- Encabezado: título, ubicación actual y botón cerrar
-        GameObject encabezado = new GameObject("Encabezado", typeof(RectTransform));
-        encabezado.transform.SetParent(panel, false);
-        LayoutElement leE = encabezado.AddComponent<LayoutElement>();
-        leE.minHeight = 96f;
-        leE.preferredHeight = 96f;
-        RectTransform rtE = (RectTransform)encabezado.transform;
+        ConstruirEncabezado(panel);
 
-        TextMeshProUGUI titulo = CrearTexto("Titulo", rtE, tituloMenu, tamTextoTitulo, colorTexto, FontStyles.Bold);
-        RectTransform rtT = (RectTransform)titulo.transform;
-        rtT.anchorMin = new Vector2(0f, 1f);
-        rtT.anchorMax = new Vector2(1f, 1f);
-        rtT.pivot = new Vector2(0.5f, 1f);
-        rtT.sizeDelta = new Vector2(-64f, 46f);
-        rtT.anchoredPosition = new Vector2(-32f, 0f);
+        // --- Inicio: acción primaria en rojo institucional
+        Image imgInicio;
+        botonInicio = CrearBoton("Inicio", panel, out imgInicio);
+        MarcaUdB.Redondear(imgInicio, MarcaUdB.RadiusMd);
+        MarcaUdB.ColoresBoton(botonInicio, MarcaUdB.Rojo, MarcaUdB.RojoFuerte, MarcaUdB.RojoFuerte);
+        LayoutElement leI = botonInicio.gameObject.AddComponent<LayoutElement>();
+        leI.minHeight = leI.preferredHeight = AltoControl;
+        acentoInicio = CrearAcento(botonInicio.transform, MarcaUdB.InkInverso, AltoControl);
+        textoFilaInicio = CrearTexto("Texto", botonInicio.transform, textoInicio, MarcaUdB.TextoBold, MarcaUdB.UIControl, MarcaUdB.InkInverso);
+        Estirar((RectTransform)textoFilaInicio.transform, MarcaUdB.Space5, MarcaUdB.Space4);
+        botonInicio.onClick.AddListener(IrAlInicio);
 
-        textoUbicacionPanel = CrearTexto("Ubicacion", rtE, "", tamTextoPunto - 2f, colorTextoSecundario, FontStyles.Normal);
-        RectTransform rtU = (RectTransform)textoUbicacionPanel.transform;
-        rtU.anchorMin = new Vector2(0f, 0f);
-        rtU.anchorMax = new Vector2(1f, 0f);
-        rtU.pivot = new Vector2(0.5f, 0f);
-        rtU.sizeDelta = new Vector2(-64f, 40f);
-        rtU.anchoredPosition = new Vector2(-32f, 6f);
-
-        Image imgCerrar;
-        Button cerrar = CrearBoton("Cerrar", rtE, colorEdificio, out imgCerrar);
-        RectTransform rtX = (RectTransform)cerrar.transform;
-        rtX.anchorMin = rtX.anchorMax = rtX.pivot = new Vector2(1f, 1f);
-        rtX.sizeDelta = new Vector2(56f, 56f);
-        rtX.anchoredPosition = Vector2.zero;
-        TextMeshProUGUI x = CrearTexto("X", rtX, "×", 40f, colorTexto, FontStyles.Normal);
-        x.alignment = TextAlignmentOptions.Center;
-        Estirar((RectTransform)x.transform, 0f, 0f);
-        cerrar.onClick.AddListener(Cerrar);
-
-        // --- Botón de inicio
-        Button inicio = CrearFila(panel, textoInicio, altoEdificio, colorEdificio, tamTextoEdificio,
-            FontStyles.Bold, 24f, out textoFilaInicio, out acentoInicio);
-        inicio.onClick.AddListener(IrAlInicio);
+        // --- Rótulo de la lista
+        TextMeshProUGUI rotuloLista = CrearTexto("RotuloEdificios", panel, "Edificios", null, 0f, Color.white);
+        MarcaUdB.EstiloEtiqueta(rotuloLista, MarcaUdB.InkMuted);
+        LayoutElement leR = rotuloLista.gameObject.AddComponent<LayoutElement>();
+        leR.minHeight = leR.preferredHeight = 20f;
 
         // --- Lista con scroll
         Image imgLista = CrearImagen("Lista", panel, new Color(0f, 0f, 0f, 0f));
@@ -428,10 +573,10 @@ public class MenuDesplegable : MonoBehaviour
         rtC.anchorMin = new Vector2(0f, 1f);
         rtC.anchorMax = new Vector2(1f, 1f);
         rtC.pivot = new Vector2(0.5f, 1f);
-        rtC.sizeDelta = new Vector2(-16f, 0f);
-        rtC.anchoredPosition = new Vector2(-8f, 0f);
+        rtC.sizeDelta = new Vector2(-MarcaUdB.Space3, 0f);
+        rtC.anchoredPosition = new Vector2(-MarcaUdB.Space3 / 2f, 0f);
         VerticalLayoutGroup vlc = contenido.AddComponent<VerticalLayoutGroup>();
-        vlc.spacing = 6f;
+        vlc.spacing = MarcaUdB.Space2;
         vlc.childControlWidth = true;
         vlc.childControlHeight = true;
         vlc.childForceExpandWidth = true;
@@ -444,30 +589,33 @@ public class MenuDesplegable : MonoBehaviour
         scroll.horizontal = false;
         scroll.vertical = true;
         scroll.movementType = ScrollRect.MovementType.Clamped;
-        scroll.scrollSensitivity = 40f;
+        scroll.scrollSensitivity = AltoEdificio + 4f; // una fila por paso de rueda
 
         // Barra de desplazamiento delgada
-        Image barra = CrearImagen("Barra", imgLista.transform, new Color(1f, 1f, 1f, 0.06f));
+        Image barra = CrearImagen("Barra", imgLista.transform, MarcaUdB.Surface300);
         RectTransform rtB = (RectTransform)barra.transform;
         rtB.anchorMin = new Vector2(1f, 0f);
         rtB.anchorMax = new Vector2(1f, 1f);
         rtB.pivot = new Vector2(1f, 0.5f);
-        rtB.sizeDelta = new Vector2(8f, 0f);
+        rtB.sizeDelta = new Vector2(AnchoBarra, 0f);
         rtB.anchoredPosition = Vector2.zero;
         GameObject area = new GameObject("Area", typeof(RectTransform));
         area.transform.SetParent(rtB, false);
         Estirar((RectTransform)area.transform, 0f, 0f);
-        Image manija = CrearImagen("Manija", area.transform, new Color(1f, 1f, 1f, 0.35f));
+        Image manija = CrearImagen("Manija", area.transform, Color.white);
         Estirar((RectTransform)manija.transform, 0f, 0f);
         Scrollbar sb = barra.gameObject.AddComponent<Scrollbar>();
         sb.handleRect = (RectTransform)manija.transform;
         sb.targetGraphic = manija;
         sb.direction = Scrollbar.Direction.BottomToTop;
         SinNavegacion(sb);
+        MarcaUdB.EstilizarBarra(sb, MarcaUdB.Negro, Color.white, AnchoBarra);
         scroll.verticalScrollbar = sb;
+        barraLista = sb;
+        scrollLista = scroll;
         scroll.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
 
-        // --- Edificios
+        // --- Edificios, cada uno con su color de zona
         if (origenDatos != null && origenDatos.edificios != null)
         {
             foreach (EdificioRecorrido ed in origenDatos.edificios)
@@ -478,38 +626,102 @@ public class MenuDesplegable : MonoBehaviour
             Debug.LogWarning("[MenuDesplegable] No se encontró MenuNavegacion: el menú solo tendrá el botón de inicio.");
         }
 
-        panel.gameObject.SetActive(false);
+        panelRaiz.gameObject.SetActive(false);
+    }
+
+    // Encabezado en negro institucional con el filete rojo de marca
+    void ConstruirEncabezado(RectTransform panel)
+    {
+        Image fondo = CrearImagen("Encabezado", panel, MarcaUdB.Negro);
+        fondo.raycastTarget = false;
+        MarcaUdB.Redondear(fondo, MarcaUdB.RadiusMd);
+        LayoutElement le = fondo.gameObject.AddComponent<LayoutElement>();
+        le.minHeight = le.preferredHeight = AltoEncabezado;
+        RectTransform rtE = (RectTransform)fondo.transform;
+
+        float pad = MarcaUdB.Space4;
+
+        Image filete = CrearImagen("FileteRojo", rtE, MarcaUdB.Rojo);
+        filete.raycastTarget = false;
+        RectTransform rf = (RectTransform)filete.transform;
+        rf.anchorMin = rf.anchorMax = rf.pivot = new Vector2(0f, 1f);
+        rf.sizeDelta = new Vector2(32f, 4f);
+        rf.anchoredPosition = new Vector2(pad, -pad);
+        MarcaUdB.Redondear(filete, 2f);
+
+        TextMeshProUGUI rotulo = CrearTexto("Rotulo", rtE, "Universidad de Boyacá", null, 0f, Color.white);
+        MarcaUdB.EstiloEtiqueta(rotulo, new Color(1f, 1f, 1f, 0.72f));
+        Colocar((RectTransform)rotulo.transform, pad + 10f, 16f, pad, 56f);
+
+        TextMeshProUGUI titulo = CrearTexto("Titulo", rtE, tituloMenu, MarcaUdB.Display, MarcaUdB.DisplayM, MarcaUdB.InkInverso);
+        Colocar((RectTransform)titulo.transform, pad + 30f, 28f, pad, 56f);
+
+        textoUbicacionPanel = CrearTexto("Ubicacion", rtE, "", MarcaUdB.Texto, MarcaUdB.CuerpoS, new Color(1f, 1f, 1f, 0.80f));
+        Colocar((RectTransform)textoUbicacionPanel.transform, pad + 62f, 20f, pad, pad);
+
+        Image imgCerrar;
+        Button cerrar = CrearBoton("Cerrar", rtE, out imgCerrar);
+        RectTransform rtX = (RectTransform)cerrar.transform;
+        rtX.anchorMin = rtX.anchorMax = rtX.pivot = new Vector2(1f, 1f);
+        rtX.sizeDelta = new Vector2(MarcaUdB.AreaTactil, MarcaUdB.AreaTactil);
+        rtX.anchoredPosition = new Vector2(-MarcaUdB.Space2, -MarcaUdB.Space2);
+        MarcaUdB.Redondear(imgCerrar, MarcaUdB.RadiusMd);
+        MarcaUdB.ColoresBoton(cerrar, new Color(1f, 1f, 1f, 0f), new Color(1f, 1f, 1f, 0.14f), new Color(1f, 1f, 1f, 0.22f));
+        TextMeshProUGUI x = CrearTexto("X", rtX, "×", MarcaUdB.Texto, 28f, MarcaUdB.InkInverso);
+        x.alignment = TextAlignmentOptions.Center;
+        Estirar((RectTransform)x.transform, 0f, 0f);
+        cerrar.onClick.AddListener(Cerrar);
     }
 
     void CrearSeccion(RectTransform padre, EdificioRecorrido ed)
     {
         Seccion s = new Seccion();
         s.edificio = ed;
+        s.zona = MarcaUdB.ColorZona(ed.nombreEdificio);
+        // Tinta legible sobre el relleno más oscuro que toma el encabezado (presionado)
+        Color tinta = MarcaUdB.TintaLegible(s.zona, MarcaUdB.Tenue(s.zona, 0.32f));
 
         int n = ed.puntos != null ? ed.puntos.Count : 0;
-        string conteo = "  <size=75%><color=#" + ColorUtility.ToHtmlStringRGB(colorTextoSecundario) + ">"
+        string conteo = "  <size=" + MarcaUdB.CuerpoS + "><color=" + MarcaUdB.HexRGB(MarcaUdB.InkMuted) + ">"
                         + n + (n == 1 ? " lugar" : " lugares") + "</color></size>";
 
-        TextMeshProUGUI textoEnc;
-        Image acentoEnc;
-        Button encabezado = CrearFila(padre, ed.nombreEdificio + conteo, altoEdificio, colorEdificio,
-            tamTextoEdificio, FontStyles.Bold, 20f, out textoEnc, out acentoEnc);
-        s.textoEncabezado = textoEnc;
+        // Encabezado del edificio: relleno suave de la zona + banda sólida a la izquierda
+        Image img;
+        Button encabezado = CrearBoton("Edificio", padre, out img);
+        s.encabezado = (RectTransform)encabezado.transform;
+        MarcaUdB.Redondear(img, MarcaUdB.RadiusMd);
+        MarcaUdB.ColoresBoton(encabezado, MarcaUdB.Tenue(s.zona, 0.14f), MarcaUdB.Tenue(s.zona, 0.24f), MarcaUdB.Tenue(s.zona, 0.32f));
+        LayoutElement le = encabezado.gameObject.AddComponent<LayoutElement>();
+        le.minHeight = le.preferredHeight = AltoEdificio;
 
-        TextMeshProUGUI chevron = CrearTexto("Flecha", encabezado.transform, ">", tamTextoEdificio, colorTextoSecundario, FontStyles.Bold);
+        Image banda = CrearImagen("Banda", encabezado.transform, s.zona);
+        banda.raycastTarget = false;
+        RectTransform rb = (RectTransform)banda.transform;
+        rb.anchorMin = new Vector2(0f, 0f);
+        rb.anchorMax = new Vector2(0f, 1f);
+        rb.pivot = new Vector2(0f, 0.5f);
+        rb.sizeDelta = new Vector2(6f, -MarcaUdB.Space3);
+        rb.anchoredPosition = new Vector2(MarcaUdB.Space2, 0f);
+        MarcaUdB.Redondear(banda, 3f);
+
+        TextMeshProUGUI textoEnc = CrearTexto("Texto", encabezado.transform, ed.nombreEdificio + conteo,
+            MarcaUdB.TextoBold, MarcaUdB.UIControl, tinta);
+        Estirar((RectTransform)textoEnc.transform, MarcaUdB.Space5, MarcaUdB.Space8);
+
+        TextMeshProUGUI chevron = CrearTexto("Flecha", encabezado.transform, ">", MarcaUdB.TextoBold, MarcaUdB.UIControl, tinta);
         chevron.alignment = TextAlignmentOptions.Center;
         RectTransform rtF = (RectTransform)chevron.transform;
         rtF.anchorMin = rtF.anchorMax = new Vector2(1f, 0.5f);
         rtF.pivot = new Vector2(0.5f, 0.5f);
-        rtF.sizeDelta = new Vector2(40f, 40f);
-        rtF.anchoredPosition = new Vector2(-28f, 0f);
+        rtF.sizeDelta = new Vector2(24f, 24f);
+        rtF.anchoredPosition = new Vector2(-MarcaUdB.Space5, 0f);
         s.chevron = rtF;
 
         s.contenedor = new GameObject("Puntos_" + ed.nombreEdificio, typeof(RectTransform));
         s.contenedor.transform.SetParent(padre, false);
         VerticalLayoutGroup vl = s.contenedor.AddComponent<VerticalLayoutGroup>();
-        vl.spacing = 4f;
-        vl.padding = new RectOffset(0, 0, 2, 10);
+        vl.spacing = 2f;
+        vl.padding = new RectOffset(0, 0, 0, (int)MarcaUdB.Space2);
         vl.childControlWidth = true;
         vl.childControlHeight = true;
         vl.childForceExpandWidth = true;
@@ -522,10 +734,19 @@ public class MenuDesplegable : MonoBehaviour
                 if (p == null) continue;
                 FilaPunto fila = new FilaPunto();
                 fila.punto = p;
-                Button b = CrearFila(s.contenedor.transform, p.nombre, altoPunto, colorPunto, tamTextoPunto,
-                    FontStyles.Normal, 44f, out fila.texto, out fila.acento);
+
+                Image ip;
+                fila.boton = CrearBoton("Punto", s.contenedor.transform, out ip);
+                MarcaUdB.Redondear(ip, MarcaUdB.RadiusMd);
+                LayoutElement lp = fila.boton.gameObject.AddComponent<LayoutElement>();
+                lp.minHeight = lp.preferredHeight = AltoPunto;
+                fila.acento = CrearAcento(fila.boton.transform, s.zona, AltoPunto);
+                fila.texto = CrearTexto("Texto", fila.boton.transform, p.nombre, MarcaUdB.Texto, MarcaUdB.Cuerpo, MarcaUdB.Ink);
+                Estirar((RectTransform)fila.texto.transform, MarcaUdB.Space6, MarcaUdB.Space4);
+                MarcarPunto(fila, s.zona, false);
+
                 Material destino = p.skybox;
-                b.onClick.AddListener(() => IrA(destino));
+                fila.boton.onClick.AddListener(() => IrA(destino));
                 s.filas.Add(fila);
             }
         }
@@ -535,46 +756,67 @@ public class MenuDesplegable : MonoBehaviour
         secciones.Add(s);
     }
 
-    // ------------------------------------------------------------------ utilidades de UI
+    // ------------------------------------------------------------------ barra de la lista
 
-    Button CrearFila(Transform padre, string texto, float alto, Color fondo, float tam, FontStyles estilo,
-                     float sangria, out TextMeshProUGUI tmp, out Image acento)
+    // La manija se tiñe del color del edificio que ocupa el centro de la lista, con una transición suave
+    void ActualizarColorBarra()
     {
-        Image img;
-        Button btn = CrearBoton("Fila", padre, fondo, out img);
-        LayoutElement le = btn.gameObject.AddComponent<LayoutElement>();
-        le.minHeight = alto;
-        le.preferredHeight = alto;
+        if (barraLista == null || scrollLista == null || !barraLista.gameObject.activeInHierarchy) return;
 
-        acento = CrearImagen("Acento", btn.transform, colorResaltado);
-        acento.raycastTarget = false;
-        RectTransform ra = (RectTransform)acento.transform;
-        ra.anchorMin = new Vector2(0f, 0f);
-        ra.anchorMax = new Vector2(0f, 1f);
-        ra.pivot = new Vector2(0f, 0.5f);
-        ra.sizeDelta = new Vector2(6f, 0f);
-        ra.anchoredPosition = Vector2.zero;
-        acento.gameObject.SetActive(false);
-
-        tmp = CrearTexto("Texto", btn.transform, texto, tam, colorTexto, estilo);
-        Estirar((RectTransform)tmp.transform, sangria, 56f);
-        return btn;
+        Color objetivo = ZonaVisible();
+        if (!colorBarraIniciado)
+        {
+            colorBarra = objetivo;
+            colorBarraIniciado = true;
+        }
+        else
+        {
+            if (colorBarra == objetivo) return;
+            colorBarra = Color.Lerp(colorBarra, objetivo, 1f - Mathf.Exp(-12f * Time.unscaledDeltaTime));
+            if (Mathf.Abs(colorBarra.r - objetivo.r) + Mathf.Abs(colorBarra.g - objetivo.g) + Mathf.Abs(colorBarra.b - objetivo.b) < 0.004f)
+                colorBarra = objetivo;
+        }
+        MarcaUdB.ColorBarra(barraLista, colorBarra, Color.white);
     }
 
-    Button CrearBoton(string nombre, Transform padre, Color fondo, out Image img)
+    Color ZonaVisible()
+    {
+        if (secciones.Count == 0) return MarcaUdB.Negro;
+
+        RectTransform vista = scrollLista.viewport != null ? scrollLista.viewport : (RectTransform)scrollLista.transform;
+        float centro = vista.rect.center.y;
+        Color zona = secciones[0].zona;
+        foreach (Seccion s in secciones)
+        {
+            if (s.encabezado == null) continue;
+            if (vista.InverseTransformPoint(s.encabezado.position).y >= centro) zona = s.zona;
+            else break;
+        }
+        return zona;
+    }
+
+    // ------------------------------------------------------------------ utilidades de UI
+
+    static Image CrearAcento(Transform padre, Color color, float alto)
+    {
+        Image acento = CrearImagen("Acento", padre, color);
+        acento.raycastTarget = false;
+        RectTransform ra = (RectTransform)acento.transform;
+        ra.anchorMin = new Vector2(0f, 0.5f);
+        ra.anchorMax = new Vector2(0f, 0.5f);
+        ra.pivot = new Vector2(0f, 0.5f);
+        ra.sizeDelta = new Vector2(4f, alto - MarcaUdB.Space4);
+        ra.anchoredPosition = new Vector2(MarcaUdB.Space2, 0f);
+        MarcaUdB.Redondear(acento, 2f);
+        acento.gameObject.SetActive(false);
+        return acento;
+    }
+
+    static Button CrearBoton(string nombre, Transform padre, out Image img)
     {
         img = CrearImagen(nombre, padre, Color.white);
         Button btn = img.gameObject.AddComponent<Button>();
         btn.targetGraphic = img;
-        ColorBlock cb = btn.colors;
-        cb.normalColor = fondo;
-        cb.highlightedColor = Aclarar(fondo, 0.10f);
-        cb.pressedColor = Aclarar(fondo, 0.20f);
-        cb.selectedColor = fondo;
-        cb.disabledColor = fondo * 0.6f;
-        cb.colorMultiplier = 1f;
-        cb.fadeDuration = 0.08f;
-        btn.colors = cb;
         SinNavegacion(btn);
         return btn;
     }
@@ -588,20 +830,30 @@ public class MenuDesplegable : MonoBehaviour
         return img;
     }
 
-    static TextMeshProUGUI CrearTexto(string nombre, Transform padre, string texto, float tam, Color color, FontStyles estilo)
+    static TextMeshProUGUI CrearTexto(string nombre, Transform padre, string texto, TMP_FontAsset fuente, float tam, Color color)
     {
         GameObject go = new GameObject(nombre, typeof(RectTransform));
         go.transform.SetParent(padre, false);
         TextMeshProUGUI t = go.AddComponent<TextMeshProUGUI>();
         t.text = texto;
-        t.fontSize = tam;
+        if (fuente != null) t.font = fuente;
+        if (tam > 0f) t.fontSize = tam;
         t.color = color;
-        t.fontStyle = estilo;
         t.alignment = TextAlignmentOptions.MidlineLeft;
         t.enableWordWrapping = false;
         t.overflowMode = TextOverflowModes.Ellipsis;
         t.raycastTarget = false;
         return t;
+    }
+
+    // Ubica un texto dentro de un bloque: desde arriba, con alto fijo y márgenes laterales
+    static void Colocar(RectTransform rt, float desdeArriba, float alto, float izquierda, float derecha)
+    {
+        rt.anchorMin = new Vector2(0f, 1f);
+        rt.anchorMax = new Vector2(1f, 1f);
+        rt.pivot = new Vector2(0.5f, 1f);
+        rt.offsetMin = new Vector2(izquierda, -desdeArriba - alto);
+        rt.offsetMax = new Vector2(-derecha, -desdeArriba);
     }
 
     static void Estirar(RectTransform rt, float izquierda, float derecha)
@@ -620,13 +872,6 @@ public class MenuDesplegable : MonoBehaviour
         s.navigation = nav;
     }
 
-    static Color Aclarar(Color c, float t)
-    {
-        Color r = Color.Lerp(c, Color.white, t);
-        r.a = c.a;
-        return r;
-    }
-
     static void AsegurarEventSystem()
     {
         if (EventSystem.current == null && FindObjectOfType<EventSystem>() == null)
@@ -643,8 +888,8 @@ public class MenuDesplegable : MonoBehaviour
 
     IEnumerator Deslizar(float destinoX)
     {
-        panel.gameObject.SetActive(true);
-        float inicioX = panel.anchoredPosition.x;
+        panelRaiz.gameObject.SetActive(true);
+        float inicioX = panelRaiz.anchoredPosition.x;
         float t = 0f;
         const float duracion = 0.2f;
 
@@ -652,11 +897,11 @@ public class MenuDesplegable : MonoBehaviour
         {
             t += Time.unscaledDeltaTime / duracion;
             float e = 1f - Mathf.Pow(1f - Mathf.Clamp01(t), 3f);
-            panel.anchoredPosition = new Vector2(Mathf.Lerp(inicioX, destinoX, e), 0f);
+            panelRaiz.anchoredPosition = new Vector2(Mathf.Lerp(inicioX, destinoX, e), 0f);
             yield return null;
         }
 
-        if (!abierto) panel.gameObject.SetActive(false);
+        if (!abierto) panelRaiz.gameObject.SetActive(false);
         animacion = null;
     }
 }
