@@ -114,6 +114,7 @@ public class POIController : MonoBehaviour
 
         if (abierto != null && abierto != this) abierto.CerrarMenu();
         MenuDesplegable.CerrarSiAbierto();
+        PanelInfo.CerrarSiAbierto();
 
         menuAbierto = true;
         abierto = this;

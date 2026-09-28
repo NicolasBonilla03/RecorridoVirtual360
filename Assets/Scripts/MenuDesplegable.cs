@@ -183,6 +183,7 @@ public class MenuDesplegable : MonoBehaviour
     {
         if (abierto || panelRaiz == null) return;
         POIController.CerrarAbierto(); // un solo menú a la vez
+        PanelInfo.CerrarSiAbierto();
         abierto = true;
 
         AjustarAnchoPanel();

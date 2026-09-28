@@ -192,6 +192,169 @@ public static class HerramientasRecorrido
         SceneVisibilityManager.instance.ShowAll();
     }
 
+    // ------------------------------------------------------------------ 6. Puntos de información
+
+    [MenuItem("Recorrido/6. Crear punto de información donde estoy mirando %&i", false, 50)]
+    static void CrearPuntoInfo()
+    {
+        Material sky = RenderSettings.skybox;
+        if (sky == null)
+        {
+            EditorUtility.DisplayDialog(Titulo, "No hay skybox puesto. Usa primero 'Recorrido > 1. Ver el skybox...'.", "OK");
+            return;
+        }
+
+        Transform padre = GrupoPuntosInfo(sky);
+        if (padre == null)
+        {
+            EditorUtility.DisplayDialog(Titulo, "No se encontró un Canvas en World Space (CanvasWorld) para colgar el punto.", "OK");
+            return;
+        }
+
+        // Misma distancia y tamaño aparente que los botones TP de esta foto
+        Transform referencia = PrimerBoton(Config(Gestor(false), sky, false));
+        if (referencia == null)
+        {
+            TeleportPoint cualquiera = Object.FindObjectOfType<TeleportPoint>(true);
+            if (cualquiera != null) referencia = cualquiera.transform;
+        }
+        float distancia = referencia != null ? referencia.position.magnitude : DistanciaPorDefecto;
+        if (distancia < 1f) distancia = DistanciaPorDefecto;
+
+        GameObject go = new GameObject("Info_" + NombreCorto(sky), typeof(RectTransform));
+        Undo.RegisterCreatedObjectUndo(go, "Crear punto de información");
+        go.transform.SetParent(padre, false);
+        go.name = NombreUnico(padre, go.name);
+        ((RectTransform)go.transform).sizeDelta = new Vector2(80f, 80f);
+
+        float escalaMundo = referencia != null ? Mathf.Abs(referencia.lossyScale.x) : EscalaPorDefecto;
+        float escalaPadre = Mathf.Max(0.000001f, Mathf.Abs(padre.lossyScale.x));
+        go.transform.localScale = Vector3.one * (escalaMundo / escalaPadre);
+
+        PuntoInfo p = go.AddComponent<PuntoInfo>();
+        p.skybox = sky;
+        p.zona = AdivinarZona(sky);
+        UbicarFrenteALaVista(go.transform, distancia);
+
+        Selection.activeGameObject = go;
+        EditorGUIUtility.PingObject(go);
+        SceneVisibilityManager.instance.Show(go, true);
+        Debug.Log("[Recorrido] Creado " + go.name + " en '" + sky.name + "'. Escribe el título y el texto en el componente PuntoInfo.", go);
+    }
+
+    [MenuItem("Recorrido/6. Crear punto de información donde estoy mirando %&i", true)]
+    static bool ValidarCrearPuntoInfo()
+    {
+        return !EditorApplication.isPlaying;
+    }
+
+    [MenuItem("Recorrido/7. Seleccionar los puntos de información de este skybox", false, 51)]
+    static void SeleccionarPuntosInfo()
+    {
+        List<Object> lista = new List<Object>();
+        foreach (PuntoInfo p in Object.FindObjectsOfType<PuntoInfo>(true))
+            if (p.skybox == RenderSettings.skybox) lista.Add(p.gameObject);
+        Selection.objects = lista.ToArray();
+        Debug.Log("[Recorrido] " + lista.Count + " punto(s) de información en '" + (RenderSettings.skybox != null ? RenderSettings.skybox.name : "sin skybox") + "'.");
+    }
+
+    [MenuItem("Recorrido/Revisar puntos de información sin texto", false, 62)]
+    static void RevisarPuntosInfo()
+    {
+        List<Object> malos = new List<Object>();
+        foreach (PuntoInfo p in Object.FindObjectsOfType<PuntoInfo>(true))
+        {
+            bool sinTexto = string.IsNullOrEmpty(p.resumen) && string.IsNullOrEmpty(p.descripcion) &&
+                            (p.queEncuentras == null || p.queEncuentras.Length == 0);
+            if (p.skybox == null || sinTexto || p.titulo == "Nuevo punto de información")
+            {
+                malos.Add(p.gameObject);
+                Debug.LogWarning("[Recorrido] Punto de información incompleto: " + Ruta(p.transform) +
+                                 (p.skybox == null ? " (sin skybox)" : "") + (sinTexto ? " (sin texto)" : ""), p);
+            }
+        }
+
+        if (malos.Count == 0)
+        {
+            EditorUtility.DisplayDialog(Titulo, "Todos los puntos de información tienen foto, título y texto.", "OK");
+        }
+        else
+        {
+            Selection.objects = malos.ToArray();
+            EditorUtility.DisplayDialog(Titulo, malos.Count + " punto(s) incompletos. Quedaron seleccionados y listados en la consola.", "OK");
+        }
+    }
+
+    // Grupo «PuntosInfo/<skybox>» dentro del Canvas del mundo
+    static Transform GrupoPuntosInfo(Material sky)
+    {
+        Canvas mundo = null;
+        GameObject tps = GameObject.Find("BotonesTP");
+        if (tps != null)
+        {
+            Canvas c = tps.transform.GetComponentInParent<Canvas>();
+            if (c != null) mundo = c.rootCanvas;
+        }
+        if (mundo == null)
+        {
+            foreach (Canvas c in Object.FindObjectsOfType<Canvas>(true))
+                if (c.renderMode == RenderMode.WorldSpace) { mundo = c; break; }
+        }
+        if (mundo == null) return null;
+
+        Transform raiz = mundo.transform.Find("PuntosInfo");
+        if (raiz == null)
+        {
+            GameObject g = new GameObject("PuntosInfo", typeof(RectTransform));
+            Undo.RegisterCreatedObjectUndo(g, "Crear grupo de puntos de información");
+            g.transform.SetParent(mundo.transform, false);
+            raiz = g.transform;
+        }
+
+        string nombre = NombreCorto(sky);
+        Transform grupo = raiz.Find(nombre);
+        if (grupo == null)
+        {
+            GameObject g = new GameObject(nombre, typeof(RectTransform));
+            Undo.RegisterCreatedObjectUndo(g, "Crear grupo de puntos de información");
+            g.transform.SetParent(raiz, false);
+            grupo = g.transform;
+        }
+        return grupo;
+    }
+
+    // La zona (y su color) sale del menú en el que aparece esta foto
+    static string AdivinarZona(Material sky)
+    {
+        foreach (MenuNavegacion m in Object.FindObjectsOfType<MenuNavegacion>(true))
+        {
+            if (m.edificios == null) continue;
+            foreach (EdificioRecorrido e in m.edificios)
+            {
+                if (e == null || e.puntos == null) continue;
+                foreach (PuntoRecorrido p in e.puntos)
+                    if (p != null && p.skybox == sky) return e.nombreEdificio;
+            }
+        }
+        foreach (MenusDeZona mz in Object.FindObjectsOfType<MenusDeZona>(true))
+        {
+            if (mz.menus == null) continue;
+            foreach (MenuDeZona m in mz.menus)
+            {
+                if (m == null || m.lugares == null) continue;
+                foreach (LugarZona l in m.lugares)
+                    if (l != null && l.skybox == sky) return m.titulo;
+            }
+        }
+        foreach (POIController poi in Object.FindObjectsOfType<POIController>(true))
+        {
+            if (poi.skyboxes == null) continue;
+            foreach (Material m in poi.skyboxes)
+                if (m == sky) return poi.nombreEdificio;
+        }
+        return "";
+    }
+
     // ------------------------------------------------------------------ web y móvil
 
     [MenuItem("Recorrido/Web y móvil/1. Preparar ajustes para web (plantilla UdB, Gzip)", false, 80)]
@@ -440,7 +603,7 @@ public static class HerramientasRecorrido
     static bool HaySeleccionTP()
     {
         foreach (GameObject go in Selection.gameObjects)
-            if (go.GetComponent<TeleportPoint>() != null) return true;
+            if (go.GetComponent<TeleportPoint>() != null || go.GetComponent<PuntoInfo>() != null) return true;
         return false;
     }
 
