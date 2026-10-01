@@ -285,6 +285,100 @@ public static class HerramientasRecorrido
         }
     }
 
+    // ------------------------------------------------------------------ 8. Nombres oficiales y fichas
+
+    [MenuItem("Recorrido/8. Aplicar nombres oficiales y fichas del catálogo", false, 52)]
+    static void AplicarNombresOficiales()
+    {
+        CatalogoInfo.Recargar();
+        int cambios = 0;
+        List<string> sinNombre = new List<string>();
+
+        foreach (MenuNavegacion m in Object.FindObjectsOfType<MenuNavegacion>(true))
+        {
+            if (m.edificios == null) continue;
+            Undo.RecordObject(m, "Aplicar nombres oficiales");
+            foreach (EdificioRecorrido e in m.edificios)
+            {
+                if (e == null) continue;
+                string ed = NombreEdificioOficial(e.nombreEdificio);
+                if (ed != e.nombreEdificio) { e.nombreEdificio = ed; cambios++; }
+                if (e.puntos == null) continue;
+                foreach (PuntoRecorrido p in e.puntos)
+                    if (p != null) cambios += Renombrar(ref p.nombre, p.skybox, "Menú lateral · " + e.nombreEdificio, sinNombre);
+            }
+            EditorUtility.SetDirty(m);
+        }
+
+        foreach (MenusDeZona mz in Object.FindObjectsOfType<MenusDeZona>(true))
+        {
+            if (mz.menus == null) continue;
+            Undo.RecordObject(mz, "Aplicar nombres oficiales");
+            foreach (MenuDeZona m in mz.menus)
+            {
+                if (m == null || m.lugares == null) continue;
+                foreach (LugarZona l in m.lugares)
+                    if (l != null) cambios += Renombrar(ref l.nombre, l.skybox, "Menú de zona · " + m.titulo, sinNombre);
+            }
+            EditorUtility.SetDirty(mz);
+        }
+
+        foreach (POIController poi in Object.FindObjectsOfType<POIController>(true))
+        {
+            Undo.RecordObject(poi, "Aplicar nombres oficiales");
+            string ed = NombreEdificioOficial(poi.nombreEdificio);
+            if (ed != poi.nombreEdificio) { poi.nombreEdificio = ed; cambios++; }
+            if (poi.dependencias != null && poi.skyboxes != null)
+            {
+                for (int i = 0; i < poi.dependencias.Length && i < poi.skyboxes.Length; i++)
+                    cambios += Renombrar(ref poi.dependencias[i], poi.skyboxes[i], "Punto " + poi.nombreEdificio, sinNombre);
+            }
+            EditorUtility.SetDirty(poi);
+        }
+
+        // Los puntos de información sin ficha toman la de su foto 360
+        int fichas = 0;
+        foreach (PuntoInfo p in Object.FindObjectsOfType<PuntoInfo>(true))
+        {
+            if (!string.IsNullOrEmpty(p.idFicha)) continue;
+            FichaInfo f = CatalogoInfo.PorSkybox(p.skybox);
+            if (f == null) continue;
+            Undo.RecordObject(p, "Asignar ficha");
+            p.idFicha = f.id;
+            if (string.IsNullOrEmpty(p.zona)) p.zona = f.zona;
+            EditorUtility.SetDirty(p);
+            fichas++;
+        }
+
+        MarcarEscena();
+        foreach (string s in sinNombre) Debug.LogWarning("[Recorrido] Sin nombre oficial en el catálogo: " + s);
+        EditorUtility.DisplayDialog(Titulo,
+            cambios + " nombre(s) actualizados y " + fichas + " punto(s) de información enlazados a su ficha." +
+            (sinNombre.Count > 0 ? "\n\n" + sinNombre.Count + " lugar(es) sin nombre en el catálogo: quedan como estaban (ver consola)." : "") +
+            "\n\nGuarda la escena con Ctrl+S.", "OK");
+    }
+
+    static int Renombrar(ref string nombre, Material sky, string donde, List<string> sinNombre)
+    {
+        string oficial = CatalogoInfo.NombreOficialDe(sky);
+        if (string.IsNullOrEmpty(oficial))
+        {
+            sinNombre.Add(donde + " · «" + nombre + "» (" + (sky != null ? sky.name : "sin skybox") + ")");
+            return 0;
+        }
+        if (oficial == nombre) return 0;
+        nombre = oficial;
+        return 1;
+    }
+
+    static string NombreEdificioOficial(string nombre)
+    {
+        if (string.IsNullOrEmpty(nombre)) return nombre;
+        string n = nombre.Trim();
+        if (n == "Edificio12") return "Edificio 12";
+        return n;
+    }
+
     // Grupo «PuntosInfo/<skybox>» dentro del Canvas del mundo
     static Transform GrupoPuntosInfo(Material sky)
     {

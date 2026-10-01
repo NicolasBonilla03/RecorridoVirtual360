@@ -1,0 +1,758 @@
+{
+  "fichas": [
+    {
+      "id": "campus-tunja",
+      "titulo": "Universidad de Boyacá · Sede Tunja",
+      "tipo": "Dato",
+      "zona": "",
+      "resumen": "Bienvenido al campus de Tunja: 11 edificaciones y 43.191 m² construidos, rodeados de amplias zonas verdes.",
+      "descripcion": "La Universidad de Boyacá fue fundada en 1979 por el Dr. Osmar Correal Cabral y la Dra. Rosita Cuervo Payeras. Antes de llegar a este campus en 1993, funcionó en el Parque Santander, el Pasaje de Vargas y el Claustro de Santo Domingo.",
+      "tituloLista": "En el campus encuentras",
+      "queEncuentras": [
+        "Paraninfo para 512 personas, el recinto académico más moderno de Boyacá",
+        "Aula Magna para 855 personas, en el Edificio 12",
+        "Dos auditorios y un salón de conferencias",
+        "Coliseo cubierto y canchas multifuncionales",
+        "Campus deportivo de más de 36.000 m²"
+      ],
+      "horario": "",
+      "ubicacion": "Carrera 2ª Este No. 64-169, Tunja",
+      "contacto": "608 745 0000 · atencionudeb@uniboyaca.edu.co",
+      "enlace": "https://www.uniboyaca.edu.co/es",
+      "textoEnlace": "Ir a uniboyaca.edu.co",
+      "fuente": "https://www.uniboyaca.edu.co/es/centro-informacion/articulos/sedes ; https://www.uniboyaca.edu.co/es/fundadores ; https://www.uniboyaca.edu.co/es/historia-de-la-udeb",
+      "skyboxes": [
+        "Skybox360"
+      ]
+    },
+    {
+      "id": "edificio-central",
+      "titulo": "Edificio Central",
+      "tipo": "Edificio",
+      "zona": "Edificio Central",
+      "resumen": "El corazón administrativo del campus: aquí están la Rectoría, las vicerrectorías, Bienestar Universitario y varios de los salones más usados.",
+      "descripcion": "",
+      "tituloLista": "Adentro encuentras",
+      "queEncuentras": [
+        "Piso 1: División de Bienestar Universitario (oficina 104), enfermería y consultorio médico",
+        "Piso 1: Hall de Artes, Salón de Conferencias El Búho y cafetería central",
+        "Plazoleta, piso 1: Centro de Innovación Origen",
+        "Piso 2: CENSEI y un salón de conferencias para 150 personas",
+        "Piso 3: Rectoría",
+        "Piso 4: Vicerrectoría Académica, Vicerrectoría de Investigación, Ciencia e Innovación y CIPADE",
+        "Piso 5: Relaciones Interinstitucionales e Internacionales (oficina 508), Educación Virtual y Salón Fundadores"
+      ],
+      "horario": "",
+      "ubicacion": "Carrera 2ª Este No. 64-169, Tunja",
+      "contacto": "",
+      "enlace": "",
+      "textoEnlace": "",
+      "fuente": "https://www.uniboyaca.edu.co/sites/default/files/2020-10/Documento%20General%20de%20Infraestructura%20oct%202020-1.pdf (2020) ; páginas de cada dependencia",
+      "skyboxes": [
+        "Skybox_EntradaPrincipalCentral",
+        "Skybox_InteriorPrincipalCentral"
+      ]
+    },
+    {
+      "id": "rectoria",
+      "titulo": "Rectoría",
+      "tipo": "Oficina",
+      "zona": "Edificio Central",
+      "resumen": "Es la dirección general de la Universidad. De ella dependen las vicerrectorías y varias oficinas institucionales.",
+      "descripcion": "",
+      "tituloLista": "De la Rectoría dependen",
+      "queEncuentras": [
+        "Instituto de Estudios del Futuro",
+        "Secretaría General (Admisiones, Aspirantes y Calendario Académico)",
+        "Oficina de Comunicaciones y Mercadeo",
+        "Oficina de Planeación"
+      ],
+      "horario": "",
+      "ubicacion": "Edificio Central, piso 3",
+      "contacto": "608 745 0000 ext. 15300 · WhatsApp +57 315 310 1278",
+      "enlace": "https://www.uniboyaca.edu.co/es/directory#org/1046",
+      "textoEnlace": "Ver directivos",
+      "fuente": "https://www.uniboyaca.edu.co/es ; https://www.uniboyaca.edu.co/es/telefonos-y-celulares-de-contacto-universidad-de-boyaca ; https://www.uniboyaca.edu.co/sites/default/files/2020-10/Documento%20General%20de%20Infraestructura%20oct%202020-1.pdf",
+      "skyboxes": [
+        "Skybox_Rectoria"
+      ]
+    },
+    {
+      "id": "relaciones-internacionales",
+      "titulo": "División de Relaciones Interinstitucionales e Internacionales",
+      "tipo": "Oficina",
+      "zona": "Edificio Central",
+      "resumen": "Te acompaña si quieres estudiar un tiempo en otra universidad, del país o del exterior, y gestiona los convenios de la Universidad.",
+      "descripcion": "",
+      "tituloLista": "Aquí puedes",
+      "queEncuentras": [
+        "Postularte a movilidad académica: intercambios de ida y de llegada",
+        "Conocer los convenios interinstitucionales y de cooperación académica",
+        "Participar en clases espejo, cursos COIL y masterclasses",
+        "Sumarte a actividades en lengua extranjera",
+        "Informarte sobre misiones académicas y viajes pedagógicos"
+      ],
+      "horario": "",
+      "ubicacion": "Edificio Central, piso 5, oficina 508",
+      "contacto": "608 745 0000 ext. 15506 – 15507 · internacionalizacionudeb@uniboyaca.edu.co · Intercambios: intercambiosudeb@uniboyaca.edu.co",
+      "enlace": "https://www.uniboyaca.edu.co/es/internacionalizacion",
+      "textoEnlace": "",
+      "fuente": "https://www.uniboyaca.edu.co/es/internacionalizacion ; https://www.uniboyaca.edu.co/es/telefonos-y-celulares-de-contacto-universidad-de-boyaca",
+      "skyboxes": [
+        "Skybox_Diri"
+      ]
+    },
+    {
+      "id": "bienestar",
+      "titulo": "División de Bienestar Universitario",
+      "tipo": "Oficina",
+      "zona": "Edificio Central",
+      "resumen": "Promueve la formación integral, el desarrollo humano y la calidad de vida de toda la comunidad universitaria.",
+      "descripcion": "",
+      "tituloLista": "Aquí puedes",
+      "queEncuentras": [
+        "Inscribirte en los deportes",
+        "Hacer parte de los grupos culturales",
+        "Pedir consulta médica o de enfermería",
+        "Recibir apoyo psicológico",
+        "Acceder a tutorías",
+        "Conocer los programas de inclusión"
+      ],
+      "horario": "Lunes a viernes, 7:30 a. m. a 8:00 p. m. · Sábados, 8:00 a. m. a 11:30 a. m.",
+      "ubicacion": "Edificio Central, piso 1, oficina 104",
+      "contacto": "608 745 0000 ext. 15107 – 15108 · WhatsApp +57 315 410 8396 · bienestaruniversitario@uniboyaca.edu.co",
+      "enlace": "https://www.uniboyaca.edu.co/es/bienestar-universitario",
+      "textoEnlace": "",
+      "fuente": "https://www.uniboyaca.edu.co/es/bienestar-universitario ; https://www.uniboyaca.edu.co/es/telefonos-y-celulares-de-contacto-universidad-de-boyaca",
+      "skyboxes": [
+        "Skybox_Bienestar"
+      ]
+    },
+    {
+      "id": "politeca",
+      "titulo": "Politeca",
+      "tipo": "Servicio",
+      "zona": "Edificio Múltiple",
+      "resumen": "Es el centro de información de la Universidad: colecciones especializadas, herramientas digitales y acompañamiento para tus trabajos.",
+      "descripcion": "",
+      "tituloLista": "Aquí puedes",
+      "queEncuentras": [
+        "Consultar el catálogo bibliográfico",
+        "Usar las bases de datos",
+        "Pedir ayuda en el servicio de referencia («Pregúntale al bibliotecario»)",
+        "Consultar el repositorio institucional",
+        "Aprender a usar gestores bibliográficos y dar formato a tu trabajo de grado"
+      ],
+      "horario": "Lunes a viernes, 8:00 a. m. a 7:00 p. m. · Sábados, 8:00 a. m. a 1:00 p. m.",
+      "ubicacion": "Edificio Múltiple 1, piso 2",
+      "contacto": "608 745 0000 ext. 17300 – 17301 · politeca@uniboyaca.edu.co",
+      "enlace": "https://www.uniboyaca.edu.co/es/micrositio/politeca",
+      "textoEnlace": "",
+      "fuente": "https://www.uniboyaca.edu.co/es/micrositio/politeca",
+      "skyboxes": [
+        "Skybox_PoliDentro"
+      ]
+    },
+    {
+      "id": "hall-de-artes",
+      "titulo": "Hall de Artes",
+      "tipo": "Espacio",
+      "zona": "Edificio Central",
+      "resumen": "Espacio de exposiciones del Edificio Central donde se presentan muestras e intervenciones artísticas.",
+      "descripcion": "",
+      "tituloLista": "",
+      "queEncuentras": [],
+      "horario": "",
+      "ubicacion": "Edificio Central, piso 1",
+      "contacto": "",
+      "enlace": "",
+      "textoEnlace": "",
+      "fuente": "https://www.uniboyaca.edu.co/sites/default/files/2020-10/Documento%20General%20de%20Infraestructura%20oct%202020-1.pdf (2020) ; noticias de uniboyaca.edu.co sobre muestras en el Hall de Artes",
+      "skyboxes": [
+        "Skybox_HalldeArtes"
+      ]
+    },
+    {
+      "id": "cafeteria-central",
+      "titulo": "Cafetería central",
+      "tipo": "Servicio",
+      "zona": "Edificio Central",
+      "resumen": "La cafetería principal del campus, en el primer piso del Edificio Central.",
+      "descripcion": "",
+      "tituloLista": "",
+      "queEncuentras": [],
+      "horario": "",
+      "ubicacion": "Edificio Central, piso 1",
+      "contacto": "",
+      "enlace": "",
+      "textoEnlace": "",
+      "fuente": "https://www.uniboyaca.edu.co/sites/default/files/2020-10/Documento%20General%20de%20Infraestructura%20oct%202020-1.pdf (2020)",
+      "skyboxes": [
+        "Skybox_Cafeteria"
+      ]
+    },
+    {
+      "id": "el-buho",
+      "titulo": "El Búho",
+      "tipo": "Dato",
+      "zona": "Edificio Central",
+      "resumen": "El búho es el símbolo de la Universidad: representa la sabiduría, la visión y la búsqueda del conocimiento.",
+      "descripcion": "En el logosímbolo, el búho está dentro de la U, que habla de universalidad y unidad en la diversidad, junto a la B de Boyacá. En el primer piso del Edificio Central está el Salón de Conferencias El Búho, para 45 personas.",
+      "tituloLista": "",
+      "queEncuentras": [],
+      "horario": "",
+      "ubicacion": "",
+      "contacto": "",
+      "enlace": "",
+      "textoEnlace": "",
+      "fuente": "https://www.uniboyaca.edu.co/es/identidad-institucional ; https://www.uniboyaca.edu.co/sites/default/files/2020-10/Documento%20General%20de%20Infraestructura%20oct%202020-1.pdf",
+      "skyboxes": [
+        "Skybox_Buho"
+      ]
+    },
+    {
+      "id": "salon-fundadores",
+      "titulo": "Salón Fundadores",
+      "tipo": "Espacio",
+      "zona": "Edificio Central",
+      "resumen": "Salón del Edificio Central donde se realizan actos solemnes, como la entrega de la Medalla Fundadores a quienes cumplen 25 y 30 años al servicio de la Universidad.",
+      "descripcion": "Lleva el nombre de quienes fundaron la Universidad en 1979: el Dr. Osmar Correal Cabral, fundador y rector, y la Dra. Rosita Cuervo Payeras, cofundadora.",
+      "tituloLista": "",
+      "queEncuentras": [],
+      "horario": "",
+      "ubicacion": "Edificio Central, piso 5",
+      "contacto": "",
+      "enlace": "",
+      "textoEnlace": "",
+      "fuente": "https://www.uniboyaca.edu.co/es/node/6626 ; https://www.uniboyaca.edu.co/es/fundadores ; https://www.uniboyaca.edu.co/sites/default/files/2020-10/Documento%20General%20de%20Infraestructura%20oct%202020-1.pdf",
+      "skyboxes": [
+        "Skybox_Saladefundadores"
+      ]
+    },
+    {
+      "id": "censei",
+      "titulo": "CENSEI · Centro de Simulación Gerencial y Operación Bursátil",
+      "tipo": "Servicio",
+      "zona": "Edificio Central",
+      "resumen": "Entorno de práctica para que los estudiantes de la Facultad de Ciencias Administrativas y Contables afiancen sus conocimientos en gerencia y operación bursátil.",
+      "descripcion": "",
+      "tituloLista": "",
+      "queEncuentras": [],
+      "horario": "",
+      "ubicacion": "Edificio Central, piso 2",
+      "contacto": "",
+      "enlace": "https://www.uniboyaca.edu.co/es/centro-informacion/evento/conoces-censei",
+      "textoEnlace": "",
+      "fuente": "https://www.uniboyaca.edu.co/es/centro-informacion/evento/conoces-censei ; https://www.uniboyaca.edu.co/es/node/7817",
+      "skyboxes": [
+        "Skybox_Censei"
+      ]
+    },
+    {
+      "id": "origen",
+      "titulo": "Centro de Innovación Origen",
+      "tipo": "Servicio",
+      "zona": "Edificio Central",
+      "resumen": "Laboratorio de creatividad e innovación para estudiantes, egresados y colaboradores que quieren desarrollar ideas y emprendimientos.",
+      "descripcion": "",
+      "tituloLista": "Aquí puedes",
+      "queEncuentras": [
+        "Reservar el Laboratorio de Creatividad e Innovación, para hasta 68 personas",
+        "Pedir juegos en préstamo",
+        "Participar en su programación radial",
+        "Recibir apoyo para emprender y transferir tecnología",
+        "Postularte a CREO – Aceleradora de Empresas"
+      ],
+      "horario": "Lunes a viernes, 8:00 a. m. a 12:00 m. y 2:00 a 6:00 p. m.",
+      "ubicacion": "Plazoleta del Edificio Central, piso 1",
+      "contacto": "608 745 0000 ext. 15117 – 15118 · origen@uniboyaca.edu.co",
+      "enlace": "https://www.uniboyaca.edu.co/es/micrositio/centro-de-innovacion-origen",
+      "textoEnlace": "",
+      "fuente": "https://www.uniboyaca.edu.co/es/micrositio/centro-de-innovacion-origen",
+      "skyboxes": [
+        "Skybox_Origen"
+      ]
+    },
+    {
+      "id": "paraninfo",
+      "titulo": "Paraninfo",
+      "tipo": "Espacio",
+      "zona": "Edificio Múltiple",
+      "resumen": "El recinto académico más moderno de Boyacá, con capacidad para 512 personas.",
+      "descripcion": "Cuenta con cabina de traducción simultánea, concha acústica y equipos de grabación y proyección.",
+      "tituloLista": "Aquí se realizan",
+      "queEncuentras": [
+        "Grados de pregrado y posgrado",
+        "Seminarios nacionales e internacionales",
+        "Festivales de música y muestras de talento",
+        "Foros y actividades de extensión"
+      ],
+      "horario": "",
+      "ubicacion": "Edificio Múltiple 1",
+      "contacto": "608 745 0000 · +57 318 054 9141 · atencionudeb@uniboyaca.edu.co",
+      "enlace": "",
+      "textoEnlace": "",
+      "fuente": "https://www.uniboyaca.edu.co/es/node/2181 ; https://www.uniboyaca.edu.co/es/node/2179 ; https://www.uniboyaca.edu.co/sites/default/files/2020-10/Documento%20General%20de%20Infraestructura%20oct%202020-1.pdf",
+      "skyboxes": [
+        "Skybox_Paraninfo"
+      ]
+    },
+    {
+      "id": "edificio-multiple",
+      "titulo": "Edificios Múltiple 1 y 2",
+      "tipo": "Edificio",
+      "zona": "Edificio Múltiple",
+      "resumen": "Los dos edificios de la Facultad de Ciencias e Ingeniería, con laboratorios, salas de cómputo, la Politeca y el Paraninfo.",
+      "descripcion": "",
+      "tituloLista": "Adentro encuentras",
+      "queEncuentras": [
+        "Múltiple 1: Politeca (piso 2), Paraninfo para 512 personas y la División de Tecnología",
+        "Múltiple 1 y 2: dependencias de la Facultad de Ciencias e Ingeniería",
+        "Múltiple 2: laboratorios y Centro de Informática (pisos 2 y 3)",
+        "Múltiple 2: Auditorio 1, para 200 personas, conectado por circuito cerrado a las pantallas del campus"
+      ],
+      "horario": "",
+      "ubicacion": "",
+      "contacto": "",
+      "enlace": "",
+      "textoEnlace": "",
+      "fuente": "https://www.uniboyaca.edu.co/sites/default/files/2020-10/Documento%20General%20de%20Infraestructura%20oct%202020-1.pdf (2020) ; https://www.uniboyaca.edu.co/es/node/2179 ; https://www.uniboyaca.edu.co/es/micrositio/politeca",
+      "skyboxes": [
+        "Skybox_Piso1multiple",
+        "Skybox_Piso2multiple",
+        "Skybox_Piso3multiple",
+        "Skybox_Piso4multiple",
+        "Skybox_LaboratoriosMultiple"
+      ]
+    },
+    {
+      "id": "edificio-12",
+      "titulo": "Edificio 12",
+      "tipo": "Edificio",
+      "zona": "Edificio 12",
+      "resumen": "Edificio de 12 pisos y 12.139 m² dedicado en buena parte a los posgrados.",
+      "descripcion": "",
+      "tituloLista": "Adentro encuentras",
+      "queEncuentras": [
+        "Aula Magna, para 855 personas en dos niveles",
+        "Hall principal para eventos y exposiciones",
+        "Centro Multimedios (CEMM), piso 4",
+        "Clínica de Simulación",
+        "Aulas de posgrado y oficinas académicas",
+        "Cafetería panorámica en el último piso"
+      ],
+      "horario": "",
+      "ubicacion": "",
+      "contacto": "",
+      "enlace": "",
+      "textoEnlace": "",
+      "fuente": "https://www.uniboyaca.edu.co/sites/default/files/2020-10/Documento%20General%20de%20Infraestructura%20oct%202020-1.pdf (2020) ; https://www.uniboyaca.edu.co/es/micrositio/centro-multimedios ; https://www.uniboyaca.edu.co/es/micrositio/clinica-de-simulacion",
+      "skyboxes": [
+        "Skybox_Entrada12",
+        "Skybox_Entrada12 2",
+        "Skybox_Entradadentro12"
+      ]
+    },
+    {
+      "id": "aula-magna",
+      "titulo": "Aula Magna",
+      "tipo": "Espacio",
+      "zona": "Edificio 12",
+      "resumen": "El auditorio del Edificio 12: capacidad para 855 personas en dos niveles, con un excelente acondicionamiento acústico.",
+      "descripcion": "",
+      "tituloLista": "Aquí se realizan",
+      "queEncuentras": [
+        "Grados de pregrado y posgrado",
+        "Seminarios nacionales e internacionales",
+        "Festivales de música y muestras de talento",
+        "Foros y actividades de extensión"
+      ],
+      "horario": "",
+      "ubicacion": "Edificio 12",
+      "contacto": "",
+      "enlace": "",
+      "textoEnlace": "",
+      "fuente": "https://www.uniboyaca.edu.co/es/node/2181 ; https://www.uniboyaca.edu.co/sites/default/files/2020-10/Documento%20General%20de%20Infraestructura%20oct%202020-1.pdf",
+      "skyboxes": [
+        "Skybox_AulaMagna"
+      ]
+    },
+    {
+      "id": "cemm",
+      "titulo": "Centro Multimedios (CEMM)",
+      "tipo": "Servicio",
+      "zona": "Edificio 12",
+      "resumen": "Espacio colaborativo para aprender creando contenido audiovisual. Apoya a los programas académicos, la investigación y la responsabilidad social.",
+      "descripcion": "",
+      "tituloLista": "Adentro encuentras",
+      "queEncuentras": [
+        "Laboratorios y estudios de diseño, televisión, audio y fotografía",
+        "Sala de redacción y centro de emisión",
+        "UdB Virtual Radio",
+        "Producción de televisión y radio, diseño gráfico, guiones y corrección de estilo"
+      ],
+      "horario": "Lunes a sábado, 8:00 a. m. a 12:00 m. y 2:00 a 6:00 p. m.",
+      "ubicacion": "Edificio 12, piso 4",
+      "contacto": "608 745 0000 ext. 20401 – 20408 · centromultimedios@uniboyaca.edu.co",
+      "enlace": "https://www.uniboyaca.edu.co/es/micrositio/centro-multimedios",
+      "textoEnlace": "",
+      "fuente": "https://www.uniboyaca.edu.co/es/micrositio/centro-multimedios ; https://www.uniboyaca.edu.co/es/telefonos-y-celulares-de-contacto-universidad-de-boyaca",
+      "skyboxes": [
+        "Skybox_Piso4-12"
+      ]
+    },
+    {
+      "id": "clinica-simulacion",
+      "titulo": "Clínica de Simulación",
+      "tipo": "Servicio",
+      "zona": "Edificio 12",
+      "resumen": "Centro de práctica simulada y centro de entrenamiento internacional AHA. Aquí los estudiantes de salud practican con simuladores antes de atender pacientes reales.",
+      "descripcion": "",
+      "tituloLista": "Adentro encuentras",
+      "queEncuentras": [
+        "13 zonas para escenarios simulados, administrativas y clínico-quirúrgicas",
+        "Áreas como Pediatría, UCI y sala de observación",
+        "Simuladores de alta y mediana fidelidad y laboratorios de habilidades",
+        "Cursos de educación continua para profesionales de la salud"
+      ],
+      "horario": "Lunes a viernes, 8:00 a. m. a 12:00 m. y 2:00 a 6:00 p. m.",
+      "ubicacion": "Edificio 12",
+      "contacto": "608 745 0000 ext. 20500 – 20501 · clinicadesimulacion@uniboyaca.edu.co",
+      "enlace": "https://www.uniboyaca.edu.co/es/micrositio/clinica-de-simulacion",
+      "textoEnlace": "",
+      "fuente": "https://www.uniboyaca.edu.co/es/micrositio/clinica-de-simulacion ; https://www.uniboyaca.edu.co/es/acerca-de-la-clinica-de-simulacion ; https://www.uniboyaca.edu.co/es/telefonos-y-celulares-de-contacto-universidad-de-boyaca",
+      "skyboxes": [
+        "Skybox_Piso5-12 2"
+      ]
+    },
+    {
+      "id": "edificio-10",
+      "titulo": "Edificio 10",
+      "tipo": "Edificio",
+      "zona": "Exteriores",
+      "resumen": "Edificio de talleres y laboratorios, con el Auditorio 2.",
+      "descripcion": "",
+      "tituloLista": "Adentro encuentras",
+      "queEncuentras": [
+        "Talleres de diseño de modas",
+        "Laboratorio de hidráulica",
+        "Laboratorio de anatomía 3D",
+        "Centro de mecanizado (torno y fresadora)",
+        "Auditorio 2, para 300 personas, con recursos audiovisuales y multimedia",
+        "Cámara de Gesell"
+      ],
+      "horario": "",
+      "ubicacion": "",
+      "contacto": "",
+      "enlace": "",
+      "textoEnlace": "",
+      "fuente": "https://www.uniboyaca.edu.co/sites/default/files/2020-10/Documento%20General%20de%20Infraestructura%20oct%202020-1.pdf (2020) ; https://www.uniboyaca.edu.co/es/node/2179",
+      "skyboxes": [
+        "Skybox_Edificio10"
+      ]
+    },
+    {
+      "id": "edificio-1",
+      "titulo": "Edificio 1",
+      "tipo": "Edificio",
+      "zona": "Exteriores",
+      "resumen": "La sede de la Facultad de Ciencias de la Salud.",
+      "descripcion": "",
+      "tituloLista": "Adentro encuentras",
+      "queEncuentras": [
+        "Piso 1: Facultad de Ciencias de la Salud, laboratorios de cuidado cardiorrespiratorio y de anatomía integrada y el Centro de Atención en Fisioterapia",
+        "Piso 2: dirección de Instrumentación Quirúrgica y aulas",
+        "Piso 3: direcciones de Fisioterapia y Terapia Respiratoria y aulas",
+        "Piso 4: posgrados de salud, estudio de fotografía y laboratorios de radio y audiovisuales"
+      ],
+      "horario": "",
+      "ubicacion": "",
+      "contacto": "",
+      "enlace": "",
+      "textoEnlace": "",
+      "fuente": "https://www.uniboyaca.edu.co/sites/default/files/2020-10/Documento%20General%20de%20Infraestructura%20oct%202020-1.pdf (2020)",
+      "skyboxes": [
+        "Skybox_Edificio1"
+      ]
+    },
+    {
+      "id": "edificio-2",
+      "titulo": "Edificio 2",
+      "tipo": "Edificio",
+      "zona": "Exteriores",
+      "resumen": "Edificio de aulas de Derecho, Ciencias Políticas y Comunicación Social.",
+      "descripcion": "",
+      "tituloLista": "Adentro encuentras",
+      "queEncuentras": [
+        "Piso 1: emisora virtual, aulas y cafetería",
+        "Piso 2: coordinación de Derecho y Ciencias Políticas",
+        "Piso 3: dirección del programa de Comunicación Social",
+        "Piso 4: dirección de posgrados y aulas"
+      ],
+      "horario": "",
+      "ubicacion": "",
+      "contacto": "",
+      "enlace": "",
+      "textoEnlace": "",
+      "fuente": "https://www.uniboyaca.edu.co/sites/default/files/2020-10/Documento%20General%20de%20Infraestructura%20oct%202020-1.pdf (2020)",
+      "skyboxes": [
+        "Skybox_Pasillodl2"
+      ]
+    },
+    {
+      "id": "edificio-3",
+      "titulo": "Edificio 3",
+      "tipo": "Edificio",
+      "zona": "Edificio 3",
+      "resumen": "Edificio de Arquitectura, Diseño y Ciencias Administrativas y Contables.",
+      "descripcion": "",
+      "tituloLista": "Adentro encuentras",
+      "queEncuentras": [
+        "Piso 1: Centro de Asesoría en Vivienda y Urbanismo (CAVIUR), talleres de dibujo y direcciones de Arquitectura y Diseño",
+        "Piso 2: talleres de dibujo y aulas",
+        "Pisos 3 y 4: Facultad de Ciencias Administrativas y Contables"
+      ],
+      "horario": "",
+      "ubicacion": "",
+      "contacto": "",
+      "enlace": "",
+      "textoEnlace": "",
+      "fuente": "https://www.uniboyaca.edu.co/sites/default/files/2020-10/Documento%20General%20de%20Infraestructura%20oct%202020-1.pdf (2020)",
+      "skyboxes": [
+        "Skybox_Entrada3"
+      ]
+    },
+    {
+      "id": "edificio-11",
+      "titulo": "Edificio 11",
+      "tipo": "Edificio",
+      "zona": "Exteriores",
+      "resumen": "Edificio de cinco pisos dedicado a funciones administrativas.",
+      "descripcion": "",
+      "tituloLista": "",
+      "queEncuentras": [],
+      "horario": "",
+      "ubicacion": "",
+      "contacto": "",
+      "enlace": "",
+      "textoEnlace": "",
+      "fuente": "https://www.uniboyaca.edu.co/sites/default/files/2020-10/Documento%20General%20de%20Infraestructura%20oct%202020-1.pdf (2020)",
+      "skyboxes": [
+        "Skybox_Edificio11creo"
+      ]
+    },
+    {
+      "id": "canchas",
+      "titulo": "Canchas multifuncionales",
+      "tipo": "Espacio",
+      "zona": "Exteriores",
+      "resumen": "Canchas al aire libre del campus para practicar deporte.",
+      "descripcion": "La Universidad también tiene un coliseo cubierto y un campus deportivo de más de 36.000 m² con cancha de fútbol reglamentaria, pista atlética y canchas de tenis.",
+      "tituloLista": "",
+      "queEncuentras": [],
+      "horario": "",
+      "ubicacion": "",
+      "contacto": "Deportes: 608 745 0000 ext. 15101",
+      "enlace": "https://www.uniboyaca.edu.co/es/bienestar-universitario",
+      "textoEnlace": "Ver Bienestar y deportes",
+      "fuente": "https://www.uniboyaca.edu.co/es/centro-informacion/articulos/sedes ; https://www.uniboyaca.edu.co/es/node/2179 ; https://www.uniboyaca.edu.co/es/telefonos-y-celulares-de-contacto-universidad-de-boyaca",
+      "skyboxes": [
+        "Skybox_Canchas",
+        "Skybox_MasArribaDCanchas"
+      ]
+    },
+    {
+      "id": "coliseo",
+      "titulo": "Coliseo",
+      "tipo": "Espacio",
+      "zona": "Exteriores",
+      "resumen": "Escenario deportivo cubierto con cancha múltiple, gimnasio y salones para aeróbicos, danza y música.",
+      "descripcion": "",
+      "tituloLista": "Aquí se practica",
+      "queEncuentras": [
+        "Microfútbol, voleibol y baloncesto",
+        "Tenis de mesa y taekwondo"
+      ],
+      "horario": "",
+      "ubicacion": "",
+      "contacto": "608 745 0000 ext. 11005",
+      "enlace": "",
+      "textoEnlace": "",
+      "fuente": "https://www.uniboyaca.edu.co/es/node/2179 ; https://www.uniboyaca.edu.co/es/telefonos-y-celulares-de-contacto-universidad-de-boyaca ; https://www.uniboyaca.edu.co/sites/default/files/2020-10/Documento%20General%20de%20Infraestructura%20oct%202020-1.pdf",
+      "skyboxes": []
+    },
+    {
+      "id": "entrada-principal",
+      "titulo": "Entrada principal de la Universidad",
+      "tipo": "Dato",
+      "zona": "Exteriores",
+      "resumen": "La entrada principal y la portería del campus de Tunja.",
+      "descripcion": "",
+      "tituloLista": "",
+      "queEncuentras": [],
+      "horario": "",
+      "ubicacion": "Carrera 2ª Este No. 64-169, Tunja",
+      "contacto": "608 745 0000 · atencionudeb@uniboyaca.edu.co",
+      "enlace": "",
+      "textoEnlace": "",
+      "fuente": "https://www.uniboyaca.edu.co/es",
+      "skyboxes": [
+        "Skybox_EntradaUPrincipal"
+      ]
+    }
+  ],
+  "nombres": [
+    {
+      "skybox": "Skybox_Entrada12",
+      "nombre": "Entrada del Edificio 12"
+    },
+    {
+      "skybox": "Skybox_Entrada12 2",
+      "nombre": "Segunda entrada (lado del Coliseo)"
+    },
+    {
+      "skybox": "Skybox_Entradadentro12",
+      "nombre": "Hall principal del Edificio 12"
+    },
+    {
+      "skybox": "Skybox_Piso4-12",
+      "nombre": "Centro Multimedios (CEMM)"
+    },
+    {
+      "skybox": "Skybox_Piso5-12 2",
+      "nombre": "Clínica de Simulación"
+    },
+    {
+      "skybox": "Skybox_AulaMagna",
+      "nombre": "Aula Magna"
+    },
+    {
+      "skybox": "Skybox_Edificio10",
+      "nombre": "Edificio 10"
+    },
+    {
+      "skybox": "Skybox_EntradaPrincipalCentral",
+      "nombre": "Entrada del Edificio Central"
+    },
+    {
+      "skybox": "Skybox_InteriorPrincipalCentral",
+      "nombre": "Interior del Edificio Central"
+    },
+    {
+      "skybox": "Skybox_Buho",
+      "nombre": "El Búho"
+    },
+    {
+      "skybox": "Skybox_HalldeArtes",
+      "nombre": "Hall de Artes"
+    },
+    {
+      "skybox": "Skybox_Cafeteria",
+      "nombre": "Cafetería central"
+    },
+    {
+      "skybox": "Skybox_Bienestar",
+      "nombre": "Bienestar Universitario"
+    },
+    {
+      "skybox": "Skybox_PoliDentro",
+      "nombre": "Politeca"
+    },
+    {
+      "skybox": "Skybox_Diri",
+      "nombre": "Relaciones Internacionales"
+    },
+    {
+      "skybox": "Skybox_Rectoria",
+      "nombre": "Rectoría"
+    },
+    {
+      "skybox": "Skybox_Paraninfo",
+      "nombre": "Paraninfo"
+    },
+    {
+      "skybox": "Skybox_Saladefundadores",
+      "nombre": "Salón Fundadores"
+    },
+    {
+      "skybox": "Skybox_Piso1multiple",
+      "nombre": "Primer piso"
+    },
+    {
+      "skybox": "Skybox_Piso2multiple",
+      "nombre": "Segundo piso"
+    },
+    {
+      "skybox": "Skybox_Piso3multiple",
+      "nombre": "Tercer piso"
+    },
+    {
+      "skybox": "Skybox_Piso4multiple",
+      "nombre": "Cuarto piso"
+    },
+    {
+      "skybox": "Skybox_LaboratoriosMultiple",
+      "nombre": "Laboratorios"
+    },
+    {
+      "skybox": "Skybox_EntradaUPrincipal",
+      "nombre": "Entrada principal y portería"
+    },
+    {
+      "skybox": "Skybox_EscalerasPrincipal",
+      "nombre": "Escaleras principales"
+    },
+    {
+      "skybox": "Skybox_EntradaEscaleras",
+      "nombre": "Entrada por las escaleras"
+    },
+    {
+      "skybox": "Skybox_Entrada2dlau",
+      "nombre": "Entrada al campus"
+    },
+    {
+      "skybox": "Skybox_Canchas",
+      "nombre": "Canchas multifuncionales"
+    },
+    {
+      "skybox": "Skybox_MasArribaDCanchas",
+      "nombre": "Vista sobre las canchas"
+    },
+    {
+      "skybox": "Skybox_Edificio1",
+      "nombre": "Edificio 1"
+    },
+    {
+      "skybox": "Skybox_Edificio11creo",
+      "nombre": "Edificio 11"
+    },
+    {
+      "skybox": "Skybox_Pasillodl2",
+      "nombre": "Pasillo del Edificio 2"
+    },
+    {
+      "skybox": "Skybox_Pasajecentralderecha",
+      "nombre": "Pasaje junto al Edificio Central"
+    },
+    {
+      "skybox": "Skybox_PalMultiple",
+      "nombre": "Escaleras al Edificio Múltiple"
+    },
+    {
+      "skybox": "Skybox_Pal4",
+      "nombre": "El Domo"
+    },
+    {
+      "skybox": "Skybox_Censei",
+      "nombre": "CENSEI"
+    },
+    {
+      "skybox": "Skybox_Origen",
+      "nombre": "Centro de Innovación Origen"
+    },
+    {
+      "skybox": "Skybox_Entrada3",
+      "nombre": "Entrada del Edificio 3"
+    }
+  ]
+}

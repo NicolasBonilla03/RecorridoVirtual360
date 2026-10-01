@@ -21,7 +21,13 @@ public class PanelInfo : MonoBehaviour
     public static void Mostrar(PuntoInfo punto)
     {
         if (punto == null) return;
-        Asegurar().Abrir(punto);
+        Asegurar().Abrir(punto.ComoFicha(), punto.foto);
+    }
+
+    public static void Mostrar(FichaInfo ficha, Sprite foto = null)
+    {
+        if (ficha == null) return;
+        Asegurar().Abrir(ficha, foto);
     }
 
     public static void CerrarSiAbierto()
@@ -102,7 +108,7 @@ public class PanelInfo : MonoBehaviour
 
     // ------------------------------------------------------------------ abrir y cerrar
 
-    void Abrir(PuntoInfo punto)
+    void Abrir(FichaInfo punto, Sprite foto)
     {
         // Un solo menú a la vez
         POIController.CerrarAbierto();
@@ -113,7 +119,7 @@ public class PanelInfo : MonoBehaviour
         lienzo.SetActive(true);
         velo.SetActive(true);
         AjustarAncho();
-        Rellenar(punto);
+        Rellenar(punto, foto);
         scroll.verticalNormalizedPosition = 1f;
 
         if (!yaAbierto) Animar(-MargenPanel);
@@ -173,7 +179,7 @@ public class PanelInfo : MonoBehaviour
 
     // ------------------------------------------------------------------ contenido
 
-    void Rellenar(PuntoInfo p)
+    void Rellenar(FichaInfo p, Sprite imagen)
     {
         Color zona = p.ColorZona;
 
@@ -198,13 +204,13 @@ public class PanelInfo : MonoBehaviour
         for (int i = contenido.childCount - 1; i >= 0; i--)
             Destroy(contenido.GetChild(i).gameObject);
 
-        if (p.foto != null)
+        if (imagen != null)
         {
             Image foto = CrearImagen("Foto", contenido, Color.white);
-            foto.sprite = p.foto;
+            foto.sprite = imagen;
             foto.preserveAspect = true;
             foto.raycastTarget = false;
-            float proporcion = p.foto.rect.width > 0f ? p.foto.rect.height / p.foto.rect.width : 0.56f;
+            float proporcion = imagen.rect.width > 0f ? imagen.rect.height / imagen.rect.width : 0.56f;
             LayoutElement le = foto.gameObject.AddComponent<LayoutElement>();
             le.preferredHeight = Mathf.Clamp((AnchoPanel - MarcaUdB.Space4 * 2f) * proporcion, 120f, 240f);
         }
@@ -225,7 +231,9 @@ public class PanelInfo : MonoBehaviour
                 if (grupo == null)
                 {
                     grupo = Grupo(MarcaUdB.Space1);
-                    Rotulo(grupo, p.tipo == TipoPuntoInfo.Edificio ? "Adentro encuentras" : "Aquí puedes");
+                    string encabezado = !string.IsNullOrEmpty(p.tituloLista) ? p.tituloLista
+                                      : (p.Tipo == TipoPuntoInfo.Edificio ? "Adentro encuentras" : "Aquí puedes");
+                    Rotulo(grupo, encabezado);
                 }
                 FilaLista(grupo, s.Trim(), zona);
             }

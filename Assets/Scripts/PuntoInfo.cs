@@ -28,6 +28,9 @@ public class PuntoInfo : MonoBehaviour
     public Material skybox;
 
     [Header("Contenido de la tarjeta")]
+    [Tooltip("Ficha del catálogo (Assets/Resources/PuntosInfo/catalogo.json). Lo que escribas abajo reemplaza lo del catálogo; lo que dejes vacío se toma de la ficha.")]
+    public string idFicha = "";
+
     public string titulo = "Nuevo punto de información";
     public TipoPuntoInfo tipo = TipoPuntoInfo.Oficina;
 
@@ -39,6 +42,9 @@ public class PuntoInfo : MonoBehaviour
 
     [Tooltip("Texto largo (opcional). Deja una línea en blanco entre párrafos.")]
     [TextArea(4, 12)] public string descripcion = "";
+
+    [Tooltip("Encabezado de la lista. Si está vacío: «Adentro encuentras» para edificios y «Aquí puedes» para lo demás.")]
+    public string tituloLista = "";
 
     [Tooltip("Qué hay adentro o qué servicios ofrece, uno por línea. Útil para edificios a los que el recorrido no entra.")]
     public string[] queEncuentras = new string[0];
@@ -74,7 +80,60 @@ public class PuntoInfo : MonoBehaviour
     bool visible;
     bool construido;
 
-    public Color ColorZona { get { return string.IsNullOrEmpty(zona) ? MarcaUdB.Negro : MarcaUdB.ColorZona(zona); } }
+    public const string TituloPorDefecto = "Nuevo punto de información";
+
+    FichaInfo Ficha { get { return CatalogoInfo.PorId(idFicha); } }
+
+    public string Titulo
+    {
+        get
+        {
+            if (!string.IsNullOrEmpty(titulo) && titulo != TituloPorDefecto) return titulo;
+            FichaInfo f = Ficha;
+            return f != null && !string.IsNullOrEmpty(f.titulo) ? f.titulo : titulo;
+        }
+    }
+
+    public string Zona
+    {
+        get
+        {
+            if (!string.IsNullOrEmpty(zona)) return zona;
+            FichaInfo f = Ficha;
+            return f != null ? f.zona : zona;
+        }
+    }
+
+    public Color ColorZona { get { string z = Zona; return string.IsNullOrEmpty(z) ? MarcaUdB.Negro : MarcaUdB.ColorZona(z); } }
+
+    /// <summary>Contenido de la tarjeta: la ficha del catálogo con lo escrito aquí encima.</summary>
+    public FichaInfo ComoFicha()
+    {
+        FichaInfo b = Ficha;
+        FichaInfo r = new FichaInfo();
+        r.id = idFicha;
+        r.titulo = Titulo;
+        r.tipo = b != null && TipoSinTocar() ? b.tipo : NombreTipo;
+        r.zona = Zona;
+        r.resumen = Elegir(resumen, b != null ? b.resumen : null);
+        r.descripcion = Elegir(descripcion, b != null ? b.descripcion : null);
+        r.tituloLista = Elegir(tituloLista, b != null ? b.tituloLista : null);
+        r.queEncuentras = queEncuentras != null && queEncuentras.Length > 0 ? queEncuentras : (b != null ? b.queEncuentras : null);
+        r.horario = Elegir(horario, b != null ? b.horario : null);
+        r.ubicacion = Elegir(ubicacion, b != null ? b.ubicacion : null);
+        r.contacto = Elegir(contacto, b != null ? b.contacto : null);
+        r.enlace = Elegir(enlace, b != null ? b.enlace : null);
+        r.textoEnlace = !string.IsNullOrEmpty(enlace) ? textoEnlace : (b != null && !string.IsNullOrEmpty(b.textoEnlace) ? b.textoEnlace : textoEnlace);
+        return r;
+    }
+
+    // Con una ficha asignada y el tipo en su valor por defecto, manda el tipo de la ficha
+    bool TipoSinTocar() { return tipo == TipoPuntoInfo.Oficina; }
+
+    static string Elegir(string propio, string ficha)
+    {
+        return !string.IsNullOrEmpty(propio) && propio.Trim().Length > 0 ? propio : ficha;
+    }
 
     public string NombreTipo
     {
@@ -167,7 +226,8 @@ public class PuntoInfo : MonoBehaviour
         rtIcono.sizeDelta = Vector2.zero;
 
         // Nombre en un chip de vidrio con el punto de la zona, como el chip «Estás en» del menú
-        if (mostrarNombre && !string.IsNullOrEmpty(titulo))
+        string nombre = Titulo;
+        if (mostrarNombre && !string.IsNullOrEmpty(nombre))
         {
             Image chip = CrearImagen("Nombre", rtV, MarcaUdB.VidrioPanel);
             RectTransform rtP = (RectTransform)chip.transform;
@@ -187,7 +247,7 @@ public class PuntoInfo : MonoBehaviour
             rtZ.anchoredPosition = new Vector2(pad, 0f);
             MarcaUdB.Redondear(punto, PuntoZona * 0.5f);
 
-            TextMeshProUGUI texto = CrearTexto("Texto", rtP, titulo, MarcaUdB.TextoBold, TamanoNombre, MarcaUdB.Ink);
+            TextMeshProUGUI texto = CrearTexto("Texto", rtP, nombre, MarcaUdB.TextoBold, TamanoNombre, MarcaUdB.Ink);
             texto.alignment = TextAlignmentOptions.MidlineLeft;
             RectTransform rtT = (RectTransform)texto.transform;
             rtT.anchorMin = Vector2.zero;
@@ -196,7 +256,7 @@ public class PuntoInfo : MonoBehaviour
             rtT.offsetMin = new Vector2(izquierda, 0f);
             rtT.offsetMax = new Vector2(-pad, 0f);
 
-            float ancho = Mathf.Ceil(texto.GetPreferredValues(titulo).x) + izquierda + pad;
+            float ancho = Mathf.Ceil(texto.GetPreferredValues(nombre).x) + izquierda + pad;
             rtP.sizeDelta = new Vector2(Mathf.Min(ancho, 560f), AltoNombre);
 
             Button bNombre = chip.gameObject.AddComponent<Button>();
@@ -256,7 +316,7 @@ public class PuntoInfo : MonoBehaviour
         Gizmos.DrawSphere(transform.position, radio);
         UnityEditor.Handles.color = Color.white;
         UnityEditor.Handles.DrawWireDisc(transform.position, transform.forward, radio * 1.15f);
-        UnityEditor.Handles.Label(transform.position + transform.right * radio * 1.4f, "  i  " + titulo);
+        UnityEditor.Handles.Label(transform.position + transform.right * radio * 1.4f, "  i  " + Titulo);
     }
 #endif
 }

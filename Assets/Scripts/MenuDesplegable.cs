@@ -85,6 +85,9 @@ public class MenuDesplegable : MonoBehaviour
     GameObject botonMenuSombra;
     Vector2 desfaseSombra;
     GameObject chipUbicacion;
+    Button botonInfoChip;
+    FichaInfo fichaActual;
+    const float LadoInfoChip = 32f;
     Image puntoZonaChip;
     TextMeshProUGUI etiquetaChip;
     TextMeshProUGUI textoChip;
@@ -314,6 +317,20 @@ public class MenuDesplegable : MonoBehaviour
         }
         if (lugar == null) lugar = NombreDesdeGestor(sky);
 
+        // Ficha del lugar: el botón «i» del chip solo aparece si el catálogo tiene información
+        fichaActual = CatalogoInfo.PorSkybox(sky);
+        if (botonInfoChip != null)
+        {
+            botonInfoChip.gameObject.SetActive(fichaActual != null);
+            if (fichaActual != null)
+            {
+                Color ci = !string.IsNullOrEmpty(fichaActual.zona) ? fichaActual.ColorZona : MarcaUdB.Negro;
+                MarcaUdB.ColoresBoton(botonInfoChip, ci, Color.Lerp(ci, MarcaUdB.Negro, 0.18f), Color.Lerp(ci, MarcaUdB.Negro, 0.32f));
+                TMP_Text ti = botonInfoChip.GetComponentInChildren<TMP_Text>(true);
+                if (ti != null) ti.color = MarcaUdB.TintaSobre(ci);
+            }
+        }
+
         puntoZonaChip.color = tieneZona ? zonaActual : MarcaUdB.InkMuted;
         textoChip.color = tieneZona && !enInicio ? MarcaUdB.TintaLegible(zonaActual) : MarcaUdB.Ink;
         textoChip.text = lugar;
@@ -381,6 +398,8 @@ public class MenuDesplegable : MonoBehaviour
         float ancho = pad * 2f + 10f + MarcaUdB.Space2
                       + etiquetaChip.GetPreferredValues(etiquetaChip.text).x + MarcaUdB.Space2
                       + textoChip.GetPreferredValues(textoChip.text).x + 4f;
+        if (botonInfoChip != null && botonInfoChip.gameObject.activeSelf)
+            ancho += MarcaUdB.Space2 + LadoInfoChip;
 
         float disponible = zonaSegura != null && zonaSegura.rect.width > 0f ? zonaSegura.rect.width : canvasRT.rect.width;
         float maximo = compacto
@@ -510,6 +529,20 @@ public class MenuDesplegable : MonoBehaviour
         LayoutElement ll = textoChip.gameObject.AddComponent<LayoutElement>();
         ll.minWidth = 40f;
         ll.flexibleWidth = 1f;
+
+        // Botón «i»: abre la ficha del lugar actual (catálogo de información), si la hay
+        Image imgInfo;
+        botonInfoChip = CrearBoton("Info", chipRT, out imgInfo);
+        MarcaUdB.Redondear(imgInfo, LadoInfoChip * 0.5f);
+        LayoutElement li = botonInfoChip.gameObject.AddComponent<LayoutElement>();
+        li.minWidth = li.preferredWidth = LadoInfoChip;
+        li.minHeight = li.preferredHeight = LadoInfoChip;
+        li.flexibleWidth = 0f;
+        TextMeshProUGUI textoInfo = CrearTexto("i", botonInfoChip.transform, "i", MarcaUdB.TextoBold, MarcaUdB.CuerpoL, MarcaUdB.InkInverso);
+        textoInfo.alignment = TextAlignmentOptions.Center;
+        Estirar((RectTransform)textoInfo.transform, 0f, 0f);
+        botonInfoChip.onClick.AddListener(() => { if (fichaActual != null) PanelInfo.Mostrar(fichaActual); });
+        botonInfoChip.gameObject.SetActive(false);
 
         chipUbicacion = chip.gameObject;
     }
