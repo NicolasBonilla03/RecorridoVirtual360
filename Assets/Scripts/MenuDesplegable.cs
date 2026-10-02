@@ -85,6 +85,7 @@ public class MenuDesplegable : MonoBehaviour
     GameObject botonMenuSombra;
     Vector2 desfaseSombra;
     GameObject chipUbicacion;
+    TextMeshProUGUI textoPie;
     Button botonInfoChip;
     FichaInfo fichaActual;
     const float LadoInfoChip = 32f;
@@ -114,6 +115,14 @@ public class MenuDesplegable : MonoBehaviour
         if (instancia != null) instancia.Cerrar();
     }
 
+    public static bool EstaAbierto { get { return instancia != null && instancia.abierto; } }
+
+    void OnEnable() { FadeController.AlFallarTransicion += AlFallarTransicion; }
+    void OnDisable() { FadeController.AlFallarTransicion -= AlFallarTransicion; }
+
+    // Si un cambio de lugar no se completó, se vuelve a pintar el lugar actual (puntos, chip)
+    void AlFallarTransicion() { ultimoSkybox = null; }
+
     void OnDestroy()
     {
         if (instancia == this) instancia = null;
@@ -126,6 +135,10 @@ public class MenuDesplegable : MonoBehaviour
         // La marca institucional se aplica siempre, aunque nadie haya añadido el componente a mano
         if (FindObjectOfType<AplicarMarcaUdB>() == null)
             gameObject.AddComponent<AplicarMarcaUdB>();
+
+        // El guía virtual (preguntas predefinidas) también se añade solo
+        if (FindObjectOfType<GuiaVirtual>() == null)
+            gameObject.AddComponent<GuiaVirtual>();
     }
 
     void Start()
@@ -187,7 +200,9 @@ public class MenuDesplegable : MonoBehaviour
         if (abierto || panelRaiz == null) return;
         POIController.CerrarAbierto(); // un solo menú a la vez
         PanelInfo.CerrarSiAbierto();
+        GuiaVirtual.CerrarSiAbierta();
         abierto = true;
+        ActualizarPie();
 
         AjustarAnchoPanel();
 
@@ -660,6 +675,14 @@ public class MenuDesplegable : MonoBehaviour
             Debug.LogWarning("[MenuDesplegable] No se encontró MenuNavegacion: el menú solo tendrá el botón de inicio.");
         }
 
+        // --- Pie: aviso del registro anónimo y código de la sesión (para la encuesta)
+        textoPie = CrearTexto("Pie", panel, "", MarcaUdB.Texto, MarcaUdB.CuerpoS, MarcaUdB.InkMuted);
+        textoPie.enableWordWrapping = true;
+        textoPie.overflowMode = TextOverflowModes.Overflow;
+        textoPie.alignment = TextAlignmentOptions.TopLeft;
+        textoPie.margin = new Vector4(MarcaUdB.Space1, 0f, MarcaUdB.Space1, 0f);
+        textoPie.gameObject.SetActive(false);
+
         panelRaiz.gameObject.SetActive(false);
     }
 
@@ -788,6 +811,18 @@ public class MenuDesplegable : MonoBehaviour
         encabezado.onClick.AddListener(() => AlternarSeccion(s));
         PonerSeccion(s, false);
         secciones.Add(s);
+    }
+
+    // ------------------------------------------------------------------ pie del panel
+
+    void ActualizarPie()
+    {
+        if (textoPie == null) return;
+        bool mostrar = RegistroUso.Activo && !string.IsNullOrEmpty(RegistroUso.Codigo);
+        textoPie.gameObject.SetActive(mostrar);
+        if (!mostrar) return;
+        textoPie.text = "Tu código para la encuesta: <b><color=" + MarcaUdB.HexRGB(MarcaUdB.Ink) + ">" + RegistroUso.Codigo + "</color></b>\n"
+                        + "Este recorrido registra de forma anónima los lugares que visitas y el tiempo en cada uno, con fines académicos.";
     }
 
     // ------------------------------------------------------------------ barra de la lista

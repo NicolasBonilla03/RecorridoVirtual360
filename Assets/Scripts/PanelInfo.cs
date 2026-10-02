@@ -72,6 +72,10 @@ public class PanelInfo : MonoBehaviour
     Button botonEnlace;
     TextMeshProUGUI textoEnlace;
 
+    FichaInfo fichaActual;
+    Sprite fotoActual;
+    float anchoRelleno;
+
     bool abierto;
     Coroutine animacion;
     Vector2 ultimoTamano;
@@ -113,6 +117,8 @@ public class PanelInfo : MonoBehaviour
         // Un solo menú a la vez
         POIController.CerrarAbierto();
         MenuDesplegable.CerrarSiAbierto();
+        GuiaVirtual.CerrarSiAbierta();
+        RegistroUso.Anotar("ficha", punto.titulo);
 
         bool yaAbierto = abierto;
         abierto = true;
@@ -175,12 +181,20 @@ public class PanelInfo : MonoBehaviour
         panelRaiz.sizeDelta = new Vector2(ancho, -MargenPanel * 2f);
         if (abierto && animacion == null)
             panelRaiz.anchoredPosition = new Vector2(-MargenPanel, 0f);
+
+        // Si cambió el ancho (giro del teléfono, ventana), los bloques se recalculan
+        if (abierto && fichaActual != null && Mathf.Abs(AnchoContenido() - anchoRelleno) > 0.5f)
+            Rellenar(fichaActual, fotoActual);
     }
 
     // ------------------------------------------------------------------ contenido
 
+    // El contenido se arma por bloques con alturas calculadas a partir del texto real:
+    // cada fila mide lo que mide su texto más un respiro fijo, sin huecos.
     void Rellenar(FichaInfo p, Sprite imagen)
     {
+        fichaActual = p;
+        fotoActual = imagen;
         Color zona = p.ColorZona;
 
         rotulo.text = p.NombreTipo;
@@ -200,9 +214,16 @@ public class PanelInfo : MonoBehaviour
 
         MarcaUdB.ColorBarra(barra, zona, Color.white);
 
-        // Cuerpo: se vacía y se arma de nuevo
+        // Se vacía (lo viejo se apaga de una vez para que no ocupe sitio) y se arma de nuevo
         for (int i = contenido.childCount - 1; i >= 0; i--)
-            Destroy(contenido.GetChild(i).gameObject);
+        {
+            GameObject viejo = contenido.GetChild(i).gameObject;
+            viejo.SetActive(false);
+            Destroy(viejo);
+        }
+
+        float ancho = AnchoContenido();
+        anchoRelleno = ancho;
 
         if (imagen != null)
         {
@@ -212,36 +233,12 @@ public class PanelInfo : MonoBehaviour
             foto.raycastTarget = false;
             float proporcion = imagen.rect.width > 0f ? imagen.rect.height / imagen.rect.width : 0.56f;
             LayoutElement le = foto.gameObject.AddComponent<LayoutElement>();
-            le.preferredHeight = Mathf.Clamp((AnchoPanel - MarcaUdB.Space4 * 2f) * proporcion, 120f, 240f);
+            le.minHeight = le.preferredHeight = Mathf.Clamp(ancho * proporcion, 120f, 240f);
         }
 
-        if (!string.IsNullOrEmpty(p.resumen))
-            Parrafo(contenido, p.resumen.Trim(), MarcaUdB.CuerpoL);
-
-        if (!string.IsNullOrEmpty(p.descripcion))
-            Parrafo(contenido, p.descripcion.Trim(), MarcaUdB.Cuerpo);
-
-        // «Adentro encuentras»: filas como las de los lugares del menú, con acento del color de la zona
-        if (p.queEncuentras != null)
-        {
-            RectTransform grupo = null;
-            foreach (string s in p.queEncuentras)
-            {
-                if (string.IsNullOrEmpty(s) || s.Trim().Length == 0) continue;
-                if (grupo == null)
-                {
-                    grupo = Grupo(MarcaUdB.Space1);
-                    string encabezado = !string.IsNullOrEmpty(p.tituloLista) ? p.tituloLista
-                                      : (p.Tipo == TipoPuntoInfo.Edificio ? "Adentro encuentras" : "Aquí puedes");
-                    Rotulo(grupo, encabezado);
-                }
-                FilaLista(grupo, s.Trim(), zona);
-            }
-        }
-
-        Dato("Horario", p.horario);
-        Dato("Ubicación", p.ubicacion);
-        Dato("Contacto", p.contacto);
+        BloqueTexto(p, ancho);
+        BloqueLista(p, zona, ancho);
+        BloqueDatos(p, ancho);
 
         // Pie: enlace opcional (acción principal en rojo, como «Inicio» en el menú)
         bool conEnlace = !string.IsNullOrEmpty(p.enlace) && p.enlace.Trim().Length > 0;
@@ -255,79 +252,186 @@ public class PanelInfo : MonoBehaviour
         }
     }
 
-    TextMeshProUGUI Parrafo(RectTransform padre, string texto, float tamano)
+    float AnchoContenido()
     {
-        TextMeshProUGUI t = CrearTexto("Parrafo", padre, texto, MarcaUdB.Texto, tamano, MarcaUdB.Ink);
-        t.enableWordWrapping = true;
-        t.overflowMode = TextOverflowModes.Overflow;
-        t.alignment = TextAlignmentOptions.TopLeft;
-        t.lineSpacing = 12f;       // interlineado holgado para leer en pantalla
-        t.paragraphSpacing = 12f;  // una línea en blanco separa párrafos
-        t.margin = new Vector4(MarcaUdB.Space1, 0f, MarcaUdB.Space1, 0f);
-        return t;
+        // ancho del panel − relleno del panel a cada lado − el carril de la barra de desplazamiento
+        return Mathf.Max(120f, panelRaiz.sizeDelta.x - MarcaUdB.Space4 * 2f - MarcaUdB.Space3);
     }
 
-    void Rotulo(RectTransform padre, string texto)
+    // --- 1. Qué es: resumen destacado y descripción
+    void BloqueTexto(FichaInfo p, float ancho)
     {
-        TextMeshProUGUI t = CrearTexto("Rotulo", padre, texto, null, 0f, Color.white);
-        MarcaUdB.EstiloEtiqueta(t, MarcaUdB.InkMuted);
-        t.margin = new Vector4(MarcaUdB.Space1, MarcaUdB.Space2, 0f, 0f);
-        LayoutElement le = t.gameObject.AddComponent<LayoutElement>();
-        le.minHeight = le.preferredHeight = 28f;
+        bool conResumen = !string.IsNullOrEmpty(p.resumen) && p.resumen.Trim().Length > 0;
+        bool conDescripcion = !string.IsNullOrEmpty(p.descripcion) && p.descripcion.Trim().Length > 0;
+        if (!conResumen && !conDescripcion) return;
+
+        RectTransform caja = Caja("QueEs");
+        float x = MarcaUdB.Space1;
+        float w = ancho - x * 2f;
+        float y = 0f;
+
+        if (conResumen)
+        {
+            TextMeshProUGUI t = Texto(caja, p.resumen.Trim(), MarcaUdB.Texto, MarcaUdB.CuerpoL, MarcaUdB.Ink);
+            y += Poner(t, x, y, w);
+        }
+        if (conDescripcion)
+        {
+            if (y > 0f) y += MarcaUdB.Space3;
+            TextMeshProUGUI t = Texto(caja, p.descripcion.Trim(), MarcaUdB.Texto, MarcaUdB.Cuerpo, MarcaUdB.Ink);
+            t.paragraphSpacing = 12f;
+            y += Poner(t, x, y, w);
+        }
+        FijarAlto(caja, y);
     }
 
-    // Fila con acento: mismo tratamiento que el lugar actual del menú, sin ser botón
-    void FilaLista(RectTransform padre, string texto, Color zona)
+    // --- 2. Lista: rótulo y filas del alto de su texto, con acento del color de la zona
+    void BloqueLista(FichaInfo p, Color zona, float ancho)
     {
-        Image fila = CrearImagen("Fila", padre, MarcaUdB.Tenue(zona, 0.08f));
-        fila.raycastTarget = false;
-        MarcaUdB.Redondear(fila, MarcaUdB.RadiusMd);
-        HorizontalLayoutGroup hl = fila.gameObject.AddComponent<HorizontalLayoutGroup>();
-        hl.padding = new RectOffset((int)MarcaUdB.Space6, (int)MarcaUdB.Space4, (int)MarcaUdB.Space3, (int)MarcaUdB.Space3);
-        hl.childControlWidth = true;
-        hl.childControlHeight = true;
-        hl.childForceExpandWidth = true;
-        hl.childForceExpandHeight = false;
-        LayoutElement le = fila.gameObject.AddComponent<LayoutElement>();
-        le.minHeight = MarcaUdB.AreaTactil;
+        if (p.queEncuentras == null) return;
 
-        Image acento = CrearImagen("Acento", fila.transform, zona);
-        acento.raycastTarget = false;
-        LayoutElement la = acento.gameObject.AddComponent<LayoutElement>();
-        la.ignoreLayout = true;
-        RectTransform ra = (RectTransform)acento.transform;
-        ra.anchorMin = new Vector2(0f, 0f);
-        ra.anchorMax = new Vector2(0f, 1f);
-        ra.pivot = new Vector2(0f, 0.5f);
-        ra.sizeDelta = new Vector2(4f, -MarcaUdB.Space4);
-        ra.anchoredPosition = new Vector2(MarcaUdB.Space2, 0f);
-        MarcaUdB.Redondear(acento, 2f);
+        RectTransform caja = null;
+        float y = 0f;
+        const float respiro = 9f;                    // arriba y abajo del texto de cada fila
+        float xTexto = MarcaUdB.Space2 + 4f + MarcaUdB.Space3;   // margen + acento + separación
+        float wTexto = ancho - xTexto - MarcaUdB.Space3;
 
-        TextMeshProUGUI t = CrearTexto("Texto", fila.transform, texto, MarcaUdB.Texto, MarcaUdB.Cuerpo, MarcaUdB.Ink);
-        t.enableWordWrapping = true;
-        t.overflowMode = TextOverflowModes.Overflow;
-        t.alignment = TextAlignmentOptions.MidlineLeft;
+        foreach (string s in p.queEncuentras)
+        {
+            if (string.IsNullOrEmpty(s) || s.Trim().Length == 0) continue;
+
+            if (caja == null)
+            {
+                caja = Caja("Lista");
+                string encabezado = !string.IsNullOrEmpty(p.tituloLista) ? p.tituloLista
+                                  : (p.Tipo == TipoPuntoInfo.Edificio ? "Adentro encuentras" : "Aquí puedes");
+                y += Poner(Rotulo(caja, encabezado), MarcaUdB.Space1, y, ancho - MarcaUdB.Space1 * 2f);
+                y += MarcaUdB.Space2;
+            }
+            else
+            {
+                y += MarcaUdB.Space1;
+            }
+
+            Image fila = CrearImagen("Fila", caja, MarcaUdB.Tenue(zona, 0.08f));
+            fila.raycastTarget = false;
+            MarcaUdB.Redondear(fila, MarcaUdB.RadiusMd);
+            RectTransform rf = (RectTransform)fila.transform;
+
+            TextMeshProUGUI t = Texto(rf, s.Trim(), MarcaUdB.Texto, MarcaUdB.Cuerpo, MarcaUdB.Ink);
+            float altoTexto = Poner(t, xTexto, respiro, wTexto);
+            float altoFila = altoTexto + respiro * 2f;
+
+            Image acento = CrearImagen("Acento", rf, zona);
+            acento.raycastTarget = false;
+            RectTransform ra = (RectTransform)acento.transform;
+            ra.anchorMin = ra.anchorMax = ra.pivot = new Vector2(0f, 1f);
+            ra.anchoredPosition = new Vector2(MarcaUdB.Space2, -respiro + 1f);
+            ra.sizeDelta = new Vector2(4f, altoTexto - 2f);
+            MarcaUdB.Redondear(acento, 2f);
+
+            rf.anchorMin = rf.anchorMax = rf.pivot = new Vector2(0f, 1f);
+            rf.anchoredPosition = new Vector2(0f, -y);
+            rf.sizeDelta = new Vector2(ancho, altoFila);
+            y += altoFila;
+        }
+
+        if (caja != null) FijarAlto(caja, y);
     }
 
-    RectTransform Grupo(float espaciado)
+    // --- 3. Datos prácticos en una sola tarjeta: horario, ubicación y contacto, separados por una línea
+    void BloqueDatos(FichaInfo p, float ancho)
     {
-        GameObject go = new GameObject("Grupo", typeof(RectTransform), typeof(VerticalLayoutGroup));
+        string[] nombres = { "Horario", "Ubicación", "Contacto" };
+        string[] valores = { p.horario, p.ubicacion, p.contacto };
+
+        RectTransform tarjeta = null;
+        float relleno = MarcaUdB.Space3;
+        float w = ancho - relleno * 2f;
+        float y = relleno;
+
+        for (int i = 0; i < nombres.Length; i++)
+        {
+            string valor = valores[i];
+            if (string.IsNullOrEmpty(valor) || valor.Trim().Length == 0) continue;
+
+            if (tarjeta == null)
+            {
+                Image fondo = CrearImagen("Datos", contenido, MarcaUdB.Surface200);
+                fondo.raycastTarget = false;
+                MarcaUdB.Redondear(fondo, MarcaUdB.RadiusMd);
+                tarjeta = (RectTransform)fondo.transform;
+            }
+            else
+            {
+                // Línea divisoria entre un dato y el siguiente
+                y += MarcaUdB.Space3 - 2f;
+                Image linea = CrearImagen("Linea", tarjeta, MarcaUdB.Borde);
+                linea.raycastTarget = false;
+                RectTransform rl = (RectTransform)linea.transform;
+                rl.anchorMin = rl.anchorMax = rl.pivot = new Vector2(0f, 1f);
+                rl.anchoredPosition = new Vector2(relleno, -y);
+                rl.sizeDelta = new Vector2(w, 1f);
+                y += 1f + MarcaUdB.Space3 - 2f;
+            }
+
+            y += Poner(Rotulo(tarjeta, nombres[i]), relleno, y, w);
+            y += MarcaUdB.Space1;
+
+            // Cada medio de contacto (o cada franja del horario) en su propia línea
+            string texto = valor.Trim().Replace(" · ", "\n");
+            y += Poner(Texto(tarjeta, texto, MarcaUdB.Texto, MarcaUdB.Cuerpo, MarcaUdB.Ink), relleno, y, w);
+        }
+
+        if (tarjeta != null) FijarAlto(tarjeta, y + relleno);
+    }
+
+    // ------------------------------------------------------------------ piezas del contenido
+
+    RectTransform Caja(string nombre)
+    {
+        GameObject go = new GameObject(nombre, typeof(RectTransform));
         go.transform.SetParent(contenido, false);
-        VerticalLayoutGroup vl = go.GetComponent<VerticalLayoutGroup>();
-        vl.spacing = espaciado;
-        vl.childControlWidth = true;
-        vl.childControlHeight = true;
-        vl.childForceExpandWidth = true;
-        vl.childForceExpandHeight = false;
         return (RectTransform)go.transform;
     }
 
-    void Dato(string nombre, string valor)
+    // Fija el alto de un bloque: la lista de la ficha lo apila con ese alto exacto
+    static void FijarAlto(RectTransform caja, float alto)
     {
-        if (string.IsNullOrEmpty(valor) || valor.Trim().Length == 0) return;
-        RectTransform g = Grupo(0f);
-        Rotulo(g, nombre);
-        Parrafo(g, valor.Trim(), MarcaUdB.Cuerpo);
+        LayoutElement le = caja.gameObject.GetComponent<LayoutElement>();
+        if (le == null) le = caja.gameObject.AddComponent<LayoutElement>();
+        le.minHeight = le.preferredHeight = Mathf.Ceil(alto);
+    }
+
+    TextMeshProUGUI Texto(RectTransform padre, string texto, TMP_FontAsset fuente, float tamano, Color color)
+    {
+        TextMeshProUGUI t = CrearTexto("Texto", padre, texto, fuente, tamano, color);
+        t.enableWordWrapping = true;
+        t.overflowMode = TextOverflowModes.Overflow;
+        t.alignment = TextAlignmentOptions.TopLeft;
+        t.lineSpacing = 10f; // interlineado holgado para leer en pantalla
+        return t;
+    }
+
+    TextMeshProUGUI Rotulo(RectTransform padre, string texto)
+    {
+        TextMeshProUGUI t = CrearTexto("Rotulo", padre, texto, null, 0f, Color.white);
+        MarcaUdB.EstiloEtiqueta(t, MarcaUdB.InkMuted);
+        t.enableWordWrapping = true;
+        t.overflowMode = TextOverflowModes.Overflow;
+        t.alignment = TextAlignmentOptions.TopLeft;
+        return t;
+    }
+
+    // Coloca un texto a «y» desde arriba con el ancho dado y devuelve el alto que ocupa
+    static float Poner(TextMeshProUGUI t, float x, float y, float ancho)
+    {
+        float alto = Mathf.Ceil(t.GetPreferredValues(t.text, ancho, 0f).y);
+        RectTransform rt = (RectTransform)t.transform;
+        rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0f, 1f);
+        rt.anchoredPosition = new Vector2(x, -y);
+        rt.sizeDelta = new Vector2(ancho, alto);
+        return alto;
     }
 
     // ------------------------------------------------------------------ construcción

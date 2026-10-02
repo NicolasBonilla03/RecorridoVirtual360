@@ -7398,7 +7398,7 @@ MonoBehaviour:
       skybox: {fileID: 2100000, guid: 52b7c90e2dd85ba418b7028d600d1ba7, type: 2}
     - nombre: Aula Magna
       skybox: {fileID: 2100000, guid: feb0eb9954d03544eaa624f12075be6c, type: 2}
-    - nombre: Segunda entrada (lado del Coliseo)
+    - nombre: Segunda entrada del Edificio 12 (Coliseo)
       skybox: {fileID: 2100000, guid: a83741989d1affc439e5af252bcc3122, type: 2}
     - nombre: Edificio 10
       skybox: {fileID: 2100000, guid: 60a1b89bcb62c6041a886a125bbbe84e, type: 2}
@@ -7548,13 +7548,13 @@ MonoBehaviour:
       skybox: {fileID: 2100000, guid: 3b3cba6f7293bfe468f94ec9d3b76b61, type: 2}
     - nombre: Edificio 11
       skybox: {fileID: 2100000, guid: 6c7135d84ac6b04458873d289da0f4b1, type: 2}
-    - nombre: Pasillo del Edificio 2
+    - nombre: Edificio 2
       skybox: {fileID: 2100000, guid: ec9882a524ecafb4c865669ef17034ad, type: 2}
     - nombre: Pasaje junto al Edificio Central
       skybox: {fileID: 2100000, guid: 08c4b41587fd27a40b325c884c4d8b8b, type: 2}
     - nombre: "Escaleras al Edificio M\xFAltiple"
       skybox: {fileID: 2100000, guid: ad83991c391e1504784f3f217b6b833c, type: 2}
-    - nombre: El Domo
+    - nombre: Escaleras del Edificio 4
       skybox: {fileID: 2100000, guid: 42a58c65b54a7464abfa0b328a5c637b, type: 2}
   ocultarBotonOriginal: 1
 --- !u!1 &532899370
@@ -8023,7 +8023,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1997387499}
   m_HandleRect: {fileID: 1997387498}
   m_Direction: 2
-  m_Value: 1
+  m_Value: 0
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -22874,7 +22874,7 @@ MonoBehaviour:
   nombreEdificio: Edificio 12
   dependencias:
   - Entrada del Edificio 12
-  - Segunda entrada (lado del Coliseo)
+  - Segunda entrada del Edificio 12 (Coliseo)
   - Aula Magna
   - Centro Multimedios (CEMM)
   - "Cl\xEDnica de Simulaci\xF3n"

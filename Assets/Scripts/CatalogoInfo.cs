@@ -62,11 +62,23 @@ public class NombreOficial
     public string nombre;
 }
 
+/// <summary>Pregunta predefinida del guía virtual, con su respuesta.</summary>
+[System.Serializable]
+public class PreguntaGuia
+{
+    public string categoria;
+    public string pregunta;
+    public string respuesta;
+    public string ficha;    // id de la ficha con más información (opcional)
+    public string skybox;   // foto 360 a la que lleva «Llévame» (opcional)
+}
+
 [System.Serializable]
 public class ArchivoCatalogo
 {
     public FichaInfo[] fichas;
     public NombreOficial[] nombres;
+    public PreguntaGuia[] preguntas;
 }
 
 /// <summary>
@@ -95,6 +107,7 @@ public static class CatalogoInfo
                 if (datos == null) datos = new ArchivoCatalogo();
                 if (datos.fichas == null) datos.fichas = new FichaInfo[0];
                 if (datos.nombres == null) datos.nombres = new NombreOficial[0];
+                if (datos.preguntas == null) datos.preguntas = new PreguntaGuia[0];
             }
             return datos;
         }
@@ -105,6 +118,7 @@ public static class CatalogoInfo
 
     public static IEnumerable<FichaInfo> Fichas { get { return Datos.fichas; } }
     public static IEnumerable<NombreOficial> Nombres { get { return Datos.nombres; } }
+    public static PreguntaGuia[] Preguntas { get { return Datos.preguntas; } }
 
     public static FichaInfo PorId(string id)
     {

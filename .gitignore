@@ -112,3 +112,8 @@ InitTestScene*.unity*
 
 # Auto-generated cache in Assets folder
 /[Aa]ssets/[Ss]ceneDependencyCache*
+
+# Recorrido UdB 360: build web y fotos 360 generadas (se regeneran con Recorrido > Web y movil)
+/[Bb]uilds/
+/[Aa]ssets/StreamingAssets/Panoramas/
+/[Aa]ssets/StreamingAssets/Panoramas.meta

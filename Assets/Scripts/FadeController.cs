@@ -32,6 +32,9 @@ public class FadeController : MonoBehaviour
     [Tooltip("Muestra también la pantalla blanca con el logotipo en cada cambio de escena, en lugar del fundido de color.")]
     public bool logoEnTransiciones = false;
 
+    /// <summary>Se avisa cuando un cambio de lugar no se pudo completar (no llegó la foto 360).</summary>
+    public static event System.Action AlFallarTransicion;
+
     // true mientras hay un fundido en curso (evita transiciones encimadas por doble clic)
     public bool EnTransicion { get; private set; }
 
@@ -131,6 +134,11 @@ public class FadeController : MonoBehaviour
 
         // Unos cuadros para que la primera panorámica y la interfaz ya estén dibujadas debajo
         for (int i = 0; i < 3; i++) yield return null;
+
+        // En la web, la primera foto 360 se descarga aquí, detrás de la pantalla de carga
+        yield return CargadorPanoramas.Preparar(RenderSettings.skybox);
+        yield return null;
+
         while (Time.realtimeSinceStartup - inicio < duracionMinimaCarga) yield return null;
 
         float a = 1f;
@@ -149,8 +157,10 @@ public class FadeController : MonoBehaviour
     {
         EnTransicion = true;
 
-        Color color = logoEnTransiciones ? Color.white : colorFade;
-        MostrarPantalla(color, 0f, logoEnTransiciones);
+        // Si la foto hay que descargarla (web), se muestra la pantalla blanca con el logotipo mientras llega
+        bool conLogo = logoEnTransiciones || CargadorPanoramas.Necesita(nuevoSkybox);
+        Color color = conLogo ? Color.white : colorFade;
+        MostrarPantalla(color, 0f, conLogo);
 
         float alpha = 0f;
         while (alpha < 1f)
@@ -161,7 +171,27 @@ public class FadeController : MonoBehaviour
         }
         PonerAlfa(1f);
 
+        yield return CargadorPanoramas.Preparar(nuevoSkybox);
+        if (!CargadorPanoramas.UltimaCargaOk)
+        {
+            // Sin conexión o archivo faltante: se queda en el lugar actual y se devuelven sus botones
+            if (GestorTeleports.Instance != null)
+                GestorTeleports.Instance.ActivarTeleports(RenderSettings.skybox);
+            if (AlFallarTransicion != null) AlFallarTransicion();
+
+            while (alpha > 0f)
+            {
+                alpha -= Paso() * velocidadFade;
+                PonerAlfa(Mathf.Clamp01(alpha));
+                yield return null;
+            }
+            Ocultar();
+            EnTransicion = false;
+            yield break;
+        }
+
         RenderSettings.skybox = nuevoSkybox;
+        CargadorPanoramas.Liberar(nuevoSkybox);
         DynamicGI.UpdateEnvironment();
 
         // Activar TPs correspondientes al nuevo skybox

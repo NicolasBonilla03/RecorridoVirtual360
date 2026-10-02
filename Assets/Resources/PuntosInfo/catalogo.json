@@ -50,7 +50,8 @@
       "fuente": "https://www.uniboyaca.edu.co/sites/default/files/2020-10/Documento%20General%20de%20Infraestructura%20oct%202020-1.pdf (2020) ; páginas de cada dependencia",
       "skyboxes": [
         "Skybox_EntradaPrincipalCentral",
-        "Skybox_InteriorPrincipalCentral"
+        "Skybox_InteriorPrincipalCentral",
+        "Skybox_PrincipalPremium"
       ]
     },
     {
@@ -150,7 +151,9 @@
       "textoEnlace": "",
       "fuente": "https://www.uniboyaca.edu.co/es/micrositio/politeca",
       "skyboxes": [
-        "Skybox_PoliDentro"
+        "Skybox_PoliDentro",
+        "Skybox_FueraPoli",
+        "Skybox_Politecaabajo"
       ]
     },
     {
@@ -519,7 +522,9 @@
       "textoEnlace": "",
       "fuente": "https://www.uniboyaca.edu.co/sites/default/files/2020-10/Documento%20General%20de%20Infraestructura%20oct%202020-1.pdf (2020)",
       "skyboxes": [
-        "Skybox_Entrada3"
+        "Skybox_Entrada3",
+        "Skybox_Interior3Inicio",
+        "Skybox_Masdl3"
       ]
     },
     {
@@ -599,6 +604,32 @@
       "skyboxes": [
         "Skybox_EntradaUPrincipal"
       ]
+    },
+    {
+      "id": "edificio-4",
+      "titulo": "Edificio 4",
+      "tipo": "Edificio",
+      "zona": "Exteriores",
+      "resumen": "Edificio de laboratorios de la Facultad de Ciencias e Ingeniería.",
+      "descripcion": "",
+      "tituloLista": "Adentro encuentras",
+      "queEncuentras": [
+        "Laboratorio de física",
+        "Laboratorios de histología y de biología molecular",
+        "Laboratorio de mecánica de suelos",
+        "Laboratorio de procesos",
+        "Sala de cirugía experimental"
+      ],
+      "horario": "",
+      "ubicacion": "",
+      "contacto": "",
+      "enlace": "",
+      "textoEnlace": "",
+      "fuente": "https://www.uniboyaca.edu.co/sites/default/files/2020-10/Documento%20General%20de%20Infraestructura%20oct%202020-1.pdf (2020)",
+      "skyboxes": [
+        "Skybox_Pal4",
+        "Skybox_EscalerasAMultiple"
+      ]
     }
   ],
   "nombres": [
@@ -608,7 +639,7 @@
     },
     {
       "skybox": "Skybox_Entrada12 2",
-      "nombre": "Segunda entrada (lado del Coliseo)"
+      "nombre": "Segunda entrada del Edificio 12 (Coliseo)"
     },
     {
       "skybox": "Skybox_Entradadentro12",
@@ -728,7 +759,7 @@
     },
     {
       "skybox": "Skybox_Pasillodl2",
-      "nombre": "Pasillo del Edificio 2"
+      "nombre": "Edificio 2"
     },
     {
       "skybox": "Skybox_Pasajecentralderecha",
@@ -740,7 +771,7 @@
     },
     {
       "skybox": "Skybox_Pal4",
-      "nombre": "El Domo"
+      "nombre": "Escaleras del Edificio 4"
     },
     {
       "skybox": "Skybox_Censei",
@@ -753,6 +784,216 @@
     {
       "skybox": "Skybox_Entrada3",
       "nombre": "Entrada del Edificio 3"
+    },
+    {
+      "skybox": "Skybox_EscalerasAMultiple",
+      "nombre": "Escaleras hacia el Edificio 4"
+    },
+    {
+      "skybox": "Skybox_saladnose",
+      "nombre": "Sala de doctorados"
+    },
+    {
+      "skybox": "Skybox_FueraPoli",
+      "nombre": "Entrada de la Politeca"
+    },
+    {
+      "skybox": "Skybox_Papoliteca",
+      "nombre": "Escaleras a la Politeca"
+    },
+    {
+      "skybox": "Skybox_Politecaabajo",
+      "nombre": "Politeca, nivel inferior"
+    },
+    {
+      "skybox": "Skybox_Interior3Inicio",
+      "nombre": "Interior del Edificio 3"
+    },
+    {
+      "skybox": "Skybox_Masdl3",
+      "nombre": "Fondo del Edificio 3"
+    },
+    {
+      "skybox": "Skybox_tunelalmultiple",
+      "nombre": "Túnel al Edificio Múltiple"
+    },
+    {
+      "skybox": "Skybox_PrincipalPremium",
+      "nombre": "Frente del Edificio Central"
+    },
+    {
+      "skybox": "Skybox360",
+      "nombre": "Inicio · Vista general"
+    }
+  ],
+  "preguntas": [
+    {
+      "categoria": "Servicios para ti",
+      "pregunta": "¿Dónde está la biblioteca?",
+      "respuesta": "La biblioteca se llama Politeca y queda en el Edificio Múltiple 1, piso 2. Atiende de lunes a viernes de 8:00 a. m. a 7:00 p. m. y los sábados de 8:00 a. m. a 1:00 p. m.",
+      "ficha": "politeca",
+      "skybox": "Skybox_PoliDentro"
+    },
+    {
+      "categoria": "Servicios para ti",
+      "pregunta": "¿Dónde pido cita médica o apoyo psicológico?",
+      "respuesta": "En la División de Bienestar Universitario: Edificio Central, piso 1, oficina 104. Atiende de lunes a viernes de 7:30 a. m. a 8:00 p. m. y los sábados de 8:00 a. m. a 11:30 a. m.",
+      "ficha": "bienestar",
+      "skybox": "Skybox_Bienestar"
+    },
+    {
+      "categoria": "Servicios para ti",
+      "pregunta": "¿Dónde me inscribo en deportes o en grupos culturales?",
+      "respuesta": "También en Bienestar Universitario, en el primer piso del Edificio Central. Allí manejan deportes, cultura, tutorías e inclusión.",
+      "ficha": "bienestar",
+      "skybox": "Skybox_Bienestar"
+    },
+    {
+      "categoria": "Servicios para ti",
+      "pregunta": "Quiero hacer un intercambio, ¿a dónde voy?",
+      "respuesta": "A la División de Relaciones Interinstitucionales e Internacionales: Edificio Central, piso 5, oficina 508. También puedes escribir a intercambiosudeb@uniboyaca.edu.co.",
+      "ficha": "relaciones-internacionales",
+      "skybox": "Skybox_Diri"
+    },
+    {
+      "categoria": "Servicios para ti",
+      "pregunta": "¿Dónde hay cafetería?",
+      "respuesta": "La cafetería central está en el primer piso del Edificio Central. El Edificio 12 tiene además una cafetería panorámica en el último piso.",
+      "ficha": "cafeteria-central",
+      "skybox": "Skybox_Cafeteria"
+    },
+    {
+      "categoria": "Servicios para ti",
+      "pregunta": "Tengo una idea de negocio, ¿quién me ayuda?",
+      "respuesta": "El Centro de Innovación Origen, en la plazoleta del Edificio Central. Presta su laboratorio de creatividad y acompaña emprendimientos. Atiende de lunes a viernes de 8:00 a. m. a 12:00 m. y de 2:00 a 6:00 p. m.",
+      "ficha": "origen",
+      "skybox": "Skybox_Origen"
+    },
+    {
+      "categoria": "Servicios para ti",
+      "pregunta": "¿Dónde puedo grabar o producir contenido audiovisual?",
+      "respuesta": "En el Centro Multimedios (CEMM), Edificio 12, piso 4. Tiene estudios de televisión, audio y fotografía, y allí funciona UdB Virtual Radio.",
+      "ficha": "cemm",
+      "skybox": "Skybox_Piso4-12"
+    },
+    {
+      "categoria": "Servicios para ti",
+      "pregunta": "¿Dónde practico deporte?",
+      "respuesta": "En las canchas multifuncionales del campus y en el coliseo cubierto. La Universidad tiene además un campus deportivo de más de 36.000 m². Deportes: extensión 15101.",
+      "ficha": "canchas",
+      "skybox": "Skybox_Canchas"
+    },
+    {
+      "categoria": "Oficinas",
+      "pregunta": "¿Dónde queda la Rectoría?",
+      "respuesta": "En el tercer piso del Edificio Central. Teléfono 608 745 0000, extensión 15300.",
+      "ficha": "rectoria",
+      "skybox": "Skybox_Rectoria"
+    },
+    {
+      "categoria": "Oficinas",
+      "pregunta": "¿Dónde queda Bienestar Universitario?",
+      "respuesta": "En el Edificio Central, piso 1, oficina 104.",
+      "ficha": "bienestar",
+      "skybox": "Skybox_Bienestar"
+    },
+    {
+      "categoria": "Oficinas",
+      "pregunta": "¿Qué es CENSEI?",
+      "respuesta": "Es el Centro de Simulación Gerencial y Operación Bursátil, para los estudiantes de Ciencias Administrativas y Contables. Queda en el segundo piso del Edificio Central.",
+      "ficha": "censei",
+      "skybox": "Skybox_Censei"
+    },
+    {
+      "categoria": "Oficinas",
+      "pregunta": "¿Dónde queda la Clínica de Simulación?",
+      "respuesta": "En el Edificio 12. Es un centro de práctica simulada para los programas de salud y atiende de lunes a viernes de 8:00 a. m. a 12:00 m. y de 2:00 a 6:00 p. m.",
+      "ficha": "clinica-simulacion",
+      "skybox": "Skybox_Piso5-12 2"
+    },
+    {
+      "categoria": "Auditorios y salones",
+      "pregunta": "¿Dónde es el Aula Magna?",
+      "respuesta": "En el Edificio 12. Tiene capacidad para 855 personas en dos niveles; allí se hacen grados, seminarios y eventos.",
+      "ficha": "aula-magna",
+      "skybox": "Skybox_AulaMagna"
+    },
+    {
+      "categoria": "Auditorios y salones",
+      "pregunta": "¿Dónde es el Paraninfo?",
+      "respuesta": "En el Edificio Múltiple 1. Tiene capacidad para 512 personas, cabina de traducción simultánea y concha acústica.",
+      "ficha": "paraninfo",
+      "skybox": "Skybox_Paraninfo"
+    },
+    {
+      "categoria": "Auditorios y salones",
+      "pregunta": "¿Qué es el Salón Fundadores?",
+      "respuesta": "Un salón del quinto piso del Edificio Central para actos solemnes. Lleva el nombre de los fundadores de la Universidad: el Dr. Osmar Correal Cabral y la Dra. Rosita Cuervo Payeras.",
+      "ficha": "salon-fundadores",
+      "skybox": "Skybox_Saladefundadores"
+    },
+    {
+      "categoria": "Auditorios y salones",
+      "pregunta": "¿Dónde hay exposiciones de arte?",
+      "respuesta": "En el Hall de Artes, primer piso del Edificio Central.",
+      "ficha": "hall-de-artes",
+      "skybox": "Skybox_HalldeArtes"
+    },
+    {
+      "categoria": "Edificios",
+      "pregunta": "¿Qué hay en el Edificio Central?",
+      "respuesta": "Es el corazón administrativo: Bienestar, cafetería central y Hall de Artes en el piso 1; CENSEI en el 2; Rectoría en el 3; vicerrectorías en el 4; y Relaciones Internacionales y el Salón Fundadores en el 5.",
+      "ficha": "edificio-central",
+      "skybox": "Skybox_EntradaPrincipalCentral"
+    },
+    {
+      "categoria": "Edificios",
+      "pregunta": "¿Qué hay en el Edificio 12?",
+      "respuesta": "El Aula Magna, el Centro Multimedios en el piso 4, la Clínica de Simulación, aulas de posgrado y una cafetería panorámica en el último piso.",
+      "ficha": "edificio-12",
+      "skybox": "Skybox_Entrada12"
+    },
+    {
+      "categoria": "Edificios",
+      "pregunta": "¿Qué hay en los Edificios Múltiple?",
+      "respuesta": "En el Múltiple 1 están la Politeca, el Paraninfo y la División de Tecnología. En el Múltiple 2, los laboratorios, el Centro de Informática y el Auditorio 1.",
+      "ficha": "edificio-multiple",
+      "skybox": "Skybox_Piso1multiple"
+    },
+    {
+      "categoria": "Edificios",
+      "pregunta": "¿Dónde está la Facultad de Ciencias de la Salud?",
+      "respuesta": "En el Edificio 1, con sus laboratorios y el Centro de Atención en Fisioterapia.",
+      "ficha": "edificio-1",
+      "skybox": "Skybox_Edificio1"
+    },
+    {
+      "categoria": "Edificios",
+      "pregunta": "¿Dónde están Arquitectura, Diseño y Ciencias Administrativas?",
+      "respuesta": "En el Edificio 3. En el primer piso funciona también el Centro de Asesoría en Vivienda y Urbanismo (CAVIUR).",
+      "ficha": "edificio-3",
+      "skybox": "Skybox_Entrada3"
+    },
+    {
+      "categoria": "Edificios",
+      "pregunta": "¿Dónde están Derecho y Comunicación Social?",
+      "respuesta": "En el Edificio 2: Derecho y Ciencias Políticas en el piso 2 y Comunicación Social en el piso 3.",
+      "ficha": "edificio-2",
+      "skybox": "Skybox_Pasillodl2"
+    },
+    {
+      "categoria": "Sobre la Universidad",
+      "pregunta": "¿Cuál es la dirección y el teléfono de la Universidad?",
+      "respuesta": "Carrera 2ª Este No. 64-169, Tunja. Teléfono 608 745 0000. Correo: atencionudeb@uniboyaca.edu.co.",
+      "ficha": "campus-tunja",
+      "skybox": "Skybox_EntradaUPrincipal"
+    },
+    {
+      "categoria": "Sobre la Universidad",
+      "pregunta": "¿Qué significa el búho?",
+      "respuesta": "Es el símbolo de la Universidad: representa la sabiduría, la visión y la búsqueda del conocimiento. En el logosímbolo va dentro de la U.",
+      "ficha": "el-buho",
+      "skybox": "Skybox_Buho"
     }
   ]
 }
