@@ -4,18 +4,30 @@ using UnityEngine.EventSystems;
 /// <summary>
 /// Mirar alrededor en la escena 360°.
 /// Escritorio: arrastrar con clic izquierdo y rueda del mouse para acercar.
-/// Móvil: arrastrar con un dedo y pellizcar con dos para acercar.
+/// Móvil: arrastrar con un dedo (con suavizado e inercia) y pellizcar con dos para acercar.
 /// El zoom es acotado: acercarse no rompe la sensación de estar parado en un punto.
 /// </summary>
 public class CameraController : MonoBehaviour
 {
-    [Header("Configuración")]
+    [Header("Mouse")]
     public float sensibilidad = 2f;
-    public float suavizado = 5f;
+    [Tooltip("Qué tan rápido la cámara alcanza el objetivo con el mouse.")]
+    public float suavizado = 8f;
 
     [Header("Táctil")]
-    [Tooltip("1 = la imagen sigue al dedo exactamente.")]
-    public float sensibilidadTactil = 1f;
+    [Tooltip("1 = la imagen sigue al dedo exactamente (estilo Google Maps). Súbelo para girar más rápido.")]
+    public float sensibilidadTactil = 1.3f;
+    [Tooltip("Marcado: la vista gira hacia donde mueves el dedo. Desmarcado: la imagen sigue al dedo (como Google Maps).")]
+    public bool invertirTactilX = true;
+    [Tooltip("Marcado: deslizar hacia arriba mira hacia arriba. Desmarcado: deslizar hacia arriba mira hacia abajo.")]
+    public bool invertirTactilY = true;
+    [Tooltip("Qué tan directo responde al dedo. Más alto = más pegado al dedo; más bajo = más suave.")]
+    public float suavizadoTactil = 20f;
+
+    [Header("Inercia táctil")]
+    public bool usarInercia = true;
+    [Tooltip("Qué tan rápido se frena al soltar el dedo. Más alto = se detiene antes.")]
+    public float frenadoInercia = 4f;
 
     [Header("Zoom acotado")]
     [Tooltip("Cuánto se puede acercar como máximo (0.5 = la mitad del campo de visión).")]
@@ -28,22 +40,24 @@ public class CameraController : MonoBehaviour
     [Tooltip("Tope del campo de visión vertical en pantallas verticales (evita la deformación de un gran angular).")]
     public float fovVerticalMaximo = 95f;
 
+    // Rotación objetivo; la cámara real la persigue con suavizado
     private float rotacionX = 0f;
     private float rotacionY = 0f;
-    private bool rotando = false;
+
+    private bool rotando = false;           // arrastre con mouse
+    private bool arrastreTactil = false;
+    private bool usandoTactil = false;
+    private bool animando = false;          // la cámara aún no alcanzó el objetivo
+    private Vector2 velocidad = Vector2.zero; // grados/segundo, para la inercia
 
     private Camera cam;
     private float fovBase;      // el campo de visión de la cámara al iniciar
     private float zoom = 1f;    // 1 = sin zoom
-    private bool arrastreTactil = false;
     private float ultimoAspecto = -1f;
 
     void Start()
     {
-        // Inicializar con la rotación actual de la cámara
-        rotacionX = transform.eulerAngles.y;
-        rotacionY = transform.eulerAngles.x;
-        if (rotacionY > 180f) rotacionY -= 360f;
+        SincronizarDesdeTransform();
 
         cam = GetComponent<Camera>();
         if (cam == null) cam = Camera.main;
@@ -62,33 +76,64 @@ public class CameraController : MonoBehaviour
             rotando = false;
             return;
         }
-        arrastreTactil = false;
 
-        // Activar rotación solo con clic izquierdo mantenido,
+        arrastreTactil = false;
+        AplicarInercia();
+        ManejarMouse();
+    }
+
+    void LateUpdate()
+    {
+        if (!animando) return;
+
+        Quaternion objetivo = Quaternion.Euler(rotacionY, rotacionX, 0f);
+        float k = usandoTactil ? suavizadoTactil : suavizado;
+        float t = 1f - Mathf.Exp(-k * Time.deltaTime); // independiente de los FPS
+        transform.rotation = Quaternion.Slerp(transform.rotation, objetivo, t);
+
+        if (Quaternion.Angle(transform.rotation, objetivo) < 0.01f)
+        {
+            transform.rotation = objetivo;
+            animando = false;
+        }
+    }
+
+    // Si otro script movió la cámara mientras estaba quieta, se retoma desde ahí
+    void SincronizarDesdeTransform()
+    {
+        rotacionX = transform.eulerAngles.y;
+        rotacionY = transform.eulerAngles.x;
+        if (rotacionY > 180f) rotacionY -= 360f;
+    }
+
+    void Girar(float dX, float dY)
+    {
+        rotacionX += dX;
+        // Limitar la rotación vertical para no dar vuelta completa
+        rotacionY = Mathf.Clamp(rotacionY + dY, -80f, 80f);
+        animando = true;
+    }
+
+    // ---------------- Mouse ----------------
+
+    void ManejarMouse()
+    {
+        // Rotación solo con clic izquierdo mantenido,
         // y no cuando el clic empieza sobre un botón o sobre el menú
         if (Input.GetMouseButtonDown(0) && !PunteroSobreUI())
+        {
             rotando = true;
+            if (!animando) SincronizarDesdeTransform();
+        }
 
         if (Input.GetMouseButtonUp(0))
             rotando = false;
 
         if (rotando)
         {
-            float mouseX = Input.GetAxis("Mouse X") * sensibilidad;
-            float mouseY = Input.GetAxis("Mouse Y") * sensibilidad;
-
-            rotacionX -= mouseX;
-            rotacionY += mouseY;
-
-            // Limitar la rotación vertical para no dar vuelta completa
-            rotacionY = Mathf.Clamp(rotacionY, -80f, 80f);
-
-            Quaternion rotacionObjetivo = Quaternion.Euler(rotacionY,
-                                                           rotacionX,
-                                                           0f);
-            transform.rotation = Quaternion.Lerp(transform.rotation,
-                                                  rotacionObjetivo,
-                                                  Time.deltaTime * suavizado);
+            usandoTactil = false;
+            Girar(-Input.GetAxis("Mouse X") * sensibilidad,
+                   Input.GetAxis("Mouse Y") * sensibilidad);
         }
 
         // Rueda del mouse: zoom acotado
@@ -97,30 +142,55 @@ public class CameraController : MonoBehaviour
             CambiarZoom(-rueda * pasoRueda);
     }
 
+    // ---------------- Táctil ----------------
+
     void ManejarTactil()
     {
+        usandoTactil = true;
+
         if (Input.touchCount == 1)
         {
             Touch t = Input.GetTouch(0);
 
             // Un arrastre que empieza sobre un botón o el menú no mueve la cámara
             if (t.phase == TouchPhase.Began)
-                arrastreTactil = !SobreUI(t.fingerId);
-
-            if (arrastreTactil && t.phase == TouchPhase.Moved && cam != null)
             {
-                // Grados por píxel según el campo de visión: la imagen sigue al dedo
+                arrastreTactil = !SobreUI(t.fingerId);
+                velocidad = Vector2.zero;
+                if (arrastreTactil && !animando) SincronizarDesdeTransform();
+            }
+
+            if (!arrastreTactil || cam == null) return;
+
+            if (t.phase == TouchPhase.Moved)
+            {
+                // Grados por píxel según el campo de visión
                 float gradosPorPixel = cam.fieldOfView / Mathf.Max(1f, Screen.height) * sensibilidadTactil;
-                rotacionX -= t.deltaPosition.x * gradosPorPixel;
-                rotacionY += t.deltaPosition.y * gradosPorPixel;
-                rotacionY = Mathf.Clamp(rotacionY, -80f, 80f);
-                transform.rotation = Quaternion.Euler(rotacionY, rotacionX, 0f);
+
+                // Sin invertir = la imagen sigue al dedo. Invertido = la vista va hacia donde va el dedo.
+                float signoX = invertirTactilX ? 1f : -1f;
+                float signoY = invertirTactilY ? -1f : 1f;
+
+                float dX = signoX * t.deltaPosition.x * gradosPorPixel;
+                float dY = signoY * t.deltaPosition.y * gradosPorPixel;
+                Girar(dX, dY);
+
+                // Velocidad para la inercia (promediada para evitar tirones)
+                float dt = Mathf.Max(Time.deltaTime, 0.0001f);
+                velocidad = Vector2.Lerp(velocidad, new Vector2(dX, dY) / dt, 0.4f);
+            }
+            else if (t.phase == TouchPhase.Stationary)
+            {
+                // Si se queda quieto antes de soltar, no hay inercia
+                velocidad = Vector2.zero;
             }
         }
         else if (Input.touchCount >= 2)
         {
             // Pellizcar: zoom acotado. Al levantar un dedo no se retoma el arrastre hasta el próximo toque
             arrastreTactil = false;
+            velocidad = Vector2.zero;
+
             Touch a = Input.GetTouch(0);
             Touch b = Input.GetTouch(1);
             float distancia = Vector2.Distance(a.position, b.position);
@@ -129,6 +199,21 @@ public class CameraController : MonoBehaviour
                 CambiarZoom((anterior - distancia) / Mathf.Max(1f, Screen.height));
         }
     }
+
+    // Sigue girando un poco después de soltar el dedo y se va frenando
+    void AplicarInercia()
+    {
+        if (!usarInercia || velocidad.sqrMagnitude < 0.25f)
+        {
+            velocidad = Vector2.zero;
+            return;
+        }
+
+        Girar(velocidad.x * Time.deltaTime, velocidad.y * Time.deltaTime);
+        velocidad *= Mathf.Exp(-frenadoInercia * Time.deltaTime);
+    }
+
+    // ---------------- Zoom y campo de visión ----------------
 
     void CambiarZoom(float delta)
     {
@@ -158,6 +243,8 @@ public class CameraController : MonoBehaviour
         }
         cam.fieldOfView = vertical * zoom;
     }
+
+    // ---------------- UI ----------------
 
     bool PunteroSobreUI()
     {
