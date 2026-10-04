@@ -26,7 +26,7 @@ RenderSettings:
   m_AmbientIntensity: 1
   m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 2100000, guid: 0ad46ca4051514b42b7722710339cc1c, type: 2}
+  m_SkyboxMaterial: {fileID: 2100000, guid: de63823fbe77a4b47a1c241ea02c2f60, type: 2}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -3046,6 +3046,11 @@ MonoBehaviour:
   sensibilidad: 2
   suavizado: 100
   sensibilidadTactil: 1
+  invertirTactilX: 1
+  invertirTactilY: 1
+  suavizadoTactil: 20
+  usarInercia: 1
+  frenadoInercia: 4
   zoomMaximo: 0.55
   pasoRueda: 0.08
   fovHorizontalVertical: 75
@@ -8023,7 +8028,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1997387499}
   m_HandleRect: {fileID: 1997387498}
   m_Direction: 2
-  m_Value: 0
+  m_Value: 1
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -12621,12 +12626,12 @@ PrefabInstance:
     - target: {fileID: 7303604040598248428, guid: 49009d45f8993d549931f24c5122ac68,
         type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: -1279.8633
+      value: -1280.0767
       objectReference: {fileID: 0}
     - target: {fileID: 7303604040598248428, guid: 49009d45f8993d549931f24c5122ac68,
         type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -720
+      value: -720.1835
       objectReference: {fileID: 0}
     - target: {fileID: 7303604040598248428, guid: 49009d45f8993d549931f24c5122ac68,
         type: 3}
