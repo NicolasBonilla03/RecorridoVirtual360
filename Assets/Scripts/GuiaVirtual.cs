@@ -49,6 +49,14 @@ public class GuiaVirtual : MonoBehaviour
         public bool abierta;
     }
 
+    // Una categoría plegable: su encabezado y las preguntas que contiene
+    class Grupo
+    {
+        public RectTransform flecha;
+        public bool abierto;
+        public readonly List<Fila> filas = new List<Fila>();
+    }
+
     RectTransform canvasRT;
     RectTransform zonaSegura;
     RectTransform panelRaiz;
@@ -60,7 +68,9 @@ public class GuiaVirtual : MonoBehaviour
     ScrollRect scroll;
     RectTransform contenidoLista;
     float anchoLista;
+    string lugarLista;
     readonly List<Fila> filas = new List<Fila>();
+    readonly List<Grupo> grupos = new List<Grupo>();
 
     bool abierto;
     Coroutine animacion;
@@ -119,9 +129,13 @@ public class GuiaVirtual : MonoBehaviour
 
         abierto = true;
         velo.SetActive(true);
+        // El panel se activa antes de armar la lista: un texto inactivo no se puede medir bien
+        panelRaiz.gameObject.SetActive(true);
         Acomodar();
         LlenarLista();
         ActualizarLlevame();
+        Reacomodar();
+        if (scroll != null) scroll.verticalNormalizedPosition = 1f;
         Animar(-MargenPanel);
     }
 
@@ -179,7 +193,7 @@ public class GuiaVirtual : MonoBehaviour
             panelRaiz.anchoredPosition = new Vector2(abierto ? -MargenPanel : ancho + 80f, 0f);
 
         // Si cambió el ancho con la guía abierta, las filas se vuelven a medir
-        if (abierto && contenidoLista != null) { LlenarLista(); ActualizarLlevame(); }
+        if (abierto && contenidoLista != null) { LlenarLista(); ActualizarLlevame(); Reacomodar(); }
     }
 
     // ------------------------------------------------------------------ preguntas
@@ -189,14 +203,59 @@ public class GuiaVirtual : MonoBehaviour
         bool abrir = !f.abierta;
         foreach (Fila otra in filas) Poner(otra, false);
         Poner(f, abrir);
+        Reacomodar();
         if (abrir) RegistroUso.Anotar("guia", f.datos.pregunta);
+    }
+
+    void AlternarGrupo(Grupo g)
+    {
+        PonerGrupo(g, !g.abierto);
+        Reacomodar();
+    }
+
+    void PonerGrupo(Grupo g, bool abierto)
+    {
+        g.abierto = abierto;
+        if (g.flecha != null) g.flecha.localEulerAngles = new Vector3(0f, 0f, abierto ? -90f : 0f);
+        foreach (Fila f in g.filas)
+        {
+            f.boton.gameObject.SetActive(abierto);
+            if (!abierto) Poner(f, false);
+        }
+    }
+
+    // Recalcula de inmediato las posiciones de la lista, para que nada quede encima de otra cosa
+    void Reacomodar()
+    {
+        if (contenidoLista == null) return;
+        Canvas.ForceUpdateCanvases();
+        LayoutRebuilder.ForceRebuildLayoutImmediate(contenidoLista);
     }
 
     void Poner(Fila f, bool abierta)
     {
+        bool estabaAbierta = f.abierta;
         f.abierta = abierta;
         f.respuesta.SetActive(abierta);
+        if (abierta && !estabaAbierta && AnimacionesUI.Activas && isActiveAndEnabled)
+            StartCoroutine(Aparecer(f.respuesta));
         f.flecha.localEulerAngles = new Vector3(0f, 0f, abierta ? -90f : 0f);
+    }
+
+    // La respuesta entra con un fundido corto
+    IEnumerator Aparecer(GameObject objeto)
+    {
+        CanvasGroup grupo = objeto.GetComponent<CanvasGroup>();
+        if (grupo == null) grupo = objeto.AddComponent<CanvasGroup>();
+        float t = 0f;
+        const float duracion = 0.18f;
+        while (t < 1f && objeto != null && grupo != null)
+        {
+            t += Time.unscaledDeltaTime / duracion;
+            grupo.alpha = Mathf.Clamp01(t);
+            yield return null;
+        }
+        if (grupo != null) grupo.alpha = 1f;
     }
 
     // «Llévame» no aparece si ya estás en ese lugar
@@ -451,12 +510,16 @@ public class GuiaVirtual : MonoBehaviour
         return Mathf.Max(120f, panelRaiz.sizeDelta.x - MarcaUdB.Space4 * 2f - MarcaUdB.Space3);
     }
 
-    // Las filas se arman con el ancho real del panel: cada una mide lo que mide su texto
+    // Las filas se arman con el ancho real del panel: cada una mide lo que mide su texto.
+    // Arriba van las preguntas del lugar donde está el usuario; debajo, el resto, en categorías plegables.
     void LlenarLista()
     {
         float ancho = AnchoLista();
-        if (filas.Count > 0 && Mathf.Abs(ancho - anchoLista) < 0.5f) return;
+        Material cielo = RenderSettings.skybox;
+        string lugar = cielo != null ? cielo.name : "";
+        if (filas.Count > 0 && Mathf.Abs(ancho - anchoLista) < 0.5f && lugar == lugarLista) return;
         anchoLista = ancho;
+        lugarLista = lugar;
 
         for (int i = contenidoLista.childCount - 1; i >= 0; i--)
         {
@@ -465,23 +528,115 @@ public class GuiaVirtual : MonoBehaviour
             Destroy(viejo);
         }
         filas.Clear();
+        grupos.Clear();
 
-        string categoria = null;
+        // 1. Preguntas de este lugar (o de este edificio)
+        FichaInfo aqui = CatalogoInfo.PorSkybox(cielo);
+        List<PreguntaGuia> locales = new List<PreguntaGuia>();
         foreach (PreguntaGuia p in CatalogoInfo.Preguntas)
         {
             if (p == null || string.IsNullOrEmpty(p.pregunta)) continue;
-            if (p.categoria != categoria && !string.IsNullOrEmpty(p.categoria))
-            {
-                categoria = p.categoria;
-                TextMeshProUGUI rot = CrearTexto("Categoria", contenidoLista, categoria, null, 0f, Color.white);
-                MarcaUdB.EstiloEtiqueta(rot, MarcaUdB.InkMuted);
-                rot.margin = new Vector4(MarcaUdB.Space1, 0f, 0f, 0f);
-                rot.alignment = TextAlignmentOptions.BottomLeft;
-                LayoutElement lr = rot.gameObject.AddComponent<LayoutElement>();
-                lr.minHeight = lr.preferredHeight = filas.Count == 0 ? 20f : 30f;
-            }
-            CrearFila(contenidoLista, p, ancho);
+            if (EsDeAqui(p, lugar, aqui)) locales.Add(p);
         }
+
+        if (locales.Count > 0)
+        {
+            Rotulo("Sobre este lugar", true);
+            foreach (PreguntaGuia p in locales) CrearFila(contenidoLista, p, ancho);
+            Rotulo("Más preguntas", false);
+        }
+
+        // 2. El resto, por categoría. Cada categoría se abre al tocarla.
+        Grupo grupo = null;
+        string categoria = null;
+        foreach (PreguntaGuia p in CatalogoInfo.Preguntas)
+        {
+            if (p == null || string.IsNullOrEmpty(p.pregunta) || locales.Contains(p)) continue;
+
+            string c = string.IsNullOrEmpty(p.categoria) ? "Otras preguntas" : p.categoria;
+            if (grupo == null || c != categoria)
+            {
+                categoria = c;
+                grupo = CrearGrupo(c, ContarCategoria(c, locales), ancho);
+            }
+            int antes = filas.Count;
+            CrearFila(contenidoLista, p, ancho);
+            if (filas.Count > antes) grupo.filas.Add(filas[filas.Count - 1]);
+        }
+
+        // Si no hay preguntas del lugar (por ejemplo en la vista de inicio), se abre la primera categoría
+        for (int i = 0; i < grupos.Count; i++)
+            PonerGrupo(grupos[i], locales.Count == 0 && i == 0);
+    }
+
+    static bool EsDeAqui(PreguntaGuia p, string lugar, FichaInfo aqui)
+    {
+        if (!string.IsNullOrEmpty(p.skybox) && p.skybox == lugar) return true;
+        if (aqui == null || string.IsNullOrEmpty(p.ficha)) return false;
+        if (p.ficha == aqui.id) return true;
+
+        // Mismo edificio o zona que el lugar actual
+        FichaInfo f = CatalogoInfo.PorId(p.ficha);
+        return f != null && !string.IsNullOrEmpty(aqui.zona) && f.zona == aqui.zona;
+    }
+
+    static int ContarCategoria(string categoria, List<PreguntaGuia> excluidas)
+    {
+        int n = 0;
+        foreach (PreguntaGuia p in CatalogoInfo.Preguntas)
+        {
+            if (p == null || string.IsNullOrEmpty(p.pregunta) || excluidas.Contains(p)) continue;
+            string c = string.IsNullOrEmpty(p.categoria) ? "Otras preguntas" : p.categoria;
+            if (c == categoria) n++;
+        }
+        return n;
+    }
+
+    void Rotulo(string texto, bool primero)
+    {
+        TextMeshProUGUI rot = CrearTexto("Rotulo", contenidoLista, texto, null, 0f, Color.white);
+        MarcaUdB.EstiloEtiqueta(rot, MarcaUdB.InkMuted);
+        rot.margin = new Vector4(MarcaUdB.Space1, 0f, 0f, 0f);
+        rot.alignment = TextAlignmentOptions.BottomLeft;
+        LayoutElement lr = rot.gameObject.AddComponent<LayoutElement>();
+        lr.minHeight = lr.preferredHeight = primero ? 20f : 34f;
+    }
+
+    // Encabezado de categoría: nombre, cantidad de preguntas y flecha
+    Grupo CrearGrupo(string nombre, int cantidad, float ancho)
+    {
+        Grupo g = new Grupo();
+
+        Image img;
+        Button cabecera = CrearBoton("Categoria", contenidoLista, out img);
+        MarcaUdB.Redondear(img, MarcaUdB.RadiusMd);
+        MarcaUdB.ColoresBoton(cabecera, MarcaUdB.Surface200, MarcaUdB.Surface300, MarcaUdB.Surface300);
+        LayoutElement le = cabecera.gameObject.AddComponent<LayoutElement>();
+        le.minHeight = le.preferredHeight = AltoControl;
+
+        TextMeshProUGUI texto = CrearTexto("Texto", cabecera.transform, nombre, MarcaUdB.TextoBold, MarcaUdB.UIControl, MarcaUdB.Ink);
+        Estirar((RectTransform)texto.transform, MarcaUdB.Space4, MarcaUdB.Space8 + 36f);
+
+        TextMeshProUGUI cuenta = CrearTexto("Cantidad", cabecera.transform, cantidad.ToString(), MarcaUdB.Texto, MarcaUdB.CuerpoS, MarcaUdB.InkMuted);
+        cuenta.alignment = TextAlignmentOptions.Center;
+        RectTransform rc = (RectTransform)cuenta.transform;
+        rc.anchorMin = rc.anchorMax = new Vector2(1f, 0.5f);
+        rc.pivot = new Vector2(0.5f, 0.5f);
+        rc.sizeDelta = new Vector2(32f, 24f);
+        rc.anchoredPosition = new Vector2(-MarcaUdB.Space5 - 30f, 0f);
+
+        TextMeshProUGUI flecha = CrearTexto("Flecha", cabecera.transform, ">", MarcaUdB.TextoBold, MarcaUdB.UIControl, MarcaUdB.Ink);
+        flecha.alignment = TextAlignmentOptions.Center;
+        RectTransform rtF = (RectTransform)flecha.transform;
+        rtF.anchorMin = rtF.anchorMax = new Vector2(1f, 0.5f);
+        rtF.pivot = new Vector2(0.5f, 0.5f);
+        rtF.sizeDelta = new Vector2(24f, 24f);
+        rtF.anchoredPosition = new Vector2(-MarcaUdB.Space5, 0f);
+        g.flecha = rtF;
+
+        cabecera.onClick.AddListener(() => AlternarGrupo(g));
+        grupos.Add(g);
+        return g;
     }
 
     void CrearFila(RectTransform padre, PreguntaGuia p, float ancho)

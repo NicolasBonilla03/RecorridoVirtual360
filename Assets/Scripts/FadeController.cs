@@ -138,6 +138,7 @@ public class FadeController : MonoBehaviour
         // En la web, la primera foto 360 se descarga aquí, detrás de la pantalla de carga
         yield return CargadorPanoramas.Preparar(RenderSettings.skybox);
         yield return null;
+        AdelantarVecinos();
 
         while (Time.realtimeSinceStartup - inicio < duracionMinimaCarga) yield return null;
 
@@ -153,12 +154,25 @@ public class FadeController : MonoBehaviour
         EnTransicion = false;
     }
 
+    // Fotos de los lugares vecinos, en segundo plano. Primero el que queda hacia donde mira el usuario.
+    void AdelantarVecinos()
+    {
+        Material actual = RenderSettings.skybox;
+        System.Collections.Generic.List<Material> vecinos = GestorTeleports.Instance != null
+            ? GestorTeleports.Instance.Vecinos(actual, Camera.main)
+            : null;
+        CargadorPanoramas.AdelantarVecinos(this, actual, vecinos);
+    }
+
     IEnumerator TransicionSkybox(Material nuevoSkybox)
     {
         EnTransicion = true;
 
         // Si la foto hay que descargarla (web), se muestra la pantalla blanca con el logotipo mientras llega
         bool conLogo = logoEnTransiciones || CargadorPanoramas.Necesita(nuevoSkybox);
+
+        // La descarga empieza ya, mientras la pantalla se tapa
+        CargadorPanoramas.Adelantar(this, nuevoSkybox);
         Color color = conLogo ? Color.white : colorFade;
         MostrarPantalla(color, 0f, conLogo);
 
@@ -191,7 +205,6 @@ public class FadeController : MonoBehaviour
         }
 
         RenderSettings.skybox = nuevoSkybox;
-        CargadorPanoramas.Liberar(nuevoSkybox);
         DynamicGI.UpdateEnvironment();
 
         // Activar TPs correspondientes al nuevo skybox
@@ -200,6 +213,9 @@ public class FadeController : MonoBehaviour
 
         // Un cuadro con la pantalla tapada: ahí se sube la panorámica nueva a la tarjeta de video
         yield return null;
+
+        // Mientras el usuario mira este lugar, se descargan los lugares a los que puede ir desde aquí
+        AdelantarVecinos();
 
         while (alpha > 0f)
         {

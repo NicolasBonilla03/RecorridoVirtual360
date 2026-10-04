@@ -129,6 +129,10 @@ public class POIController : MonoBehaviour
         BloquearResto();
         presionFuera = false;
         dedoPresion = -1;
+
+        // En la web: se adelantan las fotos de los primeros lugares de este menú
+        if (FadeController.Instance != null && skyboxes != null)
+            CargadorPanoramas.AdelantarAlFrente(FadeController.Instance, skyboxes, 3);
     }
 
     public void CerrarMenu()
