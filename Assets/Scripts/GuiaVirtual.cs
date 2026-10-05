@@ -616,6 +616,7 @@ public class GuiaVirtual : MonoBehaviour
 
         TextMeshProUGUI texto = CrearTexto("Texto", cabecera.transform, nombre, MarcaUdB.TextoBold, MarcaUdB.UIControl, MarcaUdB.Ink);
         Estirar((RectTransform)texto.transform, MarcaUdB.Space4, MarcaUdB.Space8 + 36f);
+        MarcaUdB.AjustarACaja(texto, false, 0.8f);
 
         TextMeshProUGUI cuenta = CrearTexto("Cantidad", cabecera.transform, cantidad.ToString(), MarcaUdB.Texto, MarcaUdB.CuerpoS, MarcaUdB.InkMuted);
         cuenta.alignment = TextAlignmentOptions.Center;
@@ -759,6 +760,7 @@ public class GuiaVirtual : MonoBehaviour
         TextMeshProUGUI t = CrearTexto("Texto", b.transform, texto, MarcaUdB.TextoBold, MarcaUdB.UIControl, MarcaUdB.InkInverso);
         t.alignment = TextAlignmentOptions.Center;
         Estirar((RectTransform)t.transform, MarcaUdB.Space2, MarcaUdB.Space2);
+        MarcaUdB.AjustarACaja(t, false, 0.75f);
         return b;
     }
 

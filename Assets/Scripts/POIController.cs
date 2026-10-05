@@ -76,7 +76,17 @@ public class POIController : MonoBehaviour
             TextMeshProUGUI texto = boton.GetComponentInChildren
                                         <TextMeshProUGUI>();
             if (texto != null)
+            {
                 texto.text = dependencias[i];
+                // Los nombres largos caben en la fila: dos renglones y letra más pequeña si hace falta
+                texto.margin = new Vector4(16f, 5f, 16f, 5f);
+                MarcaUdB.AjustarACaja(texto, true, 0.58f);
+            }
+
+            // Filas un poco más altas: el texto respira y los nombres de dos renglones caben
+            LayoutElement alto = boton.GetComponent<LayoutElement>();
+            if (alto != null && alto.preferredHeight < 58f)
+                alto.minHeight = alto.preferredHeight = 58f;
 
             int indice = i;
             boton.GetComponent<Button>().onClick.AddListener(() =>

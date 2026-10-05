@@ -241,6 +241,18 @@ public class MenuDesplegable : MonoBehaviour
         IrA(skyboxInicio);
     }
 
+    /// <summary>Vuelve a la vista de inicio (lo usa el logotipo de la cabecera).</summary>
+    public static void IrInicio()
+    {
+        if (instancia != null) instancia.IrAlInicio();
+    }
+
+    /// <summary>true si el usuario ya está en la vista de inicio.</summary>
+    public static bool EnInicio
+    {
+        get { return instancia != null && instancia.skyboxInicio != null && RenderSettings.skybox == instancia.skyboxInicio; }
+    }
+
     void MostrarControles(bool visibles)
     {
         botonMenu.SetActive(visibles);
@@ -714,6 +726,7 @@ public class MenuDesplegable : MonoBehaviour
         Colocar((RectTransform)titulo.transform, pad + 30f, 28f, pad, 56f);
 
         textoUbicacionPanel = CrearTexto("Ubicacion", rtE, "", MarcaUdB.Texto, MarcaUdB.CuerpoS, new Color(1f, 1f, 1f, 0.80f));
+        MarcaUdB.AjustarACaja(textoUbicacionPanel, false, 0.8f);
         Colocar((RectTransform)textoUbicacionPanel.transform, pad + 62f, 20f, pad, pad);
 
         Image imgCerrar;
@@ -764,6 +777,7 @@ public class MenuDesplegable : MonoBehaviour
         TextMeshProUGUI textoEnc = CrearTexto("Texto", encabezado.transform, ed.nombreEdificio + conteo,
             MarcaUdB.TextoBold, MarcaUdB.UIControl, tinta);
         Estirar((RectTransform)textoEnc.transform, MarcaUdB.Space5, MarcaUdB.Space8);
+        MarcaUdB.AjustarACaja(textoEnc, false, 0.8f);
 
         TextMeshProUGUI chevron = CrearTexto("Flecha", encabezado.transform, ">", MarcaUdB.TextoBold, MarcaUdB.UIControl, tinta);
         chevron.alignment = TextAlignmentOptions.Center;
@@ -800,6 +814,8 @@ public class MenuDesplegable : MonoBehaviour
                 fila.acento = CrearAcento(fila.boton.transform, s.zona, AltoPunto);
                 fila.texto = CrearTexto("Texto", fila.boton.transform, p.nombre, MarcaUdB.Texto, MarcaUdB.Cuerpo, MarcaUdB.Ink);
                 Estirar((RectTransform)fila.texto.transform, MarcaUdB.Space6, MarcaUdB.Space4);
+                // Nombres largos: hasta dos renglones dentro de la fila antes de recortar
+                MarcaUdB.AjustarACaja(fila.texto, true, 0.78f);
                 MarcarPunto(fila, s.zona, false);
 
                 Material destino = p.skybox;

@@ -231,7 +231,31 @@ public class AplicarMarcaUdB : MonoBehaviour
             rtBarra.anchoredPosition = new Vector2(-MarcaUdB.Space1, rtBarra.anchoredPosition.y);
         }
         foreach (ScrollRect sr in panel.GetComponentsInChildren<ScrollRect>(true))
+        {
             sr.verticalScrollbarSpacing = MarcaUdB.Space2;
+
+            // La lista ocupa exactamente el ancho visible: antes era más ancha que su ventana y las
+            // filas quedaban cortadas a los lados y debajo de la barra
+            RectTransform cont = sr.content;
+            if (cont != null)
+            {
+                cont.anchorMin = new Vector2(0f, 1f);
+                cont.anchorMax = new Vector2(1f, 1f);
+                cont.pivot = new Vector2(0.5f, 1f);
+                cont.sizeDelta = new Vector2(0f, cont.sizeDelta.y);
+                cont.anchoredPosition = new Vector2(0f, cont.anchoredPosition.y);
+
+                VerticalLayoutGroup vl = cont.GetComponent<VerticalLayoutGroup>();
+                if (vl != null)
+                {
+                    vl.padding = new RectOffset(6, 6, 4, 8);
+                    vl.spacing = 6f;
+                    vl.childControlWidth = true;
+                    vl.childForceExpandWidth = true;
+                }
+                LayoutRebuilder.MarkLayoutForRebuild(cont);
+            }
+        }
 
         // Área de la lista: sin velo propio, el vidrio del panel ya aísla la lectura
         foreach (ScrollRect sr in panel.GetComponentsInChildren<ScrollRect>(true))
@@ -243,7 +267,24 @@ public class AplicarMarcaUdB : MonoBehaviour
         // Textos: tinta; el título (el que no está dentro de un botón) va en la tinta del edificio
         Color tinta = MarcaUdB.TintaLegible(zona);
         foreach (TMP_Text t in panel.GetComponentsInChildren<TMP_Text>(true))
-            t.color = t.GetComponentInParent<Button>() == null ? tinta : MarcaUdB.Ink;
+        {
+            bool enBoton = t.GetComponentInParent<Button>() != null;
+            t.color = enBoton ? MarcaUdB.Ink : tinta;
+
+            // Ningún texto se sale de su caja: los nombres largos se parten en dos renglones
+            // y se encogen lo necesario dentro de la fila; el título se encoge en un renglón
+            bool enLista = t.GetComponentInParent<ScrollRect>() != null;
+            if (enLista)
+            {
+                t.margin = new Vector4(16f, 5f, 16f, 5f);
+                MarcaUdB.AjustarACaja(t, true, 0.58f);
+            }
+            else if (!enBoton)
+            {
+                t.margin = new Vector4(16f, 0f, 16f, 0f);
+                MarcaUdB.AjustarACaja(t, false, 0.6f);
+            }
+        }
     }
 
     // ------------------------------------------------------------------ cabecera, nota legal y pista
@@ -253,7 +294,7 @@ public class AplicarMarcaUdB : MonoBehaviour
         if (!mostrarCabecera && !mostrarVigilada && !mostrarPista) return;
 
         GameObject goCanvas = new GameObject("MarcaUdB_UI",
-            typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler));
+            typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
         goCanvas.transform.SetParent(transform, false);
         Canvas canvas = goCanvas.GetComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
@@ -270,7 +311,7 @@ public class AplicarMarcaUdB : MonoBehaviour
         zonaSegura.SetParent(canvasRT, false);
         MarcaUdB.AjustarAreaSegura(zonaSegura);
 
-        // Sin GraphicRaycaster: nada de esto bloquea el arrastre de la cámara ni los toques
+        // Solo el logotipo recibe clics (vuelve al inicio); el resto no bloquea el arrastre de la cámara
         if (mostrarCabecera) ConstruirCabecera();
         if (mostrarVigilada) ConstruirVigilada();
         if (mostrarPista) ConstruirPista();
@@ -317,6 +358,7 @@ public class AplicarMarcaUdB : MonoBehaviour
         cabecera = (RectTransform)placa.transform;
         cabecera.anchorMin = cabecera.anchorMax = cabecera.pivot = new Vector2(1f, 1f);
         MarcaUdB.Redondear(placa, MarcaUdB.RadiusLg);
+        HacerBotonDeInicio(placa);
 
         if (logotipoUsado != null)
         {
@@ -324,6 +366,8 @@ public class AplicarMarcaUdB : MonoBehaviour
             logo = CrearImagen("Logotipo", cabecera, Color.white);
             logo.sprite = logotipoUsado;
             logo.preserveAspect = true;
+            // El fondo blanco del archivo toma el color de la placa (también al pasar el cursor)
+            MarcaUdB.LogoSobreFondo(logo);
             RectTransform rl = (RectTransform)logo.transform;
             rl.anchorMin = rl.anchorMax = rl.pivot = new Vector2(0.5f, 0.5f);
             DimensionarLogo();
@@ -365,6 +409,79 @@ public class AplicarMarcaUdB : MonoBehaviour
             sombraCabecera = (RectTransform)sombra.transform;
             desfaseSombra = sombraCabecera.anchoredPosition - cabecera.anchoredPosition;
         }
+    }
+
+    // El logotipo funciona como botón «Ir al inicio». Al pasar el cursor la placa se matiza apenas,
+    // aparece el filete rojo de la marca y una pista debajo; todo entra y sale con el mismo fundido.
+    void HacerBotonDeInicio(Image placa)
+    {
+        Color normal = placa.color;
+        placa.raycastTarget = true;
+        Button boton = placa.gameObject.AddComponent<Button>();
+        boton.targetGraphic = placa;
+        Navigation nav = boton.navigation;
+        nav.mode = Navigation.Mode.None;
+        boton.navigation = nav;
+        MarcaUdB.ColoresBoton(boton, normal, MarcaUdB.Surface200, MarcaUdB.Surface300);
+
+        boton.onClick.AddListener(IrAlInicioDesdeLogo);
+
+        // Realce: un solo grupo para el filete y la pista, así se funden juntos
+        GameObject goRealce = new GameObject("Realce", typeof(RectTransform), typeof(CanvasGroup));
+        RectTransform realce = (RectTransform)goRealce.transform;
+        realce.SetParent(placa.transform, false);
+        realce.anchorMin = Vector2.zero;
+        realce.anchorMax = Vector2.one;
+        realce.offsetMin = Vector2.zero;
+        realce.offsetMax = Vector2.zero;
+        CanvasGroup grupo = goRealce.GetComponent<CanvasGroup>();
+        grupo.alpha = 0f;
+        grupo.blocksRaycasts = false;
+        grupo.interactable = false;
+
+        // Filete rojo de la marca, centrado en el borde inferior de la placa
+        Image filete = CrearImagen("Filete", realce, MarcaUdB.Rojo);
+        RectTransform rf = (RectTransform)filete.transform;
+        rf.anchorMin = rf.anchorMax = new Vector2(0.5f, 0f);
+        rf.pivot = new Vector2(0.5f, 0f);
+        rf.sizeDelta = new Vector2(40f, 3f);
+        rf.anchoredPosition = new Vector2(0f, 5f);
+        MarcaUdB.Redondear(filete, 1.5f);
+
+        // Pista «Ir al inicio» bajo la placa, alineada a la derecha
+        const string texto = "Ir al inicio";
+        float alto = 30f;
+        Image chip = CrearImagen("PistaInicio", realce, new Color(MarcaUdB.Negro.r, MarcaUdB.Negro.g, MarcaUdB.Negro.b, 0.92f));
+        RectTransform rc = (RectTransform)chip.transform;
+        rc.anchorMin = rc.anchorMax = new Vector2(1f, 0f);
+        rc.pivot = new Vector2(1f, 1f);
+        rc.anchoredPosition = new Vector2(0f, -MarcaUdB.Space2);
+
+        TMP_Text t = CrearTexto("Texto", rc, texto);
+        MarcaUdB.Estilo(t, MarcaUdB.TextoBold, MarcaUdB.CuerpoS, MarcaUdB.InkInverso);
+        t.alignment = TextAlignmentOptions.Center;
+        RectTransform rt = (RectTransform)t.transform;
+        rt.anchorMin = Vector2.zero;
+        rt.anchorMax = Vector2.one;
+        rt.offsetMin = Vector2.zero;
+        rt.offsetMax = Vector2.zero;
+
+        float ancho = Mathf.Ceil(t.GetPreferredValues(texto).x);
+        if (ancho < 4f) ancho = texto.Length * MarcaUdB.CuerpoS * 0.56f;
+        rc.sizeDelta = new Vector2(ancho + MarcaUdB.Space4 * 2f, alto);
+        MarcaUdB.Pildora(chip, alto);
+
+        placa.gameObject.AddComponent<PistaAlPasar>().pista = grupo;
+    }
+
+    void IrAlInicioDesdeLogo()
+    {
+        if (FadeController.Instance != null && FadeController.Instance.EnTransicion) return;
+        if (MenuDesplegable.EnInicio) return;
+        POIController.CerrarAbierto();
+        PanelInfo.CerrarSiAbierto();
+        GuiaVirtual.CerrarSiAbierta();
+        MenuDesplegable.IrInicio();
     }
 
     void DimensionarLogo()

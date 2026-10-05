@@ -74,6 +74,8 @@ public class PuntoInfo : MonoBehaviour
     const float RadioNombre = 9f;
     const float TamanoNombre = 24f;
     const float PuntoZona = 12f;
+    const float AnchoMaximoNombre = 440f;   // ancho máximo del texto del chip antes de pasar a dos renglones
+    const float RespiroVertical = 14f;      // aire arriba y abajo del texto dentro del chip
 
     GameObject visual;
     RectTransform circulo;
@@ -237,7 +239,7 @@ public class PuntoInfo : MonoBehaviour
             rtP.anchoredPosition = new Vector2(lado * (Diametro * 0.5f + 8f), 0f);
             MarcaUdB.Redondear(chip, RadioNombre);
 
-            float pad = 18f;
+            float pad = 22f;
             Image punto = CrearImagen("Zona", rtP, color);
             punto.raycastTarget = false;
             RectTransform rtZ = (RectTransform)punto.transform;
@@ -256,8 +258,27 @@ public class PuntoInfo : MonoBehaviour
             rtT.offsetMin = new Vector2(izquierda, 0f);
             rtT.offsetMax = new Vector2(-pad, 0f);
 
-            float ancho = Mathf.Ceil(texto.GetPreferredValues(nombre).x) + izquierda + pad;
-            rtP.sizeDelta = new Vector2(Mathf.Min(ancho, 560f), AltoNombre);
+            // El chip se ajusta al nombre, con aire alrededor del texto. Los nombres largos pasan
+            // a dos renglones y el chip crece en alto; el texto nunca se sale de su caja.
+            texto.enableWordWrapping = true;
+            Vector2 medida = texto.GetPreferredValues(nombre, AnchoMaximoNombre, 0f);
+            float anchoTexto = Mathf.Ceil(medida.x);
+            float altoTexto = Mathf.Ceil(medida.y);
+            // Si el texto aún no se puede medir (objeto inactivo), se estima por la cantidad de letras
+            if (anchoTexto < 4f || altoTexto < 4f)
+            {
+                float estimado = nombre.Length * TamanoNombre * 0.56f;
+                anchoTexto = Mathf.Min(estimado, AnchoMaximoNombre);
+                altoTexto = TamanoNombre * 1.25f * Mathf.Clamp(Mathf.Ceil(estimado / AnchoMaximoNombre), 1f, 2f);
+            }
+            // Holgura de ancho: evita que un redondeo parta el texto en un renglón más
+            anchoTexto = Mathf.Min(anchoTexto + 10f, AnchoMaximoNombre + 10f);
+            float altoChip = Mathf.Max(AltoNombre, altoTexto + RespiroVertical * 2f);
+            rtP.sizeDelta = new Vector2(anchoTexto + izquierda + pad, altoChip);
+            rtT.offsetMin = new Vector2(izquierda, RespiroVertical - 2f);
+            rtT.offsetMax = new Vector2(-pad, -(RespiroVertical - 2f));
+            // Seguro final: si aun así no cabe, se encoge un poco y termina en puntos suspensivos
+            MarcaUdB.AjustarACaja(texto, true, 0.8f);
 
             Button bNombre = chip.gameObject.AddComponent<Button>();
             bNombre.targetGraphic = chip;

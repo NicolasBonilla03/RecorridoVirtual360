@@ -315,6 +315,8 @@ public class FadeController : MonoBehaviour
             logo.sprite = logotipo;
             logo.preserveAspect = true;
             logo.raycastTarget = false;
+            // El fondo blanco del archivo se funde con el velo: logotipo y fondo aparecen y se van a la vez
+            MarcaUdB.LogoSobreFondo(logo);
             logoRT = (RectTransform)logo.transform;
             float proporcion = logotipo.rect.width > 0f ? logotipo.rect.height / logotipo.rect.width : 0.3f;
             logoRT.sizeDelta = new Vector2(AnchoLogo, AnchoLogo * proporcion);

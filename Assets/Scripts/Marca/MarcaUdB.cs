@@ -147,6 +147,23 @@ public static class MarcaUdB
         t.color = color;
     }
 
+    /// <summary>
+    /// Hace que un texto quepa siempre en su caja: se encoge hasta un mínimo y, si aun así no cabe,
+    /// termina en puntos suspensivos. Nunca se sale del contenedor. Se puede llamar varias veces.
+    /// </summary>
+    /// <param name="variasLineas">true: puede partirse en renglones dentro del alto de la caja.</param>
+    /// <param name="minimoRelativo">Tamaño mínimo como fracción del tamaño normal (0.6 = 60 %).</param>
+    public static void AjustarACaja(TMP_Text t, bool variasLineas, float minimoRelativo = 0.6f)
+    {
+        if (t == null) return;
+        float maximo = t.enableAutoSizing ? t.fontSizeMax : t.fontSize;
+        t.fontSizeMax = maximo;
+        t.fontSizeMin = Mathf.Max(8f, maximo * Mathf.Clamp(minimoRelativo, 0.3f, 1f));
+        t.enableAutoSizing = true;
+        t.enableWordWrapping = variasLineas;
+        t.overflowMode = TextOverflowModes.Ellipsis;
+    }
+
     /// <summary>Estilo «etiqueta»: 11 px, Lato 700, mayúsculas por estilo (no en el contenido), espaciado 0.09em.</summary>
     public static void EstiloEtiqueta(TMP_Text t, Color color)
     {
@@ -161,6 +178,33 @@ public static class MarcaUdB
 
     /// <summary>Identificador oficial horizontal a color (micrositio de marca UdB), sin modificar.</summary>
     public static Sprite LogotipoHorizontal { get { if (logotipoHorizontal == null) logotipoHorizontal = Resources.Load<Sprite>("MarcaUdB/Logotipos/Logo-UdB-Horizontal-a-Color"); return logotipoHorizontal; } }
+
+    // Material que multiplica el logotipo sobre su fondo: el blanco del archivo desaparece y la
+    // tinta se funde pareja con lo que tiene detrás. Si el sombreador no está, se usa el normal.
+    static Material materialLogo;
+    static bool materialLogoBuscado;
+    public static Material MaterialLogo
+    {
+        get
+        {
+            if (!materialLogoBuscado || (materialLogo == null && !materialLogoBuscado))
+            {
+                materialLogoBuscado = true;
+                Shader s = Resources.Load<Shader>("MarcaUdB/Shaders/UIMultiplicar");
+                if (s != null && s.isSupported) materialLogo = new Material(s);
+            }
+            return materialLogo;
+        }
+    }
+
+    /// <summary>Hace que el fondo blanco del logotipo tome el color de lo que tiene detrás.</summary>
+    public static void LogoSobreFondo(Image logo)
+    {
+        if (logo == null) return;
+        if (materialLogo == null) materialLogoBuscado = false; // se perdió al recargar: se vuelve a crear
+        Material m = MaterialLogo;
+        if (m != null) logo.material = m;
+    }
 
     public static Sprite Redondeado { get { if (redondeado == null) redondeado = Resources.Load<Sprite>(RutaSprites + "redondeado"); return redondeado; } }
     public static Sprite Hotspot { get { if (hotspot == null) hotspot = Resources.Load<Sprite>(RutaSprites + "hotspot"); return hotspot; } }

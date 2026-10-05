@@ -575,6 +575,7 @@ public class PanelInfo : MonoBehaviour
         textoZona.alignment = TextAlignmentOptions.MidlineLeft;
         textoZona.overflowMode = TextOverflowModes.Ellipsis;
         Estirar((RectTransform)textoZona.transform, MarcaUdB.Space5, MarcaUdB.Space4);
+        MarcaUdB.AjustarACaja(textoZona, false, 0.8f);
     }
 
     void ConstruirCuerpo(RectTransform panel)
@@ -646,6 +647,7 @@ public class PanelInfo : MonoBehaviour
 
         textoEnlace = CrearTexto("Texto", img.transform, "Más información", MarcaUdB.TextoBold, MarcaUdB.UIControl, MarcaUdB.InkInverso);
         Estirar((RectTransform)textoEnlace.transform, MarcaUdB.Space5, MarcaUdB.Space4);
+        MarcaUdB.AjustarACaja(textoEnlace, false, 0.75f);
         pie = img.gameObject;
         pie.SetActive(false);
     }
