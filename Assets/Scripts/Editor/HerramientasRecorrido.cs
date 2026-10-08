@@ -464,9 +464,23 @@ public static class HerramientasRecorrido
         // y con la pantalla de carga del recorrido (fondo blanco con el logotipo)
         PlayerSettings.SplashScreen.backgroundColor = Color.white;
         PlayerSettings.SplashScreen.unityLogoStyle = PlayerSettings.SplashScreen.UnityLogoStyle.DarkOnLight;
+
+        // «Made with Unity»: se pide quitarlo. Unity solo lo permite con licencia Pro, Plus o de estudiante;
+        // con la licencia Personal de esta versión lo vuelve a poner al construir. En ese caso se deja
+        // lo más discreto posible: sin animación y sin oscurecer el fondo.
+        bool licenciaPermite = Application.HasProLicense();
+        PlayerSettings.SplashScreen.show = false;
+        PlayerSettings.SplashScreen.showUnityLogo = false;
+        PlayerSettings.SplashScreen.animationMode = PlayerSettings.SplashScreen.AnimationMode.Static;
+        PlayerSettings.SplashScreen.overlayOpacity = 0f;
         AssetDatabase.SaveAssets();
 
+        string avisoUnity = licenciaPermite
+            ? "El aviso «Made with Unity» quedó desactivado."
+            : "El aviso «Made with Unity» NO se puede quitar con la licencia actual (Personal): Unity lo vuelve a poner al construir. Quedó sobre blanco y sin animación.";
+
         EditorUtility.DisplayDialog(Titulo,
+            avisoUnity + "\n\n" +
             "Listo: plantilla RecorridoUdB, compresión Gzip, respaldo de descompresión y pantalla de inicio sobre blanco.\n\n" +
             "Ahora usa «2. Construir para web»: genera las fotos 360 para computador y para celular " +
             "y arma la página en Builds/WebGL.", "OK");

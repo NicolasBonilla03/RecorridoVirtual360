@@ -27,6 +27,9 @@ public class GuiaVirtual : MonoBehaviour
     [Tooltip("Texto del botón flotante.")]
     public string textoBoton = "Guía";
 
+    [Tooltip("Mensaje del globo que invita a usar la guía.")]
+    public string textoBurbuja = "¿Buscas una oficina o un servicio? Pregúntame.";
+
     public string titulo = "¿En qué te ayudo?";
     public string subtitulo = "Toca una pregunta para ver la respuesta.";
 
@@ -36,6 +39,7 @@ public class GuiaVirtual : MonoBehaviour
     const float MargenAncho = MarcaUdB.Space8;
     const float AltoControl = 48f;
     const float AnchoBoton = 112f;
+    const float AltoBotonGuia = 52f;
     const float AnchoBarra = 8f;
 
     class Fila
@@ -65,6 +69,12 @@ public class GuiaVirtual : MonoBehaviour
     GameObject sombraBoton;
     RectTransform botonRT;
     Vector2 desfaseSombra;
+    Image halo;
+    RectTransform haloRT;
+    RectTransform burbujaRT;
+    CanvasGroup burbuja;
+    float anchoBotonGuia = AnchoBoton;
+    bool yaAbrioGuia;
     ScrollRect scroll;
     RectTransform contenidoLista;
     float anchoLista;
@@ -128,6 +138,7 @@ public class GuiaVirtual : MonoBehaviour
         PanelInfo.CerrarSiAbierto();
 
         abierto = true;
+        yaAbrioGuia = true;
         velo.SetActive(true);
         // El panel se activa antes de armar la lista: un texto inactivo no se puede medir bien
         panelRaiz.gameObject.SetActive(true);
@@ -185,6 +196,13 @@ public class GuiaVirtual : MonoBehaviour
         botonRT.anchoredPosition = new Vector2(-margen, compacto ? margen + 72f : margen);
         if (sombraBoton != null)
             ((RectTransform)sombraBoton.transform).anchoredPosition = botonRT.anchoredPosition + desfaseSombra;
+        if (haloRT != null) haloRT.anchoredPosition = botonRT.anchoredPosition;
+        if (burbujaRT != null)
+        {
+            float anchoB = Mathf.Min(250f, (canvasRT.rect.width > 0f ? canvasRT.rect.width : 400f) - margen * 2f);
+            burbujaRT.sizeDelta = new Vector2(anchoB, 64f);
+            burbujaRT.anchoredPosition = botonRT.anchoredPosition + new Vector2(0f, AltoBotonGuia + MarcaUdB.Space3);
+        }
 
         float disponible = zonaSegura.rect.width > 0f ? zonaSegura.rect.width : canvasRT.rect.width;
         float ancho = Mathf.Min(AnchoPanel, disponible - MargenPanel * 2f);
@@ -332,34 +350,51 @@ public class GuiaVirtual : MonoBehaviour
 
         ConstruirBoton();
         ConstruirPanel();
+        StartCoroutine(AnimarLlamado());
     }
 
-    // Botón flotante en negro institucional, como el de «Menú»
+    // Botón flotante en rojo institucional: es la entrada principal a la guía y debe verse a primera vista
     void ConstruirBoton()
     {
+        string etiqueta = string.IsNullOrEmpty(textoBoton) || textoBoton == "Guía" ? "Pregúntale al guía" : textoBoton;
+
+        // Halo que late detrás del botón hasta que el usuario abre la guía por primera vez
+        halo = CrearImagen("HaloGuia", zonaSegura, MarcaUdB.Rojo);
+        halo.raycastTarget = false;
+        haloRT = (RectTransform)halo.transform;
+        haloRT.anchorMin = haloRT.anchorMax = haloRT.pivot = new Vector2(1f, 0f);
+        MarcaUdB.Pildora(halo, AltoBotonGuia);
+
         Image img;
         Button boton = CrearBoton("BotonGuia", zonaSegura, out img);
         botonRT = (RectTransform)boton.transform;
         botonRT.anchorMin = botonRT.anchorMax = botonRT.pivot = new Vector2(1f, 0f);
-        botonRT.sizeDelta = new Vector2(AnchoBoton, AltoControl);
-        MarcaUdB.Redondear(img, MarcaUdB.RadiusMd);
-        MarcaUdB.ColoresBoton(boton, MarcaUdB.Negro, MarcaUdB.Hex("#3a3a36"), MarcaUdB.Hex("#4a4a45"));
+        MarcaUdB.Pildora(img, AltoBotonGuia);
+        MarcaUdB.ColoresBoton(boton, MarcaUdB.Rojo, MarcaUdB.RojoFuerte, MarcaUdB.RojoFuerte);
 
-        // Círculo blanco con «?»
+        // Círculo blanco con «?» en rojo
+        const float diametro = 30f;
         Image circulo = CrearImagen("Icono", botonRT, MarcaUdB.InkInverso);
         circulo.raycastTarget = false;
         RectTransform rc = (RectTransform)circulo.transform;
         rc.anchorMin = rc.anchorMax = new Vector2(0f, 0.5f);
         rc.pivot = new Vector2(0f, 0.5f);
-        rc.sizeDelta = new Vector2(22f, 22f);
-        rc.anchoredPosition = new Vector2(MarcaUdB.Space4, 0f);
-        MarcaUdB.Redondear(circulo, 11f);
-        TextMeshProUGUI signo = CrearTexto("Signo", rc, "?", MarcaUdB.TextoBold, MarcaUdB.UIControl, MarcaUdB.Negro);
+        rc.sizeDelta = new Vector2(diametro, diametro);
+        rc.anchoredPosition = new Vector2(MarcaUdB.Space3, 0f);
+        MarcaUdB.Redondear(circulo, diametro * 0.5f);
+        TextMeshProUGUI signo = CrearTexto("Signo", rc, "?", MarcaUdB.DisplayExtra, 20f, MarcaUdB.Rojo);
         signo.alignment = TextAlignmentOptions.Center;
         Estirar((RectTransform)signo.transform, 0f, 0f);
 
-        TextMeshProUGUI texto = CrearTexto("Texto", botonRT, textoBoton, MarcaUdB.TextoBold, MarcaUdB.UIControl, MarcaUdB.InkInverso);
-        Estirar((RectTransform)texto.transform, MarcaUdB.Space4 + 22f + MarcaUdB.Space2, MarcaUdB.Space2);
+        TextMeshProUGUI texto = CrearTexto("Texto", botonRT, etiqueta, MarcaUdB.TextoBold, MarcaUdB.UIControl + 1f, MarcaUdB.InkInverso);
+        texto.enableWordWrapping = false;
+        float izquierda = MarcaUdB.Space3 + diametro + MarcaUdB.Space3;
+        Estirar((RectTransform)texto.transform, izquierda, MarcaUdB.Space5);
+        float anchoTexto = Mathf.Ceil(texto.GetPreferredValues(etiqueta).x);
+        if (anchoTexto <= 1f) anchoTexto = etiqueta.Length * 9.5f;
+        anchoBotonGuia = Mathf.Max(AnchoBoton, izquierda + anchoTexto + MarcaUdB.Space5);
+        botonRT.sizeDelta = new Vector2(anchoBotonGuia, AltoBotonGuia);
+        haloRT.sizeDelta = botonRT.sizeDelta;
 
         boton.onClick.AddListener(Abrir);
         botonGuia = boton.gameObject;
@@ -370,6 +405,81 @@ public class GuiaVirtual : MonoBehaviour
             sombraBoton = sombra.gameObject;
             desfaseSombra = ((RectTransform)sombra.transform).anchoredPosition - botonRT.anchoredPosition;
         }
+        // Orden de dibujo: halo, sombra y botón
+        haloRT.SetSiblingIndex(0);
+
+        ConstruirBurbuja();
+    }
+
+    // Globo que invita a preguntar; aparece unos segundos al inicio y no vuelve después de abrir la guía
+    void ConstruirBurbuja()
+    {
+        Image fondo = CrearImagen("BurbujaGuia", zonaSegura, MarcaUdB.Surface100);
+        fondo.raycastTarget = false;
+        burbujaRT = (RectTransform)fondo.transform;
+        burbujaRT.anchorMin = burbujaRT.anchorMax = burbujaRT.pivot = new Vector2(1f, 0f);
+        MarcaUdB.Redondear(fondo, MarcaUdB.RadiusMd);
+        burbuja = fondo.gameObject.AddComponent<CanvasGroup>();
+        burbuja.alpha = 0f;
+        burbuja.blocksRaycasts = false;
+
+        Image filete = CrearImagen("Filete", burbujaRT, MarcaUdB.Rojo);
+        filete.raycastTarget = false;
+        RectTransform rf = (RectTransform)filete.transform;
+        rf.anchorMin = new Vector2(0f, 0f); rf.anchorMax = new Vector2(0f, 1f);
+        rf.pivot = new Vector2(0f, 0.5f);
+        rf.sizeDelta = new Vector2(4f, -MarcaUdB.Space3 * 2f);
+        rf.anchoredPosition = new Vector2(MarcaUdB.Space3, 0f);
+
+        TextMeshProUGUI t = CrearTexto("Texto", burbujaRT, textoBurbuja, MarcaUdB.TextoBold, MarcaUdB.UIControl, MarcaUdB.Ink);
+        t.enableWordWrapping = true;
+        Estirar((RectTransform)t.transform, MarcaUdB.Space3 + 4f + MarcaUdB.Space3, MarcaUdB.Space4);
+        burbujaRT.sizeDelta = new Vector2(250f, 64f);
+        MarcaUdB.SombraFlotante(burbujaRT);
+        burbujaRT.gameObject.SetActive(false);
+    }
+
+    IEnumerator AnimarLlamado()
+    {
+        yield return new WaitForSecondsRealtime(2.5f);
+        float inicio = Time.unscaledTime;
+        const float visible = 7f;
+        bool burbujaMostrada = false;
+
+        while (!yaAbrioGuia)
+        {
+            bool mostrar = botonGuia != null && botonGuia.activeInHierarchy;
+            float t = Time.unscaledTime - inicio;
+
+            // Halo: crece y se desvanece cada 2,4 s
+            if (halo != null)
+            {
+                halo.gameObject.SetActive(mostrar);
+                float f = (t % 2.4f) / 1.4f;
+                if (f <= 1f)
+                {
+                    float e = 1f - Mathf.Pow(1f - f, 2f);
+                    haloRT.localScale = new Vector3(1f + 0.18f * e, 1f + 0.45f * e, 1f);
+                    Color c = MarcaUdB.Rojo; c.a = 0.45f * (1f - f);
+                    halo.color = c;
+                }
+                else halo.color = new Color(0f, 0f, 0f, 0f);
+            }
+
+            // Globo: entra, se queda unos segundos y sale
+            if (burbuja != null)
+            {
+                bool dentro = mostrar && t < visible;
+                if (dentro && !burbujaMostrada) { burbujaRT.gameObject.SetActive(true); burbujaMostrada = true; }
+                float objetivo = dentro ? 1f : 0f;
+                burbuja.alpha = Mathf.MoveTowards(burbuja.alpha, objetivo, Time.unscaledDeltaTime * 4f);
+                if (burbuja.alpha <= 0f && !dentro && burbujaMostrada) burbujaRT.gameObject.SetActive(false);
+            }
+            yield return null;
+        }
+
+        if (halo != null) halo.gameObject.SetActive(false);
+        if (burbujaRT != null) burbujaRT.gameObject.SetActive(false);
     }
 
     void ConstruirPanel()

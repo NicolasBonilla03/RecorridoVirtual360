@@ -7089,7 +7089,7 @@ PrefabInstance:
     - target: {fileID: 7303604040598248428, guid: 49009d45f8993d549931f24c5122ac68,
         type: 3}
       propertyPath: m_LocalPosition.z
-      value: -226
+      value: -226.1
       objectReference: {fileID: 0}
     - target: {fileID: 7303604040598248428, guid: 49009d45f8993d549931f24c5122ac68,
         type: 3}
@@ -7114,12 +7114,12 @@ PrefabInstance:
     - target: {fileID: 7303604040598248428, guid: 49009d45f8993d549931f24c5122ac68,
         type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: -1283.2
+      value: -1302.2
       objectReference: {fileID: 0}
     - target: {fileID: 7303604040598248428, guid: 49009d45f8993d549931f24c5122ac68,
         type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -722.8
+      value: -745.9
       objectReference: {fileID: 0}
     - target: {fileID: 7303604040598248428, guid: 49009d45f8993d549931f24c5122ac68,
         type: 3}
@@ -8028,7 +8028,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1997387499}
   m_HandleRect: {fileID: 1997387498}
   m_Direction: 2
-  m_Value: 1
+  m_Value: 0
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
