@@ -451,6 +451,7 @@ public class PanelInfo : MonoBehaviour
         escalador.referenceResolution = MarcaUdB.ResolucionReferencia;
         escalador.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
         escalador.matchWidthOrHeight = 0.5f;
+        MarcaUdB.EscalarSegunPantalla(escalador);
         canvasRT = (RectTransform)lienzo.transform;
 
         // velo-escena a pantalla completa: aísla la lectura, bloquea la cámara y cierra al tocarlo

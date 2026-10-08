@@ -83,6 +83,23 @@ public static class MarcaUdB
     /// </summary>
     public static readonly Vector2 ResolucionReferencia = new Vector2(1536f, 864f);
 
+    /// <summary>
+    /// En un celular, 1536×864 deja la interfaz a la mitad de su tamaño (textos de 7 a 8 px reales).
+    /// Por eso, en vertical el ancho de la pantalla equivale a AnchoMovil px del sistema y en horizontal
+    /// la altura equivale a AltoMovilHorizontal: así un px del sistema se ve casi como un px CSS del teléfono.
+    /// </summary>
+    public const float AnchoMovil = 400f;
+    public const float AltoMovilHorizontal = 400f;
+
+    /// <summary>Hace que el CanvasScaler se adapte solo al tipo de pantalla (escritorio, celular vertical u horizontal).</summary>
+    public static void EscalarSegunPantalla(CanvasScaler escalador)
+    {
+        if (escalador == null) return;
+        EscalaAdaptable adaptable = escalador.GetComponent<EscalaAdaptable>();
+        if (adaptable == null) adaptable = escalador.gameObject.AddComponent<EscalaAdaptable>();
+        adaptable.Aplicar();
+    }
+
     // ------------------------------------------------------------------ fuentes
 
     const string RutaFuentes = "MarcaUdB/Fuentes/";
