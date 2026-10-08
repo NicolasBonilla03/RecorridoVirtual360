@@ -332,6 +332,7 @@ public class GuiaVirtual : MonoBehaviour
         escalador.referenceResolution = MarcaUdB.ResolucionReferencia;
         escalador.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
         escalador.matchWidthOrHeight = 0.5f;
+        MarcaUdB.EscalarSegunPantalla(escalador);
         canvasRT = (RectTransform)lienzo.transform;
 
         Image imgVelo = CrearImagen("VeloEscena", canvasRT, MarcaUdB.VeloEscena);

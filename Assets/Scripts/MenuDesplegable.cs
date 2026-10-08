@@ -433,7 +433,22 @@ public class MenuDesplegable : MonoBehaviour
             ? disponible - Margen * 2f
             : disponible - (Margen + AnchoBotonMenu + MarcaUdB.Space2) - 360f; // deja sitio al logotipo
         maximo = Mathf.Max(160f, maximo);
-        chipRT.sizeDelta = new Vector2(Mathf.Min(Mathf.Ceil(ancho), maximo), AltoControl);
+        float anchoChip = Mathf.Min(Mathf.Ceil(ancho), maximo);
+
+        // «Estás en» nunca se recorta; si el nombre del lugar no cabe, pasa a dos renglones en vez de cortarse
+        LayoutElement le = etiquetaChip.GetComponent<LayoutElement>();
+        if (le != null) le.minWidth = Mathf.Ceil(etiquetaChip.GetPreferredValues(etiquetaChip.text).x);
+        bool dosRenglones = Mathf.Ceil(ancho) > maximo;
+        textoChip.enableWordWrapping = dosRenglones;
+        float alto = AltoControl;
+        if (dosRenglones)
+        {
+            float resto = Mathf.Ceil(ancho) - textoChip.GetPreferredValues(textoChip.text).x;
+            float libre = Mathf.Max(40f, anchoChip - resto);
+            float altoTexto = textoChip.GetPreferredValues(textoChip.text, libre, 0f).y;
+            alto = Mathf.Max(AltoControl, Mathf.Ceil(altoTexto) + MarcaUdB.Space3 * 2f);
+        }
+        chipRT.sizeDelta = new Vector2(anchoChip, alto);
     }
 
     // ------------------------------------------------------------------ construcción de la interfaz
@@ -451,6 +466,7 @@ public class MenuDesplegable : MonoBehaviour
         escalador.referenceResolution = MarcaUdB.ResolucionReferencia;
         escalador.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
         escalador.matchWidthOrHeight = 0.5f;
+        MarcaUdB.EscalarSegunPantalla(escalador);
         canvasRT = (RectTransform)goCanvas.transform;
 
         // velo-escena a pantalla completa: aísla la lectura del panel, bloquea la cámara y cierra al tocarlo

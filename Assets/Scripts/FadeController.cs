@@ -277,6 +277,7 @@ public class FadeController : MonoBehaviour
         escalador.referenceResolution = MarcaUdB.ResolucionReferencia;
         escalador.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
         escalador.matchWidthOrHeight = 0.5f;
+        MarcaUdB.EscalarSegunPantalla(escalador);
         canvasRT = (RectTransform)raiz.transform;
 
         // Velo a pantalla completa

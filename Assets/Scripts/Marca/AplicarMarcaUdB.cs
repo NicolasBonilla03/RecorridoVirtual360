@@ -40,6 +40,8 @@ public class AplicarMarcaUdB : MonoBehaviour
     [Header("Pista de uso")]
     public bool mostrarPista = true;
     public string textoPista = "Arrastra para mirar alrededor · toca un punto para avanzar";
+    [Tooltip("Pista más corta para pantallas angostas (celular en vertical).")]
+    public string textoPistaMovil = "Desliza para mirar · toca un punto para avanzar";
     [Tooltip("Segundos antes de que la pista se esconda sola (también se esconde al primer toque).")]
     public float duracionPista = 8f;
 
@@ -304,6 +306,7 @@ public class AplicarMarcaUdB : MonoBehaviour
         escalador.referenceResolution = MarcaUdB.ResolucionReferencia;
         escalador.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
         escalador.matchWidthOrHeight = 0.5f;
+        MarcaUdB.EscalarSegunPantalla(escalador);
         canvasRT = (RectTransform)goCanvas.transform;
 
         GameObject goSegura = new GameObject("AreaSegura", typeof(RectTransform));
@@ -341,7 +344,10 @@ public class AplicarMarcaUdB : MonoBehaviour
             float y = compacto ? bajo + 28f + MarcaUdB.Space2 : bajo;
             pista.anchoredPosition = new Vector2(0f, y);
             float disponible = zonaSegura.rect.width > 0f ? zonaSegura.rect.width : canvasRT.rect.width;
-            TMP_Text t = pista.GetComponentInChildren<TMP_Text>();
+            // El primer texto hijo es la flecha: se busca el texto de la pista por su nombre
+            Transform hijo = pista.Find("Texto");
+            TMP_Text t = hijo != null ? hijo.GetComponent<TMP_Text>() : pista.GetComponentInChildren<TMP_Text>();
+            t.text = compacto && !string.IsNullOrEmpty(textoPistaMovil) ? textoPistaMovil : textoPista;
             float ancho = Mathf.Ceil(t.GetPreferredValues(t.text).x) + 18f + MarcaUdB.Space2 + MarcaUdB.Space4 * 2f;
             float maximo = disponible - Margen * 2f;
             if (!compacto) maximo -= 400f; // deja libre la nota legal a la izquierda
