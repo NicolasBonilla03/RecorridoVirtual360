@@ -216,11 +216,13 @@ public class PuntoInfo : MonoBehaviour
         }
         Button bCirculo = imgCirculo.gameObject.AddComponent<Button>();
         bCirculo.targetGraphic = imgCirculo;
-        MarcaUdB.ColoresBoton(bCirculo, color, Color.Lerp(color, MarcaUdB.Negro, 0.18f), Color.Lerp(color, MarcaUdB.Negro, 0.32f));
+        // «i» en blanco sobre el color de la zona (oscurecido lo justo: es un glifo, basta 3:1)
+        Color relleno = MarcaUdB.FondoParaBlanco(color, MarcaUdB.ContrasteIcono);
+        MarcaUdB.ColoresBoton(bCirculo, relleno, Color.Lerp(relleno, MarcaUdB.Negro, 0.18f), Color.Lerp(relleno, MarcaUdB.Negro, 0.32f));
         SinNavegacion(bCirculo);
         bCirculo.onClick.AddListener(Abrir);
 
-        TextMeshProUGUI icono = CrearTexto("Icono", circulo, "i", MarcaUdB.TextoBold, TamanoIcono, MarcaUdB.TintaSobre(color));
+        TextMeshProUGUI icono = CrearTexto("Icono", circulo, "i", MarcaUdB.TextoBold, TamanoIcono, MarcaUdB.InkInverso);
         icono.alignment = TextAlignmentOptions.Center;
         RectTransform rtIcono = (RectTransform)icono.transform;
         rtIcono.anchorMin = Vector2.zero;

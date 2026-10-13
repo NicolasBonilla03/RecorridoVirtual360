@@ -67,6 +67,7 @@ public class MenuDesplegable : MonoBehaviour
         public RectTransform encabezado;
         public GameObject contenedor;
         public bool abierta;
+        public Coroutine fundido;
         public List<FilaPunto> filas = new List<FilaPunto>();
     }
 
@@ -89,6 +90,7 @@ public class MenuDesplegable : MonoBehaviour
     Button botonInfoChip;
     FichaInfo fichaActual;
     const float LadoInfoChip = 32f;
+    const float AnchoIconoChip = 15f;
     Image puntoZonaChip;
     TextMeshProUGUI etiquetaChip;
     TextMeshProUGUI textoChip;
@@ -101,8 +103,31 @@ public class MenuDesplegable : MonoBehaviour
     Material ultimoSkybox;
     bool abierto;
     bool compacto;
+    bool vertical;                 // celular en vertical: foto a pantalla completa y hoja del lugar abajo
+    bool controlesVisibles = true; // false mientras el menú está abierto
+    Button botonMenuBoton;
+    TextMeshProUGUI textoBotonMenu;
+    readonly List<Image> trazosMenu = new List<Image>();
+    HorizontalLayoutGroup disposicionChip;
+
+    // Hoja inferior del celular vertical (como la tarjeta de Street View): edificio, lugar, resumen
+    // de la ficha y «Ver más información». Reemplaza al chip «Estás en» en ese modo.
+    RectTransform hojaRT;
+    HojaDeslizable hojaGesto;
+    Image tiradorHoja;
+    Image pinHoja;
+    TextMeshProUGUI etiquetaHoja;
+    TextMeshProUGUI tituloHoja;
+    TextMeshProUGUI resumenHoja;
+    Button botonHojaInfo;
+    Image circuloHojaInfo;
+    TextMeshProUGUI letraHojaInfo;
+    TextMeshProUGUI textoHojaInfo;
+    const float AltoBotonHoja = 48f;
+    const float AnchoTirador = 36f;
     Vector2 ultimoTamano;
     Rect ultimaAreaSegura;
+    float ultimaFilaSuperior;
     Coroutine animacion;
 
     // ------------------------------------------------------------------ ciclo de vida
@@ -171,10 +196,12 @@ public class MenuDesplegable : MonoBehaviour
             Cerrar();
 
         // Rotación del teléfono, cambio de tamaño de la ventana o de área segura
-        if (canvasRT != null && (canvasRT.rect.size != ultimoTamano || Screen.safeArea != ultimaAreaSegura))
+        if (canvasRT != null && (canvasRT.rect.size != ultimoTamano || Screen.safeArea != ultimaAreaSegura
+                                 || !Mathf.Approximately(MarcaUdB.AltoFilaSuperior, ultimaFilaSuperior)))
         {
             ultimoTamano = canvasRT.rect.size;
             ultimaAreaSegura = Screen.safeArea;
+            ultimaFilaSuperior = MarcaUdB.AltoFilaSuperior;
             AplicarLayout();
         }
 
@@ -215,7 +242,7 @@ public class MenuDesplegable : MonoBehaviour
             }
         }
 
-        fondoOscuro.SetActive(true);
+        VeloSuave.Mostrar(fondoOscuro);
         MostrarControles(false);
         Animar(MargenPanel);
     }
@@ -225,7 +252,7 @@ public class MenuDesplegable : MonoBehaviour
         if (!abierto) return;
         abierto = false;
 
-        fondoOscuro.SetActive(false);
+        VeloSuave.Ocultar(fondoOscuro);
         MostrarControles(true);
         Animar(-panelRaiz.sizeDelta.x - 80f);
     }
@@ -255,9 +282,20 @@ public class MenuDesplegable : MonoBehaviour
 
     void MostrarControles(bool visibles)
     {
-        botonMenu.SetActive(visibles);
-        if (botonMenuSombra != null) botonMenuSombra.SetActive(visibles);
-        chipUbicacion.SetActive(visibles);
+        controlesVisibles = visibles;
+        // Se funden al ritmo del velo (160 ms al volver, 140 ms al irse) en lugar de desaparecer de golpe
+        Fundir(botonMenu, visibles);
+        Fundir(botonMenuSombra, visibles);
+        // En el celular vertical el lugar va en la hoja de abajo; en el resto, en el chip «Estás en»
+        Fundir(chipUbicacion, visibles && !vertical);
+        if (hojaRT != null) Fundir(hojaRT.gameObject, visibles && vertical);
+    }
+
+    static void Fundir(GameObject objeto, bool mostrar)
+    {
+        if (objeto == null) return;
+        if (mostrar) VeloSuave.Mostrar(objeto);
+        else VeloSuave.Ocultar(objeto);
     }
 
     // ------------------------------------------------------------------ navegación
@@ -293,13 +331,44 @@ public class MenuDesplegable : MonoBehaviour
             foreach (Seccion otra in secciones)
                 if (otra != s) PonerSeccion(otra, false);
         PonerSeccion(s, abrir);
+
+        // Solo al tocar el edificio (no al abrir el menú, que ya entra deslizándose): los lugares
+        // aparecen con un fundido corto en vez de saltar, como las respuestas del guía
+        if (s.fundido != null) StopCoroutine(s.fundido);
+        s.fundido = abrir && AnimacionesUI.Activas && isActiveAndEnabled ? StartCoroutine(Aparecer(s)) : null;
+        if (!abrir || s.fundido == null) PonerAlfa(s.contenedor, 1f);
+    }
+
+    // 150 ms con salida fuerte. Solo cambia la opacidad de un CanvasGroup: no recalcula la lista
+    IEnumerator Aparecer(Seccion s)
+    {
+        float t = 0f;
+        while (t < 1f && s.contenedor != null)
+        {
+            t += Time.unscaledDeltaTime / 0.15f;
+            PonerAlfa(s.contenedor, AnimacionesUI.SalidaFuerte(Mathf.Clamp01(t)));
+            yield return null;
+        }
+        s.fundido = null;
+    }
+
+    static void PonerAlfa(GameObject objeto, float alfa)
+    {
+        if (objeto == null) return;
+        CanvasGroup grupo = objeto.GetComponent<CanvasGroup>();
+        if (grupo == null)
+        {
+            if (alfa >= 1f) return;
+            grupo = objeto.AddComponent<CanvasGroup>();
+        }
+        grupo.alpha = alfa;
     }
 
     void PonerSeccion(Seccion s, bool abrir)
     {
         s.abierta = abrir;
         s.contenedor.SetActive(abrir);
-        s.chevron.localEulerAngles = new Vector3(0f, 0f, abrir ? -90f : 0f);
+        GiroSuave.Poner(s.chevron, abrir ? -90f : 0f);
     }
 
     static bool ContieneSkybox(Seccion s, Material sky)
@@ -315,6 +384,7 @@ public class MenuDesplegable : MonoBehaviour
         Material sky = RenderSettings.skybox;
         bool enInicio = sky != null && sky == skyboxInicio;
         string lugar = null;
+        string edificioHoja = null, lugarHoja = null; // la hoja del celular los muestra en dos renglones
         bool tieneZona = false;
         Color zonaActual = MarcaUdB.InkMuted;
 
@@ -327,6 +397,8 @@ public class MenuDesplegable : MonoBehaviour
                 if (actual && lugar == null)
                 {
                     lugar = s.edificio.nombreEdificio + " · " + f.punto.nombre;
+                    edificioHoja = s.edificio.nombreEdificio;
+                    lugarHoja = f.punto.nombre;
                     zonaActual = s.zona;
                     tieneZona = true;
                 }
@@ -351,10 +423,11 @@ public class MenuDesplegable : MonoBehaviour
             botonInfoChip.gameObject.SetActive(fichaActual != null);
             if (fichaActual != null)
             {
-                Color ci = !string.IsNullOrEmpty(fichaActual.zona) ? fichaActual.ColorZona : MarcaUdB.Negro;
+                // Blanco sobre el color de la zona; el «i» es un glifo suelto, así que basta un contraste de 3:1
+                Color ci = MarcaUdB.FondoParaBlanco(!string.IsNullOrEmpty(fichaActual.zona) ? fichaActual.ColorZona : MarcaUdB.Negro, MarcaUdB.ContrasteIcono);
                 MarcaUdB.ColoresBoton(botonInfoChip, ci, Color.Lerp(ci, MarcaUdB.Negro, 0.18f), Color.Lerp(ci, MarcaUdB.Negro, 0.32f));
                 TMP_Text ti = botonInfoChip.GetComponentInChildren<TMP_Text>(true);
-                if (ti != null) ti.color = MarcaUdB.TintaSobre(ci);
+                if (ti != null) ti.color = MarcaUdB.InkInverso;
             }
         }
 
@@ -363,6 +436,9 @@ public class MenuDesplegable : MonoBehaviour
         textoChip.text = lugar;
         textoUbicacionPanel.text = "Estás en: " + lugar;
         AjustarChip();
+
+        if (enInicio || lugarHoja == null) { edificioHoja = "Estás en"; lugarHoja = lugar; }
+        ActualizarHoja(edificioHoja, lugarHoja, tieneZona && !enInicio ? zonaActual : MarcaUdB.Negro);
     }
 
     // El lugar actual se marca con tres señales, no solo color: barra de acento, relleno y peso
@@ -395,17 +471,26 @@ public class MenuDesplegable : MonoBehaviour
     {
         MarcaUdB.AjustarAreaSegura(zonaSegura);
         compacto = MarcaUdB.EsCompacto(canvasRT);
+        vertical = MarcaUdB.EsMovilVertical(canvasRT);
+        EstiloBotonMenu(vertical);
 
-        botonMenuRT.anchoredPosition = new Vector2(Margen, -Margen);
+        // Fila superior: el botón de menú se centra en el alto de la placa del logotipo, así los dos
+        // quedan sobre la misma línea (en móvil miden lo mismo: 48 px). En el celular vertical el botón
+        // es un círculo de vidrio que flota sobre la foto, como los de Street View.
+        float fila = Mathf.Max(AltoControl, MarcaUdB.AltoFilaSuperior);
+        float yFila = -Margen - (fila - AltoControl) * 0.5f;
+        botonMenuRT.anchoredPosition = new Vector2(Margen, yFila);
         if (botonMenuSombra != null)
             ((RectTransform)botonMenuSombra.transform).anchoredPosition = botonMenuRT.anchoredPosition + desfaseSombra;
 
-        // En móvil vertical el chip baja debajo del botón para no chocar con el logotipo
+        // En móvil horizontal el chip baja debajo de la fila superior, alineado con el botón de menú
         chipRT.anchoredPosition = compacto
-            ? new Vector2(Margen, -Margen - AltoControl - MarcaUdB.Space2)
-            : new Vector2(Margen + AnchoBotonMenu + MarcaUdB.Space2, -Margen);
+            ? new Vector2(Margen, -Margen - fila - MarcaUdB.Space2)
+            : new Vector2(Margen + AnchoBotonMenu + MarcaUdB.Space2, yFila);
 
+        MostrarControles(controlesVisibles);
         AjustarChip();
+        AcomodarHoja();
         AjustarAnchoPanel();
         if (!abierto) panelRaiz.anchoredPosition = new Vector2(-panelRaiz.sizeDelta.x - 80f, 0f);
     }
@@ -418,11 +503,54 @@ public class MenuDesplegable : MonoBehaviour
         panelRaiz.sizeDelta = new Vector2(ancho, -MargenPanel * 2f);
     }
 
+    // Botón de menú: negro con «Menú» en pantalla ancha; en el celular vertical, círculo de vidrio solo con el ícono
+    void EstiloBotonMenu(bool redondo)
+    {
+        if (botonMenuBoton == null) return;
+        Image fondo = botonMenuBoton.targetGraphic as Image;
+        if (redondo)
+        {
+            botonMenuRT.sizeDelta = new Vector2(AltoControl, AltoControl);
+            if (fondo != null) MarcaUdB.Redondear(fondo, AltoControl * 0.5f);
+            MarcaUdB.ColoresBoton(botonMenuBoton, MarcaUdB.VidrioPanel, MarcaUdB.Surface200, MarcaUdB.Surface300);
+        }
+        else
+        {
+            botonMenuRT.sizeDelta = new Vector2(AnchoBotonMenu, AltoControl);
+            if (fondo != null) MarcaUdB.Redondear(fondo, MarcaUdB.RadiusMd);
+            MarcaUdB.ColoresBoton(botonMenuBoton, MarcaUdB.Negro, MarcaUdB.Hex("#3a3a36"), MarcaUdB.Hex("#4a4a45"));
+        }
+        if (textoBotonMenu != null) textoBotonMenu.gameObject.SetActive(!redondo);
+        // Sobre la foto el botón siempre lleva su sombra (sombra-flotante: 8 px por lado)
+        if (botonMenuSombra != null)
+            ((RectTransform)botonMenuSombra.transform).sizeDelta = botonMenuRT.sizeDelta + new Vector2(16f, 16f);
+
+        for (int i = 0; i < trazosMenu.Count; i++)
+        {
+            RectTransform rb = (RectTransform)trazosMenu[i].transform;
+            trazosMenu[i].color = redondo ? MarcaUdB.Ink : MarcaUdB.InkInverso;
+            if (redondo)
+            {
+                rb.anchorMin = rb.anchorMax = rb.pivot = new Vector2(0.5f, 0.5f);
+                rb.sizeDelta = new Vector2(20f, 2f);
+                rb.anchoredPosition = new Vector2(0f, 6f - i * 6f);
+            }
+            else
+            {
+                rb.anchorMin = rb.anchorMax = new Vector2(0f, 0.5f);
+                rb.pivot = new Vector2(0f, 0.5f);
+                rb.sizeDelta = new Vector2(18f, 2f);
+                rb.anchoredPosition = new Vector2(MarcaUdB.Space4, 6f - i * 6f);
+            }
+        }
+    }
+
     void AjustarChip()
     {
         if (chipRT == null || textoChip == null) return;
         float pad = MarcaUdB.Space4;
-        float ancho = pad * 2f + 10f + MarcaUdB.Space2
+        float ancho = (disposicionChip != null ? disposicionChip.padding.left + disposicionChip.padding.right : pad * 2f)
+                      + AnchoIconoChip + MarcaUdB.Space2
                       + etiquetaChip.GetPreferredValues(etiquetaChip.text).x + MarcaUdB.Space2
                       + textoChip.GetPreferredValues(textoChip.text).x + 4f;
         if (botonInfoChip != null && botonInfoChip.gameObject.activeSelf)
@@ -449,6 +577,202 @@ public class MenuDesplegable : MonoBehaviour
             alto = Mathf.Max(AltoControl, Mathf.Ceil(altoTexto) + MarcaUdB.Space3 * 2f);
         }
         chipRT.sizeDelta = new Vector2(anchoChip, alto);
+    }
+
+    // ------------------------------------------------------------------ hoja inferior del celular vertical
+
+    // Rellena la hoja con el lugar actual. La ficha (si la hay) aporta el resumen y el botón.
+    void ActualizarHoja(string edificio, string lugar, Color zona)
+    {
+        if (hojaRT == null) return;
+        bool conFicha = fichaActual != null;
+
+        pinHoja.color = zona;
+        etiquetaHoja.text = edificio;
+        etiquetaHoja.color = MarcaUdB.TintaLegible(zona, MarcaUdB.Surface100);
+        tituloHoja.text = lugar;
+
+        string resumen = conFicha && !string.IsNullOrEmpty(fichaActual.resumen) ? fichaActual.resumen.Trim() : "";
+        resumenHoja.text = resumen;
+        resumenHoja.gameObject.SetActive(resumen.Length > 0);
+
+        // El botón toma el color de la zona de la ficha, como el «i» del chip (el rojo queda para el guía),
+        // oscurecido lo justo para que el texto en blanco se lea bien
+        botonHojaInfo.gameObject.SetActive(conFicha);
+        if (conFicha)
+        {
+            Color c = MarcaUdB.FondoParaBlanco(!string.IsNullOrEmpty(fichaActual.zona) ? fichaActual.ColorZona : MarcaUdB.Negro);
+            MarcaUdB.ColoresBoton(botonHojaInfo, c, Color.Lerp(c, MarcaUdB.Negro, 0.18f), Color.Lerp(c, MarcaUdB.Negro, 0.32f));
+            Color tinta = MarcaUdB.InkInverso;
+            textoHojaInfo.color = tinta;
+            circuloHojaInfo.color = tinta;
+            letraHojaInfo.color = c;
+        }
+
+        // Sin ficha no hay nada que abrir: sin tirador y sin gesto (la hoja solo informa)
+        tiradorHoja.gameObject.SetActive(conFicha);
+        hojaGesto.alAbrir = conFicha ? (System.Action)AbrirFichaActual : null;
+
+        AcomodarHoja();
+    }
+
+    void AbrirFichaActual()
+    {
+        if (fichaActual == null) return;
+        if (FadeController.Instance != null && FadeController.Instance.EnTransicion) return;
+        PanelInfo.Mostrar(fichaActual);
+    }
+
+    // Apila las piezas de arriba abajo con sus altos reales y publica el alto visible de la hoja
+    void AcomodarHoja()
+    {
+        if (hojaRT == null) return;
+        if (!vertical)
+        {
+            MarcaUdB.AltoHojaMovil = 0f;
+            return;
+        }
+
+        float lado = Margen;
+        float ancho = (canvasRT.rect.width > 0f ? canvasRT.rect.width : MarcaUdB.AnchoMovil) - lado * 2f;
+        float y = MarcaUdB.Space5; // deja sitio al tirador
+
+        RectTransform fila = (RectTransform)etiquetaHoja.transform.parent;
+        ColocarEnHoja(fila, lado, y, ancho, 18f);
+        y += 18f + MarcaUdB.Space1;
+
+        float altoTitulo = AltoTexto(tituloHoja, ancho, 2);
+        ColocarEnHoja((RectTransform)tituloHoja.transform, lado, y, ancho, altoTitulo);
+        y += altoTitulo;
+
+        if (resumenHoja.gameObject.activeSelf)
+        {
+            y += MarcaUdB.Space2;
+            float altoResumen = AltoTexto(resumenHoja, ancho, 2);
+            ColocarEnHoja((RectTransform)resumenHoja.transform, lado, y, ancho, altoResumen);
+            y += altoResumen;
+        }
+
+        if (botonHojaInfo.gameObject.activeSelf)
+        {
+            y += MarcaUdB.Space4;
+            ColocarEnHoja((RectTransform)botonHojaInfo.transform, lado, y, ancho, AltoBotonHoja);
+            y += AltoBotonHoja;
+        }
+        y += MarcaUdB.Space4;
+
+        // La hoja baja hasta el borde de la pantalla (cubre la barra de gestos) y un poco más, para que solo
+        // se vean redondeadas las esquinas de arriba
+        float inset = MarcaUdB.InsetInferior(canvasRT);
+        hojaRT.sizeDelta = new Vector2(0f, y + inset + MarcaUdB.RadiusLg);
+        hojaGesto.FijarBase(-MarcaUdB.RadiusLg);
+        MarcaUdB.AltoHojaMovil = Mathf.Ceil(y);
+    }
+
+    // Alto de un texto con un tope de renglones (lo que no cabe termina en «…»)
+    static float AltoTexto(TextMeshProUGUI t, float ancho, int maximoRenglones)
+    {
+        t.maxVisibleLines = maximoRenglones;
+        float alto = t.GetPreferredValues(t.text, ancho, 0f).y;
+        string renglones = "A";
+        for (int i = 1; i < maximoRenglones; i++) renglones += "\nA";
+        float tope = t.GetPreferredValues(renglones, ancho, 0f).y;
+        return Mathf.Ceil(Mathf.Min(alto, tope));
+    }
+
+    static void ColocarEnHoja(RectTransform rt, float x, float y, float ancho, float alto)
+    {
+        rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0f, 1f);
+        rt.anchoredPosition = new Vector2(x, -y);
+        rt.sizeDelta = new Vector2(ancho, alto);
+    }
+
+    void ConstruirHoja()
+    {
+        // Va directo en el lienzo (no en el área segura): ocupa todo el ancho y baja hasta el borde.
+        // Queda debajo de todo lo demás, así el velo del menú y de la ficha la cubren.
+        GameObject goHoja = new GameObject("HojaLugar", typeof(RectTransform));
+        hojaRT = (RectTransform)goHoja.transform;
+        hojaRT.SetParent(canvasRT, false);
+        hojaRT.SetSiblingIndex(0);
+        hojaRT.anchorMin = new Vector2(0f, 0f);
+        hojaRT.anchorMax = new Vector2(1f, 0f);
+        hojaRT.pivot = new Vector2(0.5f, 0f);
+        // El gesto va en la raíz: los toques del fondo y del texto suben hasta ella
+        hojaGesto = goHoja.AddComponent<HojaDeslizable>();
+
+        // Fondo y sombra estirados dentro de la raíz: los dos siguen el alto de la hoja y se esconden con ella
+        Image fondo = CrearImagen("Fondo", hojaRT, MarcaUdB.Surface100);
+        fondo.raycastTarget = true; // el arrastre sobre la hoja no gira la cámara
+        RectTransform cuerpo = (RectTransform)fondo.transform;
+        Estirar(cuerpo, 0f, 0f);
+        MarcaUdB.Redondear(fondo, MarcaUdB.RadiusLg);
+        MarcaUdB.SombraFlotante(cuerpo);
+
+        // Tirador: avisa que la hoja se puede subir para ver más
+        tiradorHoja = CrearImagen("Tirador", cuerpo, MarcaUdB.Borde);
+        tiradorHoja.raycastTarget = false;
+        RectTransform rt = (RectTransform)tiradorHoja.transform;
+        rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0.5f, 1f);
+        rt.sizeDelta = new Vector2(AnchoTirador, 4f);
+        rt.anchoredPosition = new Vector2(0f, -MarcaUdB.Space2);
+        MarcaUdB.Redondear(tiradorHoja, 2f);
+
+        // Edificio: pin y nombre en etiqueta, con la tinta legible de la zona
+        GameObject goFila = new GameObject("Edificio", typeof(RectTransform));
+        RectTransform fila = (RectTransform)goFila.transform;
+        fila.SetParent(cuerpo, false);
+        pinHoja = CrearImagen("Pin", fila, MarcaUdB.Negro);
+        pinHoja.raycastTarget = false;
+        Sprite pin = MarcaUdB.IconoUbicacion;
+        if (pin != null) { pinHoja.sprite = pin; pinHoja.preserveAspect = true; }
+        else MarcaUdB.Redondear(pinHoja, 5f);
+        RectTransform rp = (RectTransform)pinHoja.transform;
+        rp.anchorMin = rp.anchorMax = rp.pivot = new Vector2(0f, 0.5f);
+        rp.sizeDelta = new Vector2(12f, 16f);
+        etiquetaHoja = CrearTexto("Etiqueta", fila, "", null, 0f, MarcaUdB.InkMuted);
+        MarcaUdB.EstiloEtiqueta(etiquetaHoja, MarcaUdB.InkMuted);
+        etiquetaHoja.overflowMode = TextOverflowModes.Ellipsis;
+        Estirar((RectTransform)etiquetaHoja.transform, 12f + MarcaUdB.Space2, 0f);
+
+        // Lugar: el dato principal de la hoja, en Raleway como los títulos de las fichas
+        tituloHoja = CrearTexto("Lugar", cuerpo, "", MarcaUdB.Display, MarcaUdB.DisplayM, MarcaUdB.Ink);
+        tituloHoja.enableWordWrapping = true;
+        tituloHoja.alignment = TextAlignmentOptions.TopLeft;
+
+        // Resumen de la ficha: dos renglones como máximo, el resto está en «Ver más información»
+        resumenHoja = CrearTexto("Resumen", cuerpo, "", MarcaUdB.Texto, MarcaUdB.Cuerpo, MarcaUdB.InkMuted);
+        resumenHoja.enableWordWrapping = true;
+        resumenHoja.alignment = TextAlignmentOptions.TopLeft;
+
+        // «Ver más información»: a todo el ancho y con relleno de color para que se vea a primera vista
+        Image imgBoton;
+        botonHojaInfo = CrearBoton("VerMas", cuerpo, out imgBoton);
+        MarcaUdB.Pildora(imgBoton, AltoBotonHoja);
+        HorizontalLayoutGroup hl = imgBoton.gameObject.AddComponent<HorizontalLayoutGroup>();
+        hl.spacing = MarcaUdB.Space2;
+        hl.childAlignment = TextAnchor.MiddleCenter;
+        hl.childControlWidth = true;
+        hl.childControlHeight = true;
+        hl.childForceExpandWidth = false;
+        hl.childForceExpandHeight = false;
+
+        circuloHojaInfo = CrearImagen("Icono", botonHojaInfo.transform, MarcaUdB.InkInverso);
+        circuloHojaInfo.raycastTarget = false;
+        MarcaUdB.Redondear(circuloHojaInfo, 11f);
+        LayoutElement lc = circuloHojaInfo.gameObject.AddComponent<LayoutElement>();
+        lc.minWidth = lc.preferredWidth = 22f;
+        lc.minHeight = lc.preferredHeight = 22f;
+        letraHojaInfo = CrearTexto("i", circuloHojaInfo.transform, "i", MarcaUdB.TextoBold, MarcaUdB.Cuerpo, MarcaUdB.Negro);
+        letraHojaInfo.alignment = TextAlignmentOptions.Center;
+        Estirar((RectTransform)letraHojaInfo.transform, 0f, 0f);
+
+        textoHojaInfo = CrearTexto("Texto", botonHojaInfo.transform, "Ver más información", MarcaUdB.TextoBold, MarcaUdB.UIControl, MarcaUdB.InkInverso);
+        LayoutElement lt = textoHojaInfo.gameObject.AddComponent<LayoutElement>();
+        lt.flexibleWidth = 0f;
+        botonHojaInfo.onClick.AddListener(AbrirFichaActual);
+
+        hojaRT.gameObject.SetActive(false);
     }
 
     // ------------------------------------------------------------------ construcción de la interfaz
@@ -487,6 +811,7 @@ public class MenuDesplegable : MonoBehaviour
 
         ConstruirBotonMenu();
         ConstruirChipUbicacion();
+        ConstruirHoja();
         ConstruirPanel();
 
         // El velo va debajo del panel pero encima del botón y el chip
@@ -520,10 +845,13 @@ public class MenuDesplegable : MonoBehaviour
             rb.sizeDelta = new Vector2(18f, 2f);
             rb.anchoredPosition = new Vector2(MarcaUdB.Space4, 6f - i * 6f);
             MarcaUdB.Redondear(barra, 1f);
+            trazosMenu.Add(barra);
         }
 
         TextMeshProUGUI texto = CrearTexto("Texto", rt, "Menú", MarcaUdB.TextoBold, MarcaUdB.UIControl, MarcaUdB.InkInverso);
         Estirar((RectTransform)texto.transform, MarcaUdB.Space4 + 18f + MarcaUdB.Space2, MarcaUdB.Space2);
+        textoBotonMenu = texto;
+        botonMenuBoton = boton;
 
         boton.onClick.AddListener(Alternar);
         botonMenu = boton.gameObject;
@@ -547,7 +875,8 @@ public class MenuDesplegable : MonoBehaviour
         chipRT.sizeDelta = new Vector2(240f, AltoControl);
 
         HorizontalLayoutGroup hl = chip.gameObject.AddComponent<HorizontalLayoutGroup>();
-        hl.padding = new RectOffset((int)MarcaUdB.Space4, (int)MarcaUdB.Space4, 0, 0);
+        hl.padding = new RectOffset((int)MarcaUdB.Space4, (int)MarcaUdB.Space2 + 4, 0, 0);
+        disposicionChip = hl;
         hl.spacing = MarcaUdB.Space2;
         hl.childAlignment = TextAnchor.MiddleLeft;
         hl.childControlWidth = true;
@@ -555,13 +884,15 @@ public class MenuDesplegable : MonoBehaviour
         hl.childForceExpandWidth = false;
         hl.childForceExpandHeight = false;
 
-        // Punto con el color de la zona actual
+        // Ícono de ubicación con el color de la zona actual (rojo institucional en el inicio)
         puntoZonaChip = CrearImagen("Zona", chipRT, MarcaUdB.InkMuted);
         puntoZonaChip.raycastTarget = false;
-        MarcaUdB.Redondear(puntoZonaChip, 5f);
+        Sprite pin = MarcaUdB.IconoUbicacion;
+        if (pin != null) { puntoZonaChip.sprite = pin; puntoZonaChip.preserveAspect = true; }
+        else MarcaUdB.Redondear(puntoZonaChip, 5f);
         LayoutElement lp = puntoZonaChip.gameObject.AddComponent<LayoutElement>();
-        lp.minWidth = lp.preferredWidth = 10f;
-        lp.minHeight = lp.preferredHeight = 10f;
+        lp.minWidth = lp.preferredWidth = AnchoIconoChip;
+        lp.minHeight = lp.preferredHeight = pin != null ? 20f : 10f;
         lp.flexibleWidth = 0f;
 
         etiquetaChip = CrearTexto("Etiqueta", chipRT, "Estás en", MarcaUdB.Texto, MarcaUdB.Cuerpo, MarcaUdB.InkMuted);
@@ -992,13 +1323,14 @@ public class MenuDesplegable : MonoBehaviour
         panelRaiz.gameObject.SetActive(true);
         float inicioX = panelRaiz.anchoredPosition.x;
         float t = 0f;
-        const float duracion = 0.2f;
+        // Cajón: entra en 240 ms y sale en 180 ms. Parte de donde esté, así se puede interrumpir.
+        float duracion = abierto ? AnimacionesUI.DuracionPanelEntrada : AnimacionesUI.DuracionPanelSalida;
 
         while (t < 1f)
         {
-            t += Time.unscaledDeltaTime / duracion;
-            float e = 1f - Mathf.Pow(1f - Mathf.Clamp01(t), 3f);
-            panelRaiz.anchoredPosition = new Vector2(Mathf.Lerp(inicioX, destinoX, e), 0f);
+            t = AnimacionesUI.Activas ? t + Time.unscaledDeltaTime / duracion : 1f;
+            float e = AnimacionesUI.Cajon(Mathf.Clamp01(t));
+            panelRaiz.anchoredPosition = new Vector2(Mathf.LerpUnclamped(inicioX, destinoX, e), 0f);
             yield return null;
         }
 

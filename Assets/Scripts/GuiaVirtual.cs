@@ -36,6 +36,12 @@ public class GuiaVirtual : MonoBehaviour
     const float MargenAncho = MarcaUdB.Space8;
     const float AltoControl = 48f;
     const float AnchoBoton = 112f;
+<<<<<<< Updated upstream
+=======
+    const float AltoBotonGuia = MarcaUdB.AltoControlFlotante; // mismo alto que el botón de menú
+    const float DiametroIcono = 28f;
+    const string EtiquetaCompacta = "Guía";
+>>>>>>> Stashed changes
     const float AnchoBarra = 8f;
 
     class Fila
@@ -65,6 +71,30 @@ public class GuiaVirtual : MonoBehaviour
     GameObject sombraBoton;
     RectTransform botonRT;
     Vector2 desfaseSombra;
+<<<<<<< Updated upstream
+=======
+    Image halo;
+    RectTransform haloRT;
+    RectTransform burbujaRT;
+    CanvasGroup burbuja;
+    RectMask2D recorteBurbuja;
+    Image fondoBurbuja;
+    RectTransform textoBurbujaRT;
+    float anchoBurbuja = 260f;
+    float progresoBurbuja;
+    PreguntaGuia preguntaMensaje;                // pregunta del mensaje actual (null = invitación general)
+    readonly HashSet<PreguntaGuia> yaMostradas = new HashSet<PreguntaGuia>();
+    float anchoBotonGuia = AnchoBoton;
+    TextMeshProUGUI textoBotonGuia;
+    string etiquetaAncha;
+    TextMeshProUGUI textoBurbujaTMP;
+    Image imagenBotonGuia;
+    RectTransform iconoGuiaRT;
+    Image iconoGuia;
+    TextMeshProUGUI signoGuia;
+    bool vertical;
+    bool yaAbrioGuia;
+>>>>>>> Stashed changes
     ScrollRect scroll;
     RectTransform contenidoLista;
     float anchoLista;
@@ -76,6 +106,8 @@ public class GuiaVirtual : MonoBehaviour
     Coroutine animacion;
     Vector2 ultimoTamano;
     Rect ultimaAreaSegura;
+    float ultimaHoja = -1f;
+    bool botonOculto;                            // true mientras otro panel está abierto (el botón se funde)
 
     void Awake()
     {
@@ -105,16 +137,28 @@ public class GuiaVirtual : MonoBehaviour
             return;
         }
 
-        if (canvasRT.rect.size != ultimoTamano || Screen.safeArea != ultimaAreaSegura)
+        // También cuando la hoja del celular cambia de alto: el botón va apoyado encima de ella
+        if (canvasRT.rect.size != ultimoTamano || Screen.safeArea != ultimaAreaSegura
+            || !Mathf.Approximately(MarcaUdB.AltoHojaMovil, ultimaHoja))
             Acomodar();
 
-        // El botón se esconde mientras otro menú está abierto o hay un cambio de lugar
-        bool ocupado = abierto || MenuDesplegable.EstaAbierto || PanelInfo.Abierto || POIController.HayMenuAbierto
-                       || (FadeController.Instance != null && FadeController.Instance.EnTransicion);
-        if (botonGuia.activeSelf == ocupado)
+        // Mientras otro panel está abierto el botón se funde (160 ms al volver, 140 ms al irse), al mismo ritmo
+        // que el velo. En un cambio de lugar ya no se esconde: la pantalla del fundido lo tapa junto con todo lo
+        // demás, así aparece y desaparece a la vez que la foto (antes se apagaba y prendía de golpe).
+        bool ocupado = abierto || MenuDesplegable.EstaAbierto || PanelInfo.Abierto || POIController.HayMenuAbierto;
+        if (ocupado != botonOculto)
         {
-            botonGuia.SetActive(!ocupado);
-            if (sombraBoton != null) sombraBoton.SetActive(!ocupado);
+            botonOculto = ocupado;
+            if (ocupado)
+            {
+                VeloSuave.Ocultar(botonGuia);
+                if (sombraBoton != null) VeloSuave.Ocultar(sombraBoton);
+            }
+            else
+            {
+                VeloSuave.Mostrar(botonGuia);
+                if (sombraBoton != null && !vertical) VeloSuave.Mostrar(sombraBoton);
+            }
         }
     }
 
@@ -128,7 +172,18 @@ public class GuiaVirtual : MonoBehaviour
         PanelInfo.CerrarSiAbierto();
 
         abierto = true;
+<<<<<<< Updated upstream
         velo.SetActive(true);
+=======
+        yaAbrioGuia = true;
+        VeloSuave.Mostrar(velo);
+        // En el celular vertical el panel nace del botón redondo: arranca un poco más pequeño y transparente
+        if (MarcaUdB.EsMovilVertical(canvasRT) && !panelRaiz.gameObject.activeSelf && AnimacionesUI.Activas)
+        {
+            GrupoPanel().alpha = 0f;
+            panelRaiz.localScale = new Vector3(EscalaInicial, EscalaInicial, 1f);
+        }
+>>>>>>> Stashed changes
         // El panel se activa antes de armar la lista: un texto inactivo no se puede medir bien
         panelRaiz.gameObject.SetActive(true);
         Acomodar();
@@ -143,28 +198,89 @@ public class GuiaVirtual : MonoBehaviour
     {
         if (!abierto) return;
         abierto = false;
-        velo.SetActive(false);
+        VeloSuave.Ocultar(velo);
         Animar(panelRaiz.sizeDelta.x + 80f);
     }
 
+    // Celular vertical: el panel crece desde la esquina del botón redondo (origen en el disparador).
+    // Escritorio y horizontal: se desliza desde la derecha como un cajón.
     void Animar(float destinoX)
     {
         if (animacion != null) StopCoroutine(animacion);
-        animacion = StartCoroutine(Deslizar(destinoX));
+        animacion = StartCoroutine(vertical ? Crecer() : Deslizar(destinoX));
+    }
+
+    const float EscalaInicial = 0.95f;   // nunca desde cero: arranca casi de su tamaño
+    const float EscalaSalida = 0.97f;
+
+    CanvasGroup grupoPanel;
+    CanvasGroup GrupoPanel()
+    {
+        if (grupoPanel == null) grupoPanel = panelRaiz.GetComponent<CanvasGroup>();
+        if (grupoPanel == null) grupoPanel = panelRaiz.gameObject.AddComponent<CanvasGroup>();
+        return grupoPanel;
+    }
+
+    // Pivote del panel: abajo a la derecha (junto al botón) en el celular vertical; centrado a la derecha en el resto
+    void PonerPivotePanel(bool desdeBoton)
+    {
+        if (desdeBoton)
+        {
+            panelRaiz.pivot = new Vector2(1f, 0f);
+            panelRaiz.anchoredPosition = new Vector2(-MargenPanel, MargenPanel);
+        }
+        else
+        {
+            panelRaiz.pivot = new Vector2(1f, 0.5f);
+            panelRaiz.anchoredPosition = new Vector2(panelRaiz.anchoredPosition.x, 0f);
+        }
+    }
+
+    IEnumerator Crecer()
+    {
+        panelRaiz.gameObject.SetActive(true);
+        PonerPivotePanel(true);
+        CanvasGroup g = GrupoPanel();
+        bool abrir = abierto;
+        float a0 = g.alpha, a1 = abrir ? 1f : 0f;
+        float s0 = panelRaiz.localScale.x, s1 = abrir ? 1f : EscalaSalida;
+        float duracion = abrir ? 0.22f : 0.15f;
+        float t = 0f;
+
+        while (t < 1f)
+        {
+            t = AnimacionesUI.Activas ? t + Time.unscaledDeltaTime / duracion : 1f;
+            float e = AnimacionesUI.SalidaFuerte(Mathf.Clamp01(t));
+            g.alpha = Mathf.Lerp(a0, a1, e);
+            float s = Mathf.Lerp(s0, s1, e);
+            panelRaiz.localScale = new Vector3(s, s, 1f);
+            yield return null;
+        }
+
+        if (!abrir)
+        {
+            panelRaiz.gameObject.SetActive(false);
+            panelRaiz.localScale = Vector3.one;
+        }
+        animacion = null;
     }
 
     IEnumerator Deslizar(float destinoX)
     {
         panelRaiz.gameObject.SetActive(true);
+        PonerPivotePanel(false);
+        GrupoPanel().alpha = 1f;
+        panelRaiz.localScale = Vector3.one;
         float inicioX = panelRaiz.anchoredPosition.x;
         float t = 0f;
-        const float duracion = 0.2f;
+        // Cajón: entra en 240 ms y sale en 180 ms. Parte de donde esté, así se puede interrumpir.
+        float duracion = abierto ? AnimacionesUI.DuracionPanelEntrada : AnimacionesUI.DuracionPanelSalida;
 
         while (t < 1f)
         {
-            t += Time.unscaledDeltaTime / duracion;
-            float e = 1f - Mathf.Pow(1f - Mathf.Clamp01(t), 3f);
-            panelRaiz.anchoredPosition = new Vector2(Mathf.Lerp(inicioX, destinoX, e), 0f);
+            t = AnimacionesUI.Activas ? t + Time.unscaledDeltaTime / duracion : 1f;
+            float e = AnimacionesUI.Cajon(Mathf.Clamp01(t));
+            panelRaiz.anchoredPosition = new Vector2(Mathf.LerpUnclamped(inicioX, destinoX, e), 0f);
             yield return null;
         }
 
@@ -176,21 +292,45 @@ public class GuiaVirtual : MonoBehaviour
     {
         ultimoTamano = canvasRT.rect.size;
         ultimaAreaSegura = Screen.safeArea;
+        ultimaHoja = MarcaUdB.AltoHojaMovil;
         MarcaUdB.AjustarAreaSegura(zonaSegura);
 
         bool compacto = MarcaUdB.EsCompacto(canvasRT);
+        vertical = MarcaUdB.EsMovilVertical(canvasRT);
         float margen = compacto ? MarcaUdB.Space4 : MargenAncho;
 
-        // En vertical, el botón sube para no tapar la nota legal ni la pista de uso
-        botonRT.anchoredPosition = new Vector2(-margen, compacto ? margen + 72f : margen);
+        // El botón comparte la fila inferior con la nota legal (izquierda): mismo margen en los dos modos.
+        // Celular vertical: botón redondo solo con el «?». Celular horizontal: «Guía». Escritorio: «Pregúntale al guía».
+        AjustarBoton(compacto, vertical);
+        // En el celular vertical el botón flota encima de la hoja del lugar, como el botón redondo de Street View
+        botonRT.anchoredPosition = new Vector2(-margen, vertical ? MarcaUdB.AltoHojaMovil + MarcaUdB.Space3 : margen);
         if (sombraBoton != null)
             ((RectTransform)sombraBoton.transform).anchoredPosition = botonRT.anchoredPosition + desfaseSombra;
+<<<<<<< Updated upstream
+=======
+        if (haloRT != null)
+        {
+            haloRT.sizeDelta = botonRT.sizeDelta;
+            haloRT.anchoredPosition = botonRT.anchoredPosition + new Vector2(-botonRT.sizeDelta.x * 0.5f, botonRT.sizeDelta.y * 0.5f);
+        }
+        // El mensaje sale del botón: a su izquierda, a su misma altura y con el borde escondido bajo él
+        AcomodarBurbuja();
+>>>>>>> Stashed changes
 
         float disponible = zonaSegura.rect.width > 0f ? zonaSegura.rect.width : canvasRT.rect.width;
         float ancho = Mathf.Min(AnchoPanel, disponible - MargenPanel * 2f);
         panelRaiz.sizeDelta = new Vector2(ancho, -MargenPanel * 2f);
         if (animacion == null)
-            panelRaiz.anchoredPosition = new Vector2(abierto ? -MargenPanel : ancho + 80f, 0f);
+        {
+            if (vertical) PonerPivotePanel(true);
+            else
+            {
+                PonerPivotePanel(false);
+                GrupoPanel().alpha = 1f;
+                panelRaiz.localScale = Vector3.one;
+                panelRaiz.anchoredPosition = new Vector2(abierto ? -MargenPanel : ancho + 80f, 0f);
+            }
+        }
 
         // Si cambió el ancho con la guía abierta, las filas se vuelven a medir
         if (abierto && contenidoLista != null) { LlenarLista(); ActualizarLlevame(); Reacomodar(); }
@@ -216,7 +356,7 @@ public class GuiaVirtual : MonoBehaviour
     void PonerGrupo(Grupo g, bool abierto)
     {
         g.abierto = abierto;
-        if (g.flecha != null) g.flecha.localEulerAngles = new Vector3(0f, 0f, abierto ? -90f : 0f);
+        if (g.flecha != null) GiroSuave.Poner(g.flecha, abierto ? -90f : 0f);
         foreach (Fila f in g.filas)
         {
             f.boton.gameObject.SetActive(abierto);
@@ -239,7 +379,7 @@ public class GuiaVirtual : MonoBehaviour
         f.respuesta.SetActive(abierta);
         if (abierta && !estabaAbierta && AnimacionesUI.Activas && isActiveAndEnabled)
             StartCoroutine(Aparecer(f.respuesta));
-        f.flecha.localEulerAngles = new Vector3(0f, 0f, abierta ? -90f : 0f);
+        GiroSuave.Poner(f.flecha, abierta ? -90f : 0f);
     }
 
     // La respuesta entra con un fundido corto
@@ -252,7 +392,7 @@ public class GuiaVirtual : MonoBehaviour
         while (t < 1f && objeto != null && grupo != null)
         {
             t += Time.unscaledDeltaTime / duracion;
-            grupo.alpha = Mathf.Clamp01(t);
+            grupo.alpha = AnimacionesUI.SalidaFuerte(Mathf.Clamp01(t));
             yield return null;
         }
         if (grupo != null) grupo.alpha = 1f;
@@ -338,6 +478,23 @@ public class GuiaVirtual : MonoBehaviour
     // Botón flotante en negro institucional, como el de «Menú»
     void ConstruirBoton()
     {
+<<<<<<< Updated upstream
+=======
+        string etiqueta = string.IsNullOrEmpty(textoBoton) || textoBoton == "Guía" ? "Pregúntale al guía" : textoBoton;
+        etiquetaAncha = etiqueta;
+
+        // Halo que late detrás del botón hasta que el usuario abre la guía por primera vez
+        halo = CrearImagen("HaloGuia", zonaSegura, MarcaUdB.Rojo);
+        halo.raycastTarget = false;
+        haloRT = (RectTransform)halo.transform;
+        // Anclado como el botón pero con el pivote al centro: el pulso crece parejo hacia todos los lados
+        haloRT.anchorMin = haloRT.anchorMax = new Vector2(1f, 0f);
+        haloRT.pivot = new Vector2(0.5f, 0.5f);
+        MarcaUdB.Pildora(halo, AltoBotonGuia);
+        // Sin lienzo propio: probado en Unity, un Canvas anidado en el halo dejaba sin clic al botón en forma
+        // de píldora. El pulso es un solo cuadro de imagen y se detiene al abrir la guía, así que su costo es mínimo.
+
+>>>>>>> Stashed changes
         Image img;
         Button boton = CrearBoton("BotonGuia", zonaSegura, out img);
         botonRT = (RectTransform)boton.transform;
@@ -346,21 +503,45 @@ public class GuiaVirtual : MonoBehaviour
         MarcaUdB.Redondear(img, MarcaUdB.RadiusMd);
         MarcaUdB.ColoresBoton(boton, MarcaUdB.Negro, MarcaUdB.Hex("#3a3a36"), MarcaUdB.Hex("#4a4a45"));
 
+<<<<<<< Updated upstream
         // Círculo blanco con «?»
+=======
+        // Círculo blanco con «?» en rojo
+        const float diametro = DiametroIcono;
+>>>>>>> Stashed changes
         Image circulo = CrearImagen("Icono", botonRT, MarcaUdB.InkInverso);
         circulo.raycastTarget = false;
         RectTransform rc = (RectTransform)circulo.transform;
         rc.anchorMin = rc.anchorMax = new Vector2(0f, 0.5f);
         rc.pivot = new Vector2(0f, 0.5f);
+<<<<<<< Updated upstream
         rc.sizeDelta = new Vector2(22f, 22f);
         rc.anchoredPosition = new Vector2(MarcaUdB.Space4, 0f);
         MarcaUdB.Redondear(circulo, 11f);
         TextMeshProUGUI signo = CrearTexto("Signo", rc, "?", MarcaUdB.TextoBold, MarcaUdB.UIControl, MarcaUdB.Negro);
+=======
+        rc.sizeDelta = new Vector2(diametro, diametro);
+        rc.anchoredPosition = new Vector2(MarcaUdB.Space2 + 2f, 0f);
+        MarcaUdB.Redondear(circulo, diametro * 0.5f);
+        TextMeshProUGUI signo = CrearTexto("Signo", rc, "?", MarcaUdB.DisplayExtra, 18f, MarcaUdB.Rojo);
+>>>>>>> Stashed changes
         signo.alignment = TextAlignmentOptions.Center;
         Estirar((RectTransform)signo.transform, 0f, 0f);
+        imagenBotonGuia = img;
+        iconoGuiaRT = rc;
+        iconoGuia = circulo;
+        signoGuia = signo;
 
+<<<<<<< Updated upstream
         TextMeshProUGUI texto = CrearTexto("Texto", botonRT, textoBoton, MarcaUdB.TextoBold, MarcaUdB.UIControl, MarcaUdB.InkInverso);
         Estirar((RectTransform)texto.transform, MarcaUdB.Space4 + 22f + MarcaUdB.Space2, MarcaUdB.Space2);
+=======
+        TextMeshProUGUI texto = CrearTexto("Texto", botonRT, etiqueta, MarcaUdB.TextoBold, MarcaUdB.UIControl, MarcaUdB.InkInverso);
+        texto.enableWordWrapping = false;
+        Estirar((RectTransform)texto.transform, IzquierdaTextoBoton, MarcaUdB.Space4);
+        textoBotonGuia = texto;
+        AjustarBoton(false, false);
+>>>>>>> Stashed changes
 
         boton.onClick.AddListener(Abrir);
         botonGuia = boton.gameObject;
@@ -371,6 +552,314 @@ public class GuiaVirtual : MonoBehaviour
             sombraBoton = sombra.gameObject;
             desfaseSombra = ((RectTransform)sombra.transform).anchoredPosition - botonRT.anchoredPosition;
         }
+<<<<<<< Updated upstream
+=======
+        // Orden de dibujo: halo, sombra y botón
+        haloRT.SetSiblingIndex(0);
+
+        ConstruirBurbuja();
+    }
+
+    const float IzquierdaTextoBoton = MarcaUdB.Space2 + DiametroIcono + MarcaUdB.Space2;
+
+    // Etiqueta y ancho del botón: «Pregúntale al guía» en pantalla ancha, «Guía» en móvil vertical
+    void AjustarBoton(bool compacto, bool redondo)
+    {
+        if (textoBotonGuia == null || botonRT == null) return;
+
+        // El sprite redondeado se recalcula con el alto: píldora o círculo
+        float alto = redondo ? MarcaUdB.DiametroGuiaMovil : AltoBotonGuia;
+        if (imagenBotonGuia != null) MarcaUdB.Pildora(imagenBotonGuia, alto);
+        if (halo != null) MarcaUdB.Pildora(halo, alto);
+        textoBotonGuia.gameObject.SetActive(!redondo);
+        if (sombraBoton != null) sombraBoton.SetActive(!redondo && botonGuia != null && botonGuia.activeSelf);
+
+        if (iconoGuiaRT != null)
+        {
+            float d = redondo ? 36f : DiametroIcono;
+            iconoGuiaRT.anchorMin = iconoGuiaRT.anchorMax = new Vector2(redondo ? 0.5f : 0f, 0.5f);
+            // Pivote al centro en los dos modos: el ícono gira sobre sí mismo cuando sale un mensaje
+            iconoGuiaRT.pivot = new Vector2(0.5f, 0.5f);
+            iconoGuiaRT.sizeDelta = new Vector2(d, d);
+            iconoGuiaRT.anchoredPosition = redondo ? Vector2.zero : new Vector2(MarcaUdB.Space2 + 2f + d * 0.5f, 0f);
+            MarcaUdB.Redondear(iconoGuia, d * 0.5f);
+            if (signoGuia != null) signoGuia.fontSize = redondo ? 26f : 18f;
+        }
+
+        if (redondo)
+        {
+            botonRT.sizeDelta = new Vector2(alto, alto);
+            if (haloRT != null) haloRT.sizeDelta = botonRT.sizeDelta;
+            return;
+        }
+
+        string etiqueta = compacto ? EtiquetaCompacta : etiquetaAncha;
+        textoBotonGuia.text = etiqueta;
+        float anchoTexto = Mathf.Ceil(textoBotonGuia.GetPreferredValues(etiqueta).x);
+        if (anchoTexto <= 1f) anchoTexto = etiqueta.Length * 9f;
+        anchoBotonGuia = Mathf.Max(compacto ? 0f : AnchoBoton, IzquierdaTextoBoton + anchoTexto + MarcaUdB.Space4);
+        botonRT.sizeDelta = new Vector2(anchoBotonGuia, AltoBotonGuia);
+        if (haloRT != null) haloRT.sizeDelta = botonRT.sizeDelta;
+        if (sombraBoton != null)
+            ((RectTransform)sombraBoton.transform).sizeDelta = botonRT.sizeDelta + new Vector2(16f, 16f);
+    }
+
+    // ------------------------------------------------------------------ mensajes que salen del botón
+
+    // El globo nace detrás del botón: su borde derecho queda escondido bajo el botón y se despliega hacia
+    // la izquierda (recorte que se abre), y al irse se recoge de izquierda a derecha hasta meterse en él.
+    // Así se lee que el mensaje sale del guía. Tocarlo abre el guía (con la pregunta ya desplegada).
+    void ConstruirBurbuja()
+    {
+        GameObject goRaiz = new GameObject("MensajeGuia", typeof(RectTransform), typeof(RectMask2D), typeof(CanvasGroup));
+        burbujaRT = (RectTransform)goRaiz.transform;
+        burbujaRT.SetParent(zonaSegura, false);
+        burbujaRT.anchorMin = burbujaRT.anchorMax = new Vector2(1f, 0f);
+        burbujaRT.pivot = new Vector2(1f, 0.5f);
+        recorteBurbuja = goRaiz.GetComponent<RectMask2D>();
+        burbuja = goRaiz.GetComponent<CanvasGroup>();
+        burbuja.alpha = 0f;
+        burbuja.blocksRaycasts = false;
+
+        Image fondo = CrearImagen("Fondo", burbujaRT, MarcaUdB.Surface100);
+        // El fondo deja un margen de SombraMensaje dentro del recorte: ahí cabe su sombra sin cortarse
+        RectTransform rtFondo = (RectTransform)fondo.transform;
+        rtFondo.anchorMin = Vector2.zero;
+        rtFondo.anchorMax = Vector2.one;
+        rtFondo.pivot = new Vector2(0.5f, 0.5f);
+        rtFondo.offsetMin = new Vector2(SombraMensaje, SombraMensaje);
+        rtFondo.offsetMax = new Vector2(-SombraMensaje, -SombraMensaje);
+        MarcaUdB.SombraFlotante(rtFondo);
+        fondoBurbuja = fondo;
+        Button boton = fondo.gameObject.AddComponent<Button>();
+        boton.targetGraphic = fondo;
+        SinNavegacion(boton);
+        MarcaUdB.ColoresBoton(boton, MarcaUdB.Surface100, MarcaUdB.Surface200, MarcaUdB.Surface300);
+        boton.onClick.AddListener(AbrirDesdeMensaje);
+
+        // Filete rojo a la izquierda, como en el encabezado de los paneles
+        Image filete = CrearImagen("Filete", fondo.transform, MarcaUdB.Rojo);
+        filete.raycastTarget = false;
+        RectTransform rf = (RectTransform)filete.transform;
+        rf.anchorMin = new Vector2(0f, 0f); rf.anchorMax = new Vector2(0f, 1f);
+        rf.pivot = new Vector2(0f, 0.5f);
+        rf.sizeDelta = new Vector2(4f, -MarcaUdB.Space4 * 2f);
+        rf.anchoredPosition = new Vector2(MarcaUdB.Space4, 0f);
+        MarcaUdB.Redondear(filete, 2f);
+
+        TextMeshProUGUI t = CrearTexto("Texto", fondo.transform, textoBurbuja, MarcaUdB.TextoBold, MarcaUdB.UIControlS, MarcaUdB.Ink);
+        t.enableWordWrapping = true;
+        t.alignment = TextAlignmentOptions.MidlineLeft;
+        textoBurbujaTMP = t;
+        textoBurbujaRT = (RectTransform)t.transform;
+
+        // Detrás del botón (y delante del halo): el botón tapa el borde por donde sale el globo
+        if (haloRT != null) burbujaRT.SetSiblingIndex(haloRT.GetSiblingIndex() + 1);
+        burbujaRT.gameObject.SetActive(false);
+    }
+
+    const float AnchoMaximoMensaje = 260f;   // parte visible del globo, sin contar lo que queda bajo el botón
+    const float IzquierdaMensaje = MarcaUdB.Space4 + 4f + MarcaUdB.Space3;
+    const float SombraMensaje = 8f;          // margen del recorte para la sombra del globo
+
+    // Tamaño y lugar del globo según el texto y el botón actual
+    void AcomodarBurbuja()
+    {
+        if (burbujaRT == null || botonRT == null || textoBurbujaTMP == null || textoBurbujaRT == null) return;
+        float margen = MarcaUdB.EsCompacto(canvasRT) ? MarcaUdB.Space4 : MargenAncho;
+        float escondido = botonRT.sizeDelta.x * 0.5f;   // lo que queda tapado por el botón
+        float disponible = (zonaSegura.rect.width > 0f ? zonaSegura.rect.width : canvasRT.rect.width)
+                           - margen * 2f - botonRT.sizeDelta.x - MarcaUdB.Space2;
+        float derecha = escondido + MarcaUdB.Space4;
+        float anchoTexto = Mathf.Min(AnchoMaximoMensaje, disponible) - IzquierdaMensaje - MarcaUdB.Space4;
+        anchoTexto = Mathf.Max(120f, Mathf.Min(anchoTexto, Mathf.Ceil(textoBurbujaTMP.GetPreferredValues(textoBurbujaTMP.text).x) + 2f));
+        float altoTexto = Mathf.Ceil(textoBurbujaTMP.GetPreferredValues(textoBurbujaTMP.text, anchoTexto, 0f).y);
+
+        float alto = Mathf.Max(botonRT.sizeDelta.y, altoTexto + MarcaUdB.Space3 * 2f);
+        anchoBurbuja = IzquierdaMensaje + anchoTexto + MarcaUdB.Space4 + derecha;
+        burbujaRT.sizeDelta = new Vector2(anchoBurbuja + SombraMensaje * 2f, alto + SombraMensaje * 2f);
+        // El borde derecho del globo queda en el centro del botón, a su misma altura
+        burbujaRT.anchoredPosition = botonRT.anchoredPosition + new Vector2(-escondido + SombraMensaje, botonRT.sizeDelta.y * 0.5f);
+        MarcaUdB.Pildora(fondoBurbuja, alto);
+
+        textoBurbujaRT.anchorMin = new Vector2(0f, 0f);
+        textoBurbujaRT.anchorMax = new Vector2(1f, 1f);
+        textoBurbujaRT.pivot = new Vector2(0.5f, 0.5f);
+        textoBurbujaRT.offsetMin = new Vector2(IzquierdaMensaje, 0f);
+        textoBurbujaRT.offsetMax = new Vector2(-derecha, 0f);
+        AplicarDespliegue(progresoBurbuja);
+    }
+
+    // 0 = metido en el botón, 1 = desplegado. Solo cambia el recorte, la opacidad y la posición del texto.
+    void AplicarDespliegue(float p)
+    {
+        if (burbujaRT == null || recorteBurbuja == null || textoBurbujaRT == null) return;
+        float e = Mathf.Clamp01(p);
+        // Lo que no se ve se recorta desde la izquierda: el globo crece hacia la izquierda desde el botón
+        recorteBurbuja.padding = new Vector4((1f - e) * (anchoBurbuja + SombraMensaje * 2f), 0f, 0f, 0f);
+        burbuja.alpha = Mathf.Clamp01(e * 1.6f);
+        // El texto viaja un poco con el despliegue: acompaña el movimiento de salida del botón
+        textoBurbujaRT.anchoredPosition = new Vector2((1f - e) * 24f, 0f);
+        // El «?» gira como una rueda que suelta el mensaje: una vuelta a la izquierda mientras sale y de
+        // regreso a la derecha mientras se recoge. Va atado al mismo progreso, así que también se interrumpe.
+        if (iconoGuiaRT != null) iconoGuiaRT.localEulerAngles = new Vector3(0f, 0f, 360f * e);
+    }
+
+    // Animación interrumpible: parte del punto actual. Entra en 280 ms y se recoge en 200 ms.
+    IEnumerator Desplegar(bool mostrar)
+    {
+        if (mostrar) burbujaRT.gameObject.SetActive(true);
+        burbuja.blocksRaycasts = mostrar;
+        float desde = progresoBurbuja, hasta = mostrar ? 1f : 0f;
+        float duracion = (mostrar ? 0.28f : 0.2f) * Mathf.Abs(hasta - desde);
+        float t = 0f;
+        while (t < 1f && AnimacionesUI.Activas && duracion > 0f)
+        {
+            t += Time.unscaledDeltaTime / duracion;
+            progresoBurbuja = Mathf.Lerp(desde, hasta, AnimacionesUI.SalidaFuerte(Mathf.Clamp01(t)));
+            AplicarDespliegue(progresoBurbuja);
+            yield return null;
+        }
+        progresoBurbuja = hasta;
+        AplicarDespliegue(hasta);
+        if (!mostrar) burbujaRT.gameObject.SetActive(false);
+    }
+
+    // El «?» da un pequeño salto cuando sale un mensaje: el ojo va al botón y ve salir el globo de ahí
+    IEnumerator Saltar()
+    {
+        if (iconoGuiaRT == null || !AnimacionesUI.Activas) yield break;
+        float t = 0f;
+        while (t < 1f)
+        {
+            t += Time.unscaledDeltaTime / 0.3f;
+            float f = Mathf.Clamp01(t);
+            // Sube en el primer 40 % (salida fuerte) y vuelve en el resto
+            float s = f < 0.4f ? Mathf.Lerp(1f, 1.18f, AnimacionesUI.SalidaFuerte(f / 0.4f))
+                               : Mathf.Lerp(1.18f, 1f, AnimacionesUI.SalidaFuerte((f - 0.4f) / 0.6f));
+            iconoGuiaRT.localScale = new Vector3(s, s, 1f);
+            yield return null;
+        }
+        iconoGuiaRT.localScale = Vector3.one;
+    }
+
+    // Halo rojo: dos pulsos mientras el mensaje está afuera
+    IEnumerator Pulsar()
+    {
+        if (halo == null) yield break;
+        float inicio = Time.unscaledTime;
+        halo.gameObject.SetActive(true);
+        while (Time.unscaledTime - inicio < 2f * 2.4f && burbujaRT.gameObject.activeSelf)
+        {
+            float f = ((Time.unscaledTime - inicio) % 2.4f) / 1.4f;
+            if (f <= 1f)
+            {
+                float e = 1f - Mathf.Pow(1f - f, 2f);
+                float ex = 10f / Mathf.Max(1f, haloRT.sizeDelta.x), ey = 10f / Mathf.Max(1f, haloRT.sizeDelta.y);
+                haloRT.localScale = new Vector3(1f + ex * 2f * e, 1f + ey * 2f * e, 1f);
+                Color c = MarcaUdB.Rojo; c.a = 0.35f * (1f - f);
+                halo.color = c;
+            }
+            else halo.color = new Color(0f, 0f, 0f, 0f);
+            yield return null;
+        }
+        halo.gameObject.SetActive(false);
+    }
+
+    // Tocar el mensaje abre el guía; si el mensaje era una pregunta, ya aparece con su respuesta abierta
+    void AbrirDesdeMensaje()
+    {
+        PreguntaGuia p = preguntaMensaje;
+        Abrir();
+        if (p == null) return;
+        foreach (Grupo g in grupos)
+            if (g.filas.Exists(f => f.datos == p) && !g.abierto) PonerGrupo(g, true);
+        Fila fila = filas.Find(f => f.datos == p);
+        if (fila != null && !fila.abierta) Alternar(fila);
+    }
+
+    bool BotonALaVista
+    {
+        get
+        {
+            return botonGuia != null && !botonOculto && botonGuia.activeInHierarchy && !abierto
+                   && !(FadeController.Instance != null && FadeController.Instance.EnTransicion);
+        }
+    }
+
+    // Elige el mensaje: la invitación general al empezar y cada cinco mensajes; los demás, una pregunta de
+    // este lugar si la hay (o una del catálogo), sin repetir hasta haberlas mostrado todas. Devuelve null si
+    // el mensaje es la invitación.
+    PreguntaGuia ElegirMensaje(int vez)
+    {
+        if (vez % 5 == 0) return null;
+        Material cielo = RenderSettings.skybox;
+        string lugar = cielo != null ? cielo.name : "";
+        FichaInfo aqui = CatalogoInfo.PorSkybox(cielo);
+        List<PreguntaGuia> candidatas = new List<PreguntaGuia>();
+        foreach (PreguntaGuia p in CatalogoInfo.Preguntas)
+            if (p != null && !string.IsNullOrEmpty(p.pregunta) && !yaMostradas.Contains(p) && EsDeAqui(p, lugar, aqui))
+                candidatas.Add(p);
+        if (candidatas.Count == 0)
+            foreach (PreguntaGuia p in CatalogoInfo.Preguntas)
+                if (p != null && !string.IsNullOrEmpty(p.pregunta) && !yaMostradas.Contains(p)) candidatas.Add(p);
+        if (candidatas.Count == 0 && yaMostradas.Count > 0)
+        {
+            // Ya salieron todas: se empieza otra vuelta
+            yaMostradas.Clear();
+            return ElegirMensaje(vez);
+        }
+        if (candidatas.Count == 0) return null;
+        PreguntaGuia elegida = candidatas[Random.Range(0, candidatas.Count)];
+        yaMostradas.Add(elegida);
+        return elegida;
+    }
+
+    // Llamados del guía: el primero al empezar y después se repiten durante todo el recorrido, cada 25 s o
+    // apenas el usuario llega a un lugar nuevo (si ya pasaron 10 s desde el anterior). Cuando el usuario ya
+    // abrió el guía alguna vez, siguen saliendo pero más espaciados (60 s, o 30 s al cambiar de lugar).
+    // Mientras el guía o un menú están abiertos no sale nada. Entre un mensaje y otro la corrutina solo revisa
+    // cuatro veces por segundo: no trabaja cada cuadro.
+    IEnumerator AnimarLlamado()
+    {
+        const float Visible = 8f;
+        WaitForSecondsRealtime revisar = new WaitForSecondsRealtime(0.25f);
+
+        yield return new WaitForSecondsRealtime(2.5f);
+        // Primero la pista de uso, después el globo: así nunca hay dos avisos a la vez en pantalla
+        while (AplicarMarcaUdB.PistaVisible) yield return null;
+        yield return new WaitForSecondsRealtime(0.6f);
+
+        for (int vez = 0; ; vez++)
+        {
+            float desde = Time.unscaledTime;
+            Material lugarAnterior = RenderSettings.skybox;
+            bool porCambioDeLugar = false;
+            while (true)
+            {
+                float cada = yaAbrioGuia ? 60f : 25f;
+                float minimoAlLlegar = yaAbrioGuia ? 30f : 10f;
+                float espera = Time.unscaledTime - desde;
+                porCambioDeLugar = RenderSettings.skybox != lugarAnterior && espera >= minimoAlLlegar;
+                bool toca = vez == 0 || espera >= cada || porCambioDeLugar;
+                if (toca && BotonALaVista) break;
+                yield return revisar;
+            }
+            if (porCambioDeLugar) yield return new WaitForSecondsRealtime(1.2f); // deja ver el lugar nuevo primero
+            if (!BotonALaVista) { vez--; continue; }
+
+            preguntaMensaje = ElegirMensaje(vez);
+            textoBurbujaTMP.text = preguntaMensaje != null ? preguntaMensaje.pregunta : textoBurbuja;
+            AcomodarBurbuja();
+            StartCoroutine(Saltar());
+            StartCoroutine(Pulsar());
+            yield return Desplegar(true);
+
+            float inicio = Time.unscaledTime;
+            while (Time.unscaledTime - inicio < Visible && BotonALaVista) yield return null;
+            yield return Desplegar(false);
+        }
+>>>>>>> Stashed changes
     }
 
     void ConstruirPanel()

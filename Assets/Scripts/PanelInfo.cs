@@ -8,7 +8,8 @@ using UnityEngine.UI;
 /// Ficha de información de un PuntoInfo, con el mismo estilo del menú lateral:
 /// panel de vidrio, encabezado negro con filete rojo, fila de la zona con su color,
 /// barra de desplazamiento del color de la zona y la acción principal en rojo.
-/// Entra deslizándose por la derecha (el menú entra por la izquierda).
+/// Entra deslizándose por la derecha (el menú entra por la izquierda); en el celular vertical sube desde abajo,
+/// desde la hoja del lugar donde está su botón.
 /// Se cierra con la X, tocando fuera o con Esc. Mientras está abierta es lo único que responde.
 /// Se crea sola la primera vez que se toca un punto.
 /// </summary>
@@ -59,6 +60,7 @@ public class PanelInfo : MonoBehaviour
     RectTransform zonaSegura;
     RectTransform panelRaiz;
 
+    Image tiradorFicha;
     TextMeshProUGUI rotulo;
     TextMeshProUGUI titulo;
     GameObject filaZona;
@@ -86,7 +88,7 @@ public class PanelInfo : MonoBehaviour
         if (instancia != null && instancia != this) { Destroy(gameObject); return; }
         instancia = this;
         Construir();
-        panelRaiz.anchoredPosition = new Vector2(PosicionOculta(), 0f);
+        panelRaiz.anchoredPosition = PosicionOculta();
         lienzo.SetActive(false);
     }
 
@@ -121,48 +123,57 @@ public class PanelInfo : MonoBehaviour
         RegistroUso.Anotar("ficha", punto.titulo);
 
         bool yaAbierto = abierto;
+        bool seVeia = lienzo.activeSelf; // a mitad del cierre: sigue desde donde va
         abierto = true;
         lienzo.SetActive(true);
-        velo.SetActive(true);
+        VeloSuave.Mostrar(velo);
         AjustarAncho();
+        // Arranca del lado que corresponde al modo actual (el teléfono pudo girar con la ficha cerrada)
+        if (!seVeia) panelRaiz.anchoredPosition = PosicionOculta();
         Rellenar(punto, foto);
         scroll.verticalNormalizedPosition = 1f;
 
-        if (!yaAbierto) Animar(-MargenPanel);
+        if (!yaAbierto) Animar(PosicionAbierta);
     }
 
     public void Cerrar()
     {
         if (!abierto) return;
         abierto = false;
-        velo.SetActive(false);
+        VeloSuave.Ocultar(velo);
         if (isActiveAndEnabled) Animar(PosicionOculta());
         else lienzo.SetActive(false);
     }
 
-    float PosicionOculta()
+    static readonly Vector2 PosicionAbierta = new Vector2(-MargenPanel, 0f);
+
+    // Celular vertical: la ficha sube desde abajo, porque su botón está en la hoja inferior (el origen es
+    // el disparador). Horizontal y escritorio: entra por la derecha, frente al menú que entra por la izquierda.
+    Vector2 PosicionOculta()
     {
-        return panelRaiz.sizeDelta.x + 80f;
+        if (canvasRT != null && MarcaUdB.EsMovilVertical(canvasRT))
+            return new Vector2(-MargenPanel, -canvasRT.rect.height - 80f);
+        return new Vector2(panelRaiz.sizeDelta.x + 80f, 0f);
     }
 
-    void Animar(float destinoX)
+    void Animar(Vector2 destino)
     {
         if (animacion != null) StopCoroutine(animacion);
-        animacion = StartCoroutine(Deslizar(destinoX));
+        animacion = StartCoroutine(Deslizar(destino));
     }
 
-    // Igual que el menú: 200 ms con salida suave
-    IEnumerator Deslizar(float destinoX)
+    // Igual que el menú: curva de cajón, entra en 240 ms y sale en 180 ms, interrumpible
+    IEnumerator Deslizar(Vector2 destino)
     {
-        float inicioX = panelRaiz.anchoredPosition.x;
+        Vector2 inicio = panelRaiz.anchoredPosition;
         float t = 0f;
-        const float duracion = 0.2f;
+        float duracion = abierto ? AnimacionesUI.DuracionPanelEntrada : AnimacionesUI.DuracionPanelSalida;
 
         while (t < 1f)
         {
-            t += Time.unscaledDeltaTime / duracion;
-            float e = 1f - Mathf.Pow(1f - Mathf.Clamp01(t), 3f);
-            panelRaiz.anchoredPosition = new Vector2(Mathf.Lerp(inicioX, destinoX, e), 0f);
+            t = AnimacionesUI.Activas ? t + Time.unscaledDeltaTime / duracion : 1f;
+            float e = AnimacionesUI.Cajon(Mathf.Clamp01(t));
+            panelRaiz.anchoredPosition = Vector2.LerpUnclamped(inicio, destino, e);
             yield return null;
         }
 
@@ -179,8 +190,9 @@ public class PanelInfo : MonoBehaviour
         float disponible = zonaSegura.rect.width > 0f ? zonaSegura.rect.width : canvasRT.rect.width;
         float ancho = Mathf.Min(AnchoPanel, disponible - MargenPanel * 2f);
         panelRaiz.sizeDelta = new Vector2(ancho, -MargenPanel * 2f);
+        if (tiradorFicha != null) tiradorFicha.gameObject.SetActive(MarcaUdB.EsMovilVertical(canvasRT));
         if (abierto && animacion == null)
-            panelRaiz.anchoredPosition = new Vector2(-MargenPanel, 0f);
+            panelRaiz.anchoredPosition = PosicionAbierta;
 
         // Si cambió el ancho (giro del teléfono, ventana), los bloques se recalculan
         if (abierto && fichaActual != null && Mathf.Abs(AnchoContenido() - anchoRelleno) > 0.5f)
@@ -502,9 +514,29 @@ public class PanelInfo : MonoBehaviour
     void ConstruirEncabezado(RectTransform panel)
     {
         Image fondo = CrearImagen("Encabezado", panel, MarcaUdB.Negro);
-        fondo.raycastTarget = false;
+        fondo.raycastTarget = true; // es la zona por donde se agarra la ficha para bajarla
         MarcaUdB.Redondear(fondo, MarcaUdB.RadiusMd);
         RectTransform rtE = (RectTransform)fondo.transform;
+
+        // Celular vertical: la ficha subió desde la hoja, así que se cierra con el gesto contrario,
+        // arrastrando el encabezado hacia abajo (además de la X o tocando fuera)
+        DeslizarParaCerrar gesto = fondo.gameObject.AddComponent<DeslizarParaCerrar>();
+        gesto.objetivo = panelRaiz;
+        gesto.activo = () => abierto && MarcaUdB.EsMovilVertical(canvasRT);
+        gesto.alEmpezar = () => { if (animacion != null) { StopCoroutine(animacion); animacion = null; } };
+        gesto.alCerrar = Cerrar;
+        gesto.alVolver = () => Animar(PosicionAbierta);
+
+        // Tirador blanco tenue arriba, al centro: avisa que la ficha se puede bajar
+        tiradorFicha = CrearImagen("Tirador", rtE, new Color(1f, 1f, 1f, 0.45f));
+        tiradorFicha.raycastTarget = false;
+        tiradorFicha.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
+        RectTransform rtT = (RectTransform)tiradorFicha.transform;
+        rtT.anchorMin = rtT.anchorMax = rtT.pivot = new Vector2(0.5f, 1f);
+        rtT.sizeDelta = new Vector2(36f, 4f);
+        rtT.anchoredPosition = new Vector2(0f, -MarcaUdB.Space2);
+        MarcaUdB.Redondear(tiradorFicha, 2f);
+        tiradorFicha.gameObject.SetActive(false);
 
         float p = MarcaUdB.Space4;
         VerticalLayoutGroup vl = fondo.gameObject.AddComponent<VerticalLayoutGroup>();

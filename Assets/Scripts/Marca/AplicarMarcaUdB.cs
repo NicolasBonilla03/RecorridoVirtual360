@@ -20,10 +20,11 @@ public class AplicarMarcaUdB : MonoBehaviour
     public Sprite logotipoHorizontal;
 
     [Tooltip("Ancho del logotipo en px en pantallas anchas. El manual pide mínimo 152 px para el horizontal.")]
-    public float anchoLogotipo = 260f;
+    public float anchoLogo = 200f;
 
-    [Tooltip("Ancho del logotipo en móvil vertical (mínimo 152 px).")]
-    public float anchoLogotipoCompacto = 168f;
+    [Tooltip("Ancho del logotipo en móvil vertical. Con 152 px (el mínimo del manual) la placa mide 48 px de alto, " +
+             "lo mismo que el botón de menú, y la fila superior queda pareja.")]
+    public float anchoLogoCompacto = 152f;
 
     public string nombreInstitucion = "Universidad de Boyacá";
     public string nombreRecorrido = "Recorrido virtual 360°";
@@ -55,6 +56,8 @@ public class AplicarMarcaUdB : MonoBehaviour
     RectTransform zonaSegura;
     RectTransform cabecera;
     RectTransform sombraCabecera;
+    bool vertical;
+    float ultimaHoja = -1f;
     Vector2 desfaseSombra;
     Image logo;
     Sprite logotipoUsado;
@@ -67,9 +70,23 @@ public class AplicarMarcaUdB : MonoBehaviour
     float tiempoInicio;
     bool pistaOculta;
 
+    static AplicarMarcaUdB instancia;
+
+    /// <summary>true mientras la pista de uso está en pantalla. El globo del guía espera a que se vaya.</summary>
+    public static bool PistaVisible
+    {
+        get { return instancia != null && instancia.pista != null && instancia.pista.gameObject.activeInHierarchy && !instancia.pistaOculta; }
+    }
+
     void Awake()
     {
+        instancia = this;
         MarcaUdB.RegistrarZonas(zonas);
+    }
+
+    void OnDestroy()
+    {
+        if (instancia == this) instancia = null;
     }
 
     IEnumerator Start()
@@ -85,10 +102,13 @@ public class AplicarMarcaUdB : MonoBehaviour
 
     void Update()
     {
-        if (canvasRT != null && (canvasRT.rect.size != ultimoTamano || Screen.safeArea != ultimaAreaSegura))
+        // También cuando la hoja inferior del celular cambia de alto (otro lugar, con o sin ficha)
+        if (canvasRT != null && (canvasRT.rect.size != ultimoTamano || Screen.safeArea != ultimaAreaSegura
+                                 || !Mathf.Approximately(MarcaUdB.AltoHojaMovil, ultimaHoja)))
         {
             ultimoTamano = canvasRT.rect.size;
             ultimaAreaSegura = Screen.safeArea;
+            ultimaHoja = MarcaUdB.AltoHojaMovil;
             AplicarLayout();
         }
 
@@ -182,11 +202,13 @@ public class AplicarMarcaUdB : MonoBehaviour
                 MarcaUdB.Pildora(img, Mathf.Min(rt.rect.width, rt.rect.height));
             }
             Button bp = poi.GetComponent<Button>();
-            Color oscuro = Color.Lerp(zona, MarcaUdB.Negro, 0.2f);
+            // Texto en blanco sobre el color del edificio, oscurecido lo justo para que se lea
+            Color relleno = MarcaUdB.FondoParaBlanco(zona);
+            Color oscuro = Color.Lerp(relleno, MarcaUdB.Negro, 0.2f);
             if (bp != null)
-                MarcaUdB.ColoresBoton(bp, zona, oscuro, oscuro);
+                MarcaUdB.ColoresBoton(bp, relleno, oscuro, oscuro);
             else if (img != null)
-                img.color = zona;
+                img.color = relleno;
 
             foreach (Transform hijo in poi.transform)
             {
@@ -196,7 +218,7 @@ public class AplicarMarcaUdB : MonoBehaviour
                 {
                     if (MarcaUdB.TextoBold != null) t.font = MarcaUdB.TextoBold;
                     t.fontStyle &= ~FontStyles.Bold;
-                    t.color = MarcaUdB.TintaSobre(zona);
+                    t.color = MarcaUdB.InkInverso;
                 }
             }
 
@@ -317,31 +339,61 @@ public class AplicarMarcaUdB : MonoBehaviour
         // Solo el logotipo recibe clics (vuelve al inicio); el resto no bloquea el arrastre de la cámara
         if (mostrarCabecera) ConstruirCabecera();
         if (mostrarVigilada) ConstruirVigilada();
+
+        // La placa del logotipo (con su sombra) se dibuja encima de la nota legal: en el celular vertical la
+        // nota va justo debajo del logo y, si no, la pista «Ir al inicio» del logo quedaría tapada por ella
+        if (cabecera != null)
+        {
+            if (sombraCabecera != null) sombraCabecera.SetAsLastSibling();
+            cabecera.SetAsLastSibling();
+        }
         if (mostrarPista) ConstruirPista();
     }
 
     float Margen { get { return compacto ? MarcaUdB.Space4 : MarcaUdB.Space8; } }
+    const float AltoPista = 36f;
 
     void AplicarLayout()
     {
         MarcaUdB.AjustarAreaSegura(zonaSegura);
         compacto = MarcaUdB.EsCompacto(canvasRT);
+        vertical = MarcaUdB.EsMovilVertical(canvasRT);
 
         if (cabecera != null)
         {
             if (logo != null && logotipoUsado != null) DimensionarLogo();
+            // La placa flota sobre la foto en todos los modos (en el celular vertical, como en Street View)
             cabecera.anchoredPosition = new Vector2(-Margen, -Margen);
-            if (sombraCabecera != null) sombraCabecera.anchoredPosition = cabecera.anchoredPosition + desfaseSombra;
+            if (sombraCabecera != null)
+                sombraCabecera.anchoredPosition = cabecera.anchoredPosition + desfaseSombra;
         }
 
-        float bajo = compacto ? MarcaUdB.Space4 : MarcaUdB.Space6;
+        float fila = vertical ? MarcaUdB.DiametroGuiaMovil : MarcaUdB.AltoControlFlotante;
+        float bajo = Margen;
         if (vigilada != null)
-            vigilada.anchoredPosition = new Vector2(Margen, bajo);
+        {
+            if (vertical && cabecera != null)
+            {
+                // Celular vertical: la nota legal va arriba, justo debajo del logotipo y alineada a su borde
+                // derecho. Abajo queda libre para la hoja del lugar.
+                vigilada.anchorMin = vigilada.anchorMax = vigilada.pivot = new Vector2(1f, 1f);
+                vigilada.anchoredPosition = cabecera.anchoredPosition - new Vector2(0f, cabecera.sizeDelta.y + MarcaUdB.Space2);
+            }
+            else
+            {
+                // Fila inferior: la nota legal (izquierda) y el botón del guía (derecha) comparten la misma línea,
+                // con el mismo margen que la fila superior y centrados en el alto del botón del guía
+                vigilada.anchorMin = vigilada.anchorMax = vigilada.pivot = new Vector2(0f, 0f);
+                vigilada.anchoredPosition = new Vector2(Margen, bajo + (fila - vigilada.sizeDelta.y) * 0.5f);
+            }
+        }
 
         if (pista != null)
         {
-            // En móvil la pista va encima de la nota legal; en pantalla ancha, centrada abajo
-            float y = compacto ? bajo + 28f + MarcaUdB.Space2 : bajo;
+            // Celular vertical: encima del botón del guía, que a su vez se apoya en la hoja del lugar.
+            // Celular horizontal: encima de la fila inferior. Pantalla ancha: centrada en esa fila.
+            float y = vertical ? MarcaUdB.AltoHojaMovil + MarcaUdB.Space3 + fila + MarcaUdB.Space3
+                    : compacto ? bajo + fila + MarcaUdB.Space3 : bajo + (fila - AltoPista) * 0.5f;
             pista.anchoredPosition = new Vector2(0f, y);
             float disponible = zonaSegura.rect.width > 0f ? zonaSegura.rect.width : canvasRT.rect.width;
             // El primer texto hijo es la flecha: se busca el texto de la pista por su nombre
@@ -351,7 +403,7 @@ public class AplicarMarcaUdB : MonoBehaviour
             float ancho = Mathf.Ceil(t.GetPreferredValues(t.text).x) + 18f + MarcaUdB.Space2 + MarcaUdB.Space4 * 2f;
             float maximo = disponible - Margen * 2f;
             if (!compacto) maximo -= 400f; // deja libre la nota legal a la izquierda
-            pista.sizeDelta = new Vector2(Mathf.Min(ancho, Mathf.Max(200f, maximo)), 36f);
+            pista.sizeDelta = new Vector2(Mathf.Min(ancho, Mathf.Max(200f, maximo)), AltoPista);
         }
     }
 
@@ -363,7 +415,8 @@ public class AplicarMarcaUdB : MonoBehaviour
         Image placa = CrearImagen("Cabecera", zonaSegura, logotipoUsado != null ? MarcaUdB.Surface100 : MarcaUdB.VidrioPanel);
         cabecera = (RectTransform)placa.transform;
         cabecera.anchorMin = cabecera.anchorMax = cabecera.pivot = new Vector2(1f, 1f);
-        MarcaUdB.Redondear(placa, MarcaUdB.RadiusLg);
+        // Mismo radio que el botón de menú y el chip: la fila superior se lee como un solo sistema
+        MarcaUdB.Redondear(placa, MarcaUdB.RadiusMd);
         HacerBotonDeInicio(placa);
 
         if (logotipoUsado != null)
@@ -406,6 +459,7 @@ public class AplicarMarcaUdB : MonoBehaviour
             rs.offsetMax = new Vector2(-padH, padV + 14f);
 
             cabecera.sizeDelta = new Vector2(anchoTexto + padH * 2f, 20f + 14f + MarcaUdB.Space1 + padV * 2f);
+            MarcaUdB.AltoFilaSuperior = cabecera.sizeDelta.y;
         }
 
         cabecera.anchoredPosition = new Vector2(-MarcaUdB.Space8, -MarcaUdB.Space8);
@@ -493,13 +547,14 @@ public class AplicarMarcaUdB : MonoBehaviour
     void DimensionarLogo()
     {
         float proporcion = logotipoUsado.rect.width / Mathf.Max(1f, logotipoUsado.rect.height);
-        float anchoLogo = Mathf.Max(152f, compacto ? anchoLogotipoCompacto : anchoLogotipo); // reducción mínima en pantalla
-        float altoLogo = anchoLogo / proporcion;
+        float anchoL = Mathf.Max(152f, compacto ? anchoLogoCompacto : anchoLogo); // reducción mínima en pantalla
+        float altoLogo = anchoL / proporcion;
 
         // Área de protección: 1.5x por los cuatro lados (x = ancho del horizontal / 29.81)
-        float proteccion = Mathf.Ceil(1.5f * anchoLogo / 29.81f);
-        ((RectTransform)logo.transform).sizeDelta = new Vector2(anchoLogo, altoLogo);
-        cabecera.sizeDelta = new Vector2(anchoLogo + proteccion * 2f, altoLogo + proteccion * 2f);
+        float proteccion = Mathf.Ceil(1.5f * anchoL / 29.81f);
+        ((RectTransform)logo.transform).sizeDelta = new Vector2(anchoL, altoLogo);
+        cabecera.sizeDelta = new Vector2(anchoL + proteccion * 2f, Mathf.Ceil(altoLogo + proteccion * 2f));
+        MarcaUdB.AltoFilaSuperior = cabecera.sizeDelta.y;
 
         // La sombra de la placa se reajusta con ella (sombra-flotante: 8 px por lado)
         if (sombraCabecera != null)
@@ -568,8 +623,9 @@ public class AplicarMarcaUdB : MonoBehaviour
         float t = 0f;
         while (t < 1f && grupoPista != null)
         {
-            t += Time.unscaledDeltaTime / 0.24f;
-            grupoPista.alpha = 1f - Mathf.Clamp01(t);
+            // Salida rápida (160 ms) con la curva fuerte: se va apenas el usuario empieza a explorar
+            t = AnimacionesUI.Activas ? t + Time.unscaledDeltaTime / 0.16f : 1f;
+            grupoPista.alpha = 1f - AnimacionesUI.SalidaFuerte(Mathf.Clamp01(t));
             yield return null;
         }
         if (pista != null) pista.gameObject.SetActive(false);
