@@ -91,6 +91,51 @@ public static class MarcaUdB
     public const float AnchoMovil = 400f;
     public const float AltoMovilHorizontal = 400f;
 
+    /// <summary>
+    /// Alto de la fila superior (placa del logotipo). AplicarMarcaUdB lo publica al dimensionar el logo y
+    /// MenuDesplegable centra el botón de menú en esa misma fila, para que los dos queden alineados.
+    /// </summary>
+    public static float AltoFilaSuperior = 48f;
+
+    /// <summary>Alto común de los controles flotantes (menú, chip, guía): una sola medida en toda la interfaz.</summary>
+    public const float AltoControlFlotante = 48f;
+
+    // ------------------------------------------------------------------ versión simplificada del celular en vertical
+
+    /// <summary>Diámetro del botón redondo del guía en el celular vertical.</summary>
+    public const float DiametroGuiaMovil = 64f;
+
+    /// <summary>
+    /// Alto visible de la hoja inferior del celular vertical (lugar actual y «Ver más información»), medido
+    /// desde el borde del área segura. MenuDesplegable lo publica al armar la hoja; el botón del guía y la
+    /// pista de uso se apoyan encima. Vale 0 cuando no hay hoja (horizontal, escritorio o menú abierto).
+    /// </summary>
+    public static float AltoHojaMovil = 0f;
+
+    /// <summary>
+    /// true en el celular en vertical, al estilo de Street View: la foto ocupa toda la pantalla, arriba flotan
+    /// el botón redondo de menú y el logotipo (con «Vigilada Mineducación» debajo) y abajo va la hoja con el
+    /// lugar actual. En horizontal y en escritorio se usa la versión con botones.
+    /// </summary>
+    public static bool EsMovilVertical(RectTransform canvas)
+    {
+        return EsCompacto(canvas) && canvas.rect.height > canvas.rect.width * 1.2f;
+    }
+
+    /// <summary>Lo que ocupa la muesca o la barra de estado arriba, en unidades del canvas.</summary>
+    public static float InsetSuperior(RectTransform canvas)
+    {
+        if (canvas == null || Screen.height <= 0) return 0f;
+        return Mathf.Max(0f, canvas.rect.height * (1f - Screen.safeArea.yMax / Screen.height));
+    }
+
+    /// <summary>Lo que ocupa la barra de gestos abajo, en unidades del canvas.</summary>
+    public static float InsetInferior(RectTransform canvas)
+    {
+        if (canvas == null || Screen.height <= 0) return 0f;
+        return Mathf.Max(0f, canvas.rect.height * Screen.safeArea.yMin / Screen.height);
+    }
+
     /// <summary>Hace que el CanvasScaler se adapte solo al tipo de pantalla (escritorio, celular vertical u horizontal).</summary>
     public static void EscalarSegunPantalla(CanvasScaler escalador)
     {
@@ -226,6 +271,57 @@ public static class MarcaUdB
     public static Sprite Redondeado { get { if (redondeado == null) redondeado = Resources.Load<Sprite>(RutaSprites + "redondeado"); return redondeado; } }
     public static Sprite Hotspot { get { if (hotspot == null) hotspot = Resources.Load<Sprite>(RutaSprites + "hotspot"); return hotspot; } }
     public static Sprite Sombra { get { if (sombra == null) sombra = Resources.Load<Sprite>(RutaSprites + "sombra"); return sombra; } }
+
+    static Sprite iconoUbicacion;
+
+    /// <summary>
+    /// Ícono de ubicación (pin) dibujado en código, en blanco para teñirlo con Image.color.
+    /// Se genera una sola vez (96×128 px con suavizado), así no hace falta importar otro archivo.
+    /// </summary>
+    public static Sprite IconoUbicacion
+    {
+        get
+        {
+            if (iconoUbicacion != null) return iconoUbicacion;
+            const int w = 96, h = 128, sub = 4;
+            float cx = w * 0.5f, cy = h - 46f, r = 42f, punta = 4f, hueco = 16f;
+            float largo = cy - punta;
+            float pendiente = r / Mathf.Sqrt(largo * largo - r * r);
+            float tangente = punta + (largo * largo - r * r) / largo; // altura donde la cola toca el círculo
+            Texture2D tex = new Texture2D(w, h, TextureFormat.RGBA32, false);
+            tex.wrapMode = TextureWrapMode.Clamp;
+            tex.filterMode = FilterMode.Bilinear;
+            Color32[] px = new Color32[w * h];
+            for (int y = 0; y < h; y++)
+            {
+                for (int x = 0; x < w; x++)
+                {
+                    int dentro = 0;
+                    for (int sy = 0; sy < sub; sy++)
+                    {
+                        for (int sx = 0; sx < sub; sx++)
+                        {
+                            float fx = x + (sx + 0.5f) / sub, fy = y + (sy + 0.5f) / sub;
+                            float dx = fx - cx, dy = fy - cy;
+                            float d = Mathf.Sqrt(dx * dx + dy * dy);
+                            bool cuerpo = d <= r;
+                            // Cola: lados rectos desde la punta, tangentes al círculo
+                            if (!cuerpo && fy < tangente && fy >= punta)
+                                cuerpo = Mathf.Abs(dx) <= (fy - punta) * pendiente;
+                            if (cuerpo && d > hueco) dentro++;
+                        }
+                    }
+                    byte a = (byte)Mathf.RoundToInt(255f * dentro / (sub * sub));
+                    px[y * w + x] = new Color32(255, 255, 255, a);
+                }
+            }
+            tex.SetPixels32(px);
+            tex.Apply(false, true);
+            iconoUbicacion = Sprite.Create(tex, new Rect(0, 0, w, h), new Vector2(0.5f, 0.5f), 100f);
+            iconoUbicacion.name = "IconoUbicacion";
+            return iconoUbicacion;
+        }
+    }
 
     // Borde del sprite redondeado (px) y del sprite de sombra (px), ver los .meta
     const float BordeRedondeado = 64f;
@@ -470,6 +566,24 @@ public static class MarcaUdB
     public static Color TintaSobre(Color fondo)
     {
         return Contraste(InkInverso, fondo) >= Contraste(Ink, fondo) ? InkInverso : Ink;
+    }
+
+    /// <summary>Contraste mínimo de un texto (WCAG AA) y de un ícono o glifo suelto (WCAG 1.4.11).</summary>
+    public const float ContrasteTexto = 4.5f, ContrasteIcono = 3f;
+
+    /// <summary>
+    /// Botones rellenos con el color de una zona: el texto va siempre en blanco (negro sobre los colores de
+    /// zona se ve sucio). El relleno se oscurece lo justo, en pasos del 5 % hacia el negro de la marca, hasta
+    /// que el blanco alcance el contraste pedido. Así el botón sigue siendo del color de su zona.
+    /// </summary>
+    public static Color FondoParaBlanco(Color c, float minimo = ContrasteTexto)
+    {
+        Color r = c;
+        r.a = 1f;
+        for (int i = 0; i < 20 && Contraste(InkInverso, r) < minimo; i++)
+            r = Color.Lerp(c, Negro, (i + 1) * 0.05f);
+        r.a = 1f;
+        return r;
     }
 
     /// <summary>Contraste WCAG entre dos colores opacos.</summary>

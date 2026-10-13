@@ -76,10 +76,15 @@ public static class CargadorPanoramas
     }
 
     // Computadores: DXT. Celulares: ASTC. Cada formato tiene su carpeta.
+    // En celular se prefiere ASTC aunque el equipo también lea DXT: son las fotos de 1024 px pensadas
+    // para celular. Si un equipo no leyera ninguno de los dos, Unity tendría que descomprimir DXT a
+    // mano (unos 100 MB por foto) y podría quedarse sin memoria.
     static string Formato()
     {
+        bool astc = SystemInfo.SupportsTextureFormat(TextureFormat.ASTC_6x6);
+        if (Movil && astc) return "astc";
         if (SystemInfo.SupportsTextureFormat(TextureFormat.DXT1)) return "dxt";
-        if (SystemInfo.SupportsTextureFormat(TextureFormat.ASTC_6x6)) return "astc";
+        if (astc) return "astc";
         return "dxt";
     }
 

@@ -44,6 +44,8 @@ public class FadeController : MonoBehaviour
     const float AltoBarra = 6f;
     const float AnchoSegmento = 96f;
     const float DuracionSalidaCarga = 0.45f;
+    const float EntradaRapida = 0.25f;     // tapar, cuando la foto ya está en memoria
+    const float SalidaRapida = 0.35f;      // destapar el lugar nuevo
 
     GameObject raiz;
     RectTransform canvasRT;
@@ -176,11 +178,17 @@ public class FadeController : MonoBehaviour
         Color color = conLogo ? Color.white : colorFade;
         MostrarPantalla(color, 0f, conLogo);
 
+        // Si la foto ya está en memoria (vecina precargada, o fuera de la web), el salto es corto:
+        // 250 ms para tapar y 350 ms para destapar, con salida fuerte. Si hay que descargarla se deja
+        // el fundido de siempre, que da tiempo a la descarga y evita que la pantalla del logotipo
+        // aparezca y desaparezca de golpe. En los dos casos la foto nueva solo se destapa ya lista.
+        bool rapido = !conLogo && AnimacionesUI.Activas;
+
         float alpha = 0f;
         while (alpha < 1f)
         {
-            alpha += Paso() * velocidadFade;
-            PonerAlfa(Mathf.Clamp01(alpha));
+            alpha += rapido ? Paso() / EntradaRapida : Paso() * velocidadFade;
+            PonerAlfa(rapido ? AnimacionesUI.SalidaFuerte(Mathf.Clamp01(alpha)) : Mathf.Clamp01(alpha));
             yield return null;
         }
         PonerAlfa(1f);
@@ -219,8 +227,9 @@ public class FadeController : MonoBehaviour
 
         while (alpha > 0f)
         {
-            alpha -= Paso() * velocidadFade;
-            PonerAlfa(Mathf.Clamp01(alpha));
+            alpha -= rapido ? Paso() / SalidaRapida : Paso() * velocidadFade;
+            float a = Mathf.Clamp01(alpha);
+            PonerAlfa(rapido ? 1f - AnimacionesUI.SalidaFuerte(1f - a) : a);
             yield return null;
         }
 

@@ -49,9 +49,10 @@ public class ToqueSuave : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
         medido = true;
         RectTransform rt = transform as RectTransform;
         float ancho = rt != null ? rt.rect.width : 0f;
-        if (enElEspacio) { alPasar = 1.08f; alPresionar = 0.94f; }
+        // Al presionar se encoge poco (0.96–0.985): confirma el toque sin que el botón «se hunda»
+        if (enElEspacio) { alPasar = 1.06f; alPresionar = 0.96f; }
         else if (ancho > 220f) { alPasar = 1f; alPresionar = 0.985f; }
-        else { alPasar = 1.04f; alPresionar = 0.95f; }
+        else { alPasar = 1.03f; alPresionar = 0.97f; }
     }
 
     void Update()
@@ -70,7 +71,8 @@ public class ToqueSuave : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
         transform.localScale = escalaBase * actual;
     }
 
-    public void OnPointerEnter(PointerEventData datos) { Medir(); dentro = true; }
+    // El crecimiento al pasar solo con mouse: en pantallas táctiles el toque también dispara «entrar»
+    public void OnPointerEnter(PointerEventData datos) { Medir(); dentro = AnimacionesUI.HoverConMouse; }
     public void OnPointerExit(PointerEventData datos) { dentro = false; presionado = false; }
     public void OnPointerDown(PointerEventData datos) { Medir(); presionado = true; }
     public void OnPointerUp(PointerEventData datos) { presionado = false; }
