@@ -42,7 +42,6 @@ public class GuiaVirtual : MonoBehaviour
     const float AltoBotonGuia = MarcaUdB.AltoControlFlotante; // mismo alto que el botón de menú
     const float DiametroIcono = 28f;
     const string EtiquetaCompacta = "Guía";
->>>>>>> Juanfe
     const float AnchoBarra = 8f;
 
     class Fila
@@ -93,7 +92,6 @@ public class GuiaVirtual : MonoBehaviour
     TextMeshProUGUI signoGuia;
     bool vertical;
     bool yaAbrioGuia;
->>>>>>> Juanfe
     ScrollRect scroll;
     RectTransform contenidoLista;
     float anchoLista;
@@ -172,9 +170,6 @@ public class GuiaVirtual : MonoBehaviour
 
         abierto = true;
         yaAbrioGuia = true;
-        velo.SetActive(true);
-=======
-        yaAbrioGuia = true;
         VeloSuave.Mostrar(velo);
         // En el celular vertical el panel nace del botón redondo: arranca un poco más pequeño y transparente
         if (MarcaUdB.EsMovilVertical(canvasRT) && !panelRaiz.gameObject.activeSelf && AnimacionesUI.Activas)
@@ -182,7 +177,6 @@ public class GuiaVirtual : MonoBehaviour
             GrupoPanel().alpha = 0f;
             panelRaiz.localScale = new Vector3(EscalaInicial, EscalaInicial, 1f);
         }
->>>>>>> Stashed changes
         // El panel se activa antes de armar la lista: un texto inactivo no se puede medir bien
         panelRaiz.gameObject.SetActive(true);
         Acomodar();
@@ -312,7 +306,6 @@ public class GuiaVirtual : MonoBehaviour
         }
         // El mensaje sale del botón: a su izquierda, a su misma altura y con el borde escondido bajo él
         AcomodarBurbuja();
->>>>>>> Juanfe
 
         float disponible = zonaSegura.rect.width > 0f ? zonaSegura.rect.width : canvasRT.rect.width;
         float ancho = Mathf.Min(AnchoPanel, disponible - MargenPanel * 2f);
@@ -489,7 +482,7 @@ public class GuiaVirtual : MonoBehaviour
         MarcaUdB.Pildora(halo, AltoBotonGuia);
         // Sin lienzo propio: probado en Unity, un Canvas anidado en el halo dejaba sin clic al botón en forma
         // de píldora. El pulso es un solo cuadro de imagen y se detiene al abrir la guía, así que su costo es mínimo.
->>>>>>> Juanfe
+
         Image img;
         Button boton = CrearBoton("BotonGuia", zonaSegura, out img);
         botonRT = (RectTransform)boton.transform;
@@ -499,7 +492,6 @@ public class GuiaVirtual : MonoBehaviour
 
         // Círculo blanco con «?» en rojo
         const float diametro = DiametroIcono;
->>>>>>> Juanfe
         Image circulo = CrearImagen("Icono", botonRT, MarcaUdB.InkInverso);
         circulo.raycastTarget = false;
         RectTransform rc = (RectTransform)circulo.transform;
@@ -509,7 +501,6 @@ public class GuiaVirtual : MonoBehaviour
         rc.anchoredPosition = new Vector2(MarcaUdB.Space2 + 2f, 0f);
         MarcaUdB.Redondear(circulo, diametro * 0.5f);
         TextMeshProUGUI signo = CrearTexto("Signo", rc, "?", MarcaUdB.DisplayExtra, 18f, MarcaUdB.Rojo);
->>>>>>> Juanfe
         signo.alignment = TextAlignmentOptions.Center;
         Estirar((RectTransform)signo.transform, 0f, 0f);
         imagenBotonGuia = img;
@@ -522,7 +513,6 @@ public class GuiaVirtual : MonoBehaviour
         Estirar((RectTransform)texto.transform, IzquierdaTextoBoton, MarcaUdB.Space4);
         textoBotonGuia = texto;
         AjustarBoton(false, false);
->>>>>>> Juanfe
 
         boton.onClick.AddListener(Abrir);
         botonGuia = boton.gameObject;
@@ -539,92 +529,88 @@ public class GuiaVirtual : MonoBehaviour
         ConstruirBurbuja();
     }
 
-const float IzquierdaTextoBoton = MarcaUdB.Space2 + DiametroIcono + MarcaUdB.Space2;
+    const float IzquierdaTextoBoton = MarcaUdB.Space2 + DiametroIcono + MarcaUdB.Space2;
 
-// Etiqueta y ancho del botón: «Pregúntale al guía» en pantalla ancha, «Guía» en móvil vertical
-void AjustarBoton(bool compacto, bool redondo)
-{
-    if (textoBotonGuia == null || botonRT == null) return;
-
-    // El sprite redondeado se recalcula con el alto: píldora o círculo
-    float alto = redondo ? MarcaUdB.DiametroGuiaMovil : AltoBotonGuia;
-    if (imagenBotonGuia != null) MarcaUdB.Pildora(imagenBotonGuia, alto);
-    if (halo != null) MarcaUdB.Pildora(halo, alto);
-    textoBotonGuia.gameObject.SetActive(!redondo);
-    if (sombraBoton != null) sombraBoton.SetActive(!redondo && botonGuia != null && botonGuia.activeSelf);
-
-    if (iconoGuiaRT != null)
+    // Etiqueta y ancho del botón: «Pregúntale al guía» en pantalla ancha, «Guía» en móvil vertical
+    void AjustarBoton(bool compacto, bool redondo)
     {
-        float d = redondo ? 36f : DiametroIcono;
-        iconoGuiaRT.anchorMin = iconoGuiaRT.anchorMax = new Vector2(redondo ? 0.5f : 0f, 0.5f);
-        // Pivote al centro en los dos modos: el ícono gira sobre sí mismo cuando sale un mensaje
-        iconoGuiaRT.pivot = new Vector2(0.5f, 0.5f);
-        iconoGuiaRT.sizeDelta = new Vector2(d, d);
-        iconoGuiaRT.anchoredPosition = redondo ? Vector2.zero : new Vector2(MarcaUdB.Space2 + 2f + d * 0.5f, 0f);
-        MarcaUdB.Redondear(iconoGuia, d * 0.5f);
-        if (signoGuia != null) signoGuia.fontSize = redondo ? 26f : 18f;
-    }
+        if (textoBotonGuia == null || botonRT == null) return;
 
-    if (redondo)
-    {
-        botonRT.sizeDelta = new Vector2(alto, alto);
+        // El sprite redondeado se recalcula con el alto: píldora o círculo
+        float alto = redondo ? MarcaUdB.DiametroGuiaMovil : AltoBotonGuia;
+        if (imagenBotonGuia != null) MarcaUdB.Pildora(imagenBotonGuia, alto);
+        if (halo != null) MarcaUdB.Pildora(halo, alto);
+        textoBotonGuia.gameObject.SetActive(!redondo);
+        if (sombraBoton != null) sombraBoton.SetActive(!redondo && botonGuia != null && botonGuia.activeSelf);
+
+        if (iconoGuiaRT != null)
+        {
+            float d = redondo ? 36f : DiametroIcono;
+            iconoGuiaRT.anchorMin = iconoGuiaRT.anchorMax = new Vector2(redondo ? 0.5f : 0f, 0.5f);
+            // Pivote al centro en los dos modos: el ícono gira sobre sí mismo cuando sale un mensaje
+            iconoGuiaRT.pivot = new Vector2(0.5f, 0.5f);
+            iconoGuiaRT.sizeDelta = new Vector2(d, d);
+            iconoGuiaRT.anchoredPosition = redondo ? Vector2.zero : new Vector2(MarcaUdB.Space2 + 2f + d * 0.5f, 0f);
+            MarcaUdB.Redondear(iconoGuia, d * 0.5f);
+            if (signoGuia != null) signoGuia.fontSize = redondo ? 26f : 18f;
+        }
+
+        if (redondo)
+        {
+            botonRT.sizeDelta = new Vector2(alto, alto);
+            if (haloRT != null) haloRT.sizeDelta = botonRT.sizeDelta;
+            return;
+        }
+
+        string etiqueta = compacto ? EtiquetaCompacta : etiquetaAncha;
+        textoBotonGuia.text = etiqueta;
+        float anchoTexto = Mathf.Ceil(textoBotonGuia.GetPreferredValues(etiqueta).x);
+        if (anchoTexto <= 1f) anchoTexto = etiqueta.Length * 9f;
+        anchoBotonGuia = Mathf.Max(compacto ? 0f : AnchoBoton, IzquierdaTextoBoton + anchoTexto + MarcaUdB.Space4);
+        botonRT.sizeDelta = new Vector2(anchoBotonGuia, AltoBotonGuia);
         if (haloRT != null) haloRT.sizeDelta = botonRT.sizeDelta;
-        return;
+        if (sombraBoton != null)
+            ((RectTransform)sombraBoton.transform).sizeDelta = botonRT.sizeDelta + new Vector2(16f, 16f);
     }
 
-    string etiqueta = compacto ? EtiquetaCompacta : etiquetaAncha;
-    textoBotonGuia.text = etiqueta;
-    float anchoTexto = Mathf.Ceil(textoBotonGuia.GetPreferredValues(etiqueta).x);
-    if (anchoTexto <= 1f) anchoTexto = etiqueta.Length * 9f;
-    anchoBotonGuia = Mathf.Max(compacto ? 0f : AnchoBoton, IzquierdaTextoBoton + anchoTexto + MarcaUdB.Space4);
-    botonRT.sizeDelta = new Vector2(anchoBotonGuia, AltoBotonGuia);
-    if (haloRT != null) haloRT.sizeDelta = botonRT.sizeDelta;
-    if (sombraBoton != null)
-        ((RectTransform)sombraBoton.transform).sizeDelta = botonRT.sizeDelta + new Vector2(16f, 16f);
-}
+    // ------------------------------------------------------------------ mensajes que salen del botón
 
-// ------------------------------------------------------------------ mensajes que salen del botón
+    // El globo nace detrás del botón: su borde derecho queda escondido bajo el botón y se despliega hacia
+    // la izquierda (recorte que se abre), y al irse se recoge de izquierda a derecha hasta meterse en él.
+    // Así se lee que el mensaje sale del guía. Tocarlo abre el guía (con la pregunta ya desplegada).
+    void ConstruirBurbuja()
+    {
+        GameObject goRaiz = new GameObject("MensajeGuia", typeof(RectTransform), typeof(RectMask2D), typeof(CanvasGroup));
+        burbujaRT = (RectTransform)goRaiz.transform;
+        burbujaRT.SetParent(zonaSegura, false);
+        burbujaRT.anchorMin = burbujaRT.anchorMax = new Vector2(1f, 0f);
+        burbujaRT.pivot = new Vector2(1f, 0.5f);
+        recorteBurbuja = goRaiz.GetComponent<RectMask2D>();
+        burbuja = goRaiz.GetComponent<CanvasGroup>();
+        burbuja.alpha = 0f;
+        burbuja.blocksRaycasts = false;
 
-// El globo nace detrás del botón: su borde derecho queda escondido bajo el botón y se despliega hacia
-// la izquierda (recorte que se abre), y al irse se recoge de izquierda a derecha hasta meterse en él.
-// Así se lee que el mensaje sale del guía. Tocarlo abre el guía (con la pregunta ya desplegada).
-void ConstruirBurbuja()
-{
-    GameObject goRaiz = new GameObject("MensajeGuia", typeof(RectTransform), typeof(RectMask2D), typeof(CanvasGroup));
-    burbujaRT = (RectTransform)goRaiz.transform;
-    burbujaRT.SetParent(zonaSegura, false);
-    burbujaRT.anchorMin = burbujaRT.anchorMax = new Vector2(1f, 0f);
-    burbujaRT.pivot = new Vector2(1f, 0.5f);
-    recorteBurbuja = goRaiz.GetComponent<RectMask2D>();
-    burbuja = goRaiz.GetComponent<CanvasGroup>();
-    burbuja.alpha = 0f;
-    burbuja.blocksRaycasts = false;
+        Image fondo = CrearImagen("Fondo", burbujaRT, MarcaUdB.Surface100);
+        // El fondo deja un margen de SombraMensaje dentro del recorte: ahí cabe su sombra sin cortarse
+        RectTransform rtFondo = (RectTransform)fondo.transform;
+        rtFondo.anchorMin = Vector2.zero;
+        rtFondo.anchorMax = Vector2.one;
+        rtFondo.pivot = new Vector2(0.5f, 0.5f);
+        rtFondo.offsetMin = new Vector2(SombraMensaje, SombraMensaje);
+        rtFondo.offsetMax = new Vector2(-SombraMensaje, -SombraMensaje);
+        MarcaUdB.SombraFlotante(rtFondo);
+        fondoBurbuja = fondo;
+        Button boton = fondo.gameObject.AddComponent<Button>();
+        boton.targetGraphic = fondo;
+        SinNavegacion(boton);
+        MarcaUdB.ColoresBoton(boton, MarcaUdB.Surface100, MarcaUdB.Surface200, MarcaUdB.Surface300);
+        boton.onClick.AddListener(AbrirDesdeMensaje);
 
-    Image fondo = CrearImagen("Fondo", burbujaRT, MarcaUdB.Surface100);
-    // El fondo deja un margen de SombraMensaje dentro del recorte: ahí cabe su sombra sin cortarse
-    RectTransform rtFondo = (RectTransform)fondo.transform;
-    rtFondo.anchorMin = Vector2.zero;
-    rtFondo.anchorMax = Vector2.one;
-    rtFondo.pivot = new Vector2(0.5f, 0.5f);
-    rtFondo.offsetMin = new Vector2(SombraMensaje, SombraMensaje);
-    rtFondo.offsetMax = new Vector2(-SombraMensaje, -SombraMensaje);
-    MarcaUdB.SombraFlotante(rtFondo);
-    fondoBurbuja = fondo;
-    Button boton = fondo.gameObject.AddComponent<Button>();
-    boton.targetGraphic = fondo;
-    SinNavegacion(boton);
-    MarcaUdB.ColoresBoton(boton, MarcaUdB.Surface100, MarcaUdB.Surface200, MarcaUdB.Surface300);
-    boton.onClick.AddListener(AbrirDesdeMensaje);
-
-    // Filete rojo a la izquierda, como en el encabezado de los paneles
-    Image filete = CrearImagen("Filete", fondo.transform, MarcaUdB.Rojo);
-    filete.raycastTarget = false;
-    RectTransform rf = (RectTransform)filete.transform;
-    rf.anchorMin = new Vector2(0f, 0f); rf.anchorMax = new Vector2(0f, 1f);
+        // Filete rojo a la izquierda, como en el encabezado de los paneles
+        Image filete = CrearImagen("Filete", fondo.transform, MarcaUdB.Rojo);
         filete.raycastTarget = false;
         RectTransform rf = (RectTransform)filete.transform;
         rf.anchorMin = new Vector2(0f, 0f); rf.anchorMax = new Vector2(0f, 1f);
-        rf.pivot = new Vector2(0f, 0.5f);
         rf.pivot = new Vector2(0f, 0.5f);
         rf.sizeDelta = new Vector2(4f, -MarcaUdB.Space4 * 2f);
         rf.anchoredPosition = new Vector2(MarcaUdB.Space4, 0f);
@@ -842,8 +828,6 @@ void ConstruirBurbuja()
             while (Time.unscaledTime - inicio < Visible && BotonALaVista) yield return null;
             yield return Desplegar(false);
         }
-    }
->>>>>>> Juanfe
     }
 
     void ConstruirPanel()
