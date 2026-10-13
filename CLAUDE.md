@@ -23,11 +23,12 @@ Es un recorrido virtual interactivo en 360° del campus, hecho en Unity y public
 
 1. **No edites la escena ni los prefabs a mano desde código.** Toda la interfaz se construye en tiempo de ejecución desde los scripts (`MenuDesplegable`, `GuiaVirtual`, `PanelInfo`, `AplicarMarcaUdB`, `FadeController`). Si necesitas algo en la escena, dilo y que lo haga una persona en el editor.
 2. **Idioma:** código, comentarios y textos de la interfaz en español neutro, tuteando y sin voseo («toca», «desliza», nunca «tocá»).
-3. **Saltos de línea:** casi todos los `.cs` usan CRLF y `MarcaUdB.cs` usa LF. Respeta el que ya tenga cada archivo.
+3. **Saltos de línea:** casi todos los `.cs` usan CRLF y `MarcaUdB.cs` usa LF. Respeta el que ya tenga cada archivo. Este equipo tiene `core.autocrlf = true`: al sacar archivos de Git todos quedan en CRLF, incluso `MarcaUdB.cs`. Dentro del repositorio se guardan en LF y Unity compila igual.
 4. **No inventes datos** (puntajes, cifras, resultados de la validación). El trabajo de grado ya se entregó con datos reales.
 5. **No presentes como probado lo que no se probó.** Antes de dar algo por terminado: compila en Unity, revisa que la consola no tenga errores y prueba en las tres vistas de abajo.
 6. **Unity solo recompila cuando la ventana del editor tiene el foco.** Después de guardar, enfoca Unity o usa *Assets → Refresh* (Ctrl+R), y no pruebes hasta que termine «Compiling Scripts».
 7. **En la vista Game, el primer clic después de usar otra ventana de Unity solo enfoca la vista.** Si un botón «no responde», haz un segundo clic antes de buscar un error. En el navegador no pasa.
+8. **Antes de cambiar de rama en GitHub Desktop, haz commit.** Si se cambia de rama con cambios sin guardar, GitHub Desktop los mueve en un stash y, al aplicarlos sobre otra versión, pueden chocar y quedar marcas de conflicto (`<<<<<<<`, `=======`, `>>>>>>>`) dentro del código. Antes de cada commit revisa que no haya: `git grep -nE "^(<<<<<<<|=======|>>>>>>>)" -- "*.cs"`.
 
 ## Cómo probar
 
@@ -118,13 +119,11 @@ Las skills de Emil están instaladas en este equipo, en `~/.agents/skills/`: `em
   - HDR apagado y volumen «Via Scripting» en `URP-Balanced`.
   - En los ajustes WebGL: nombres de archivo con hash y preferencia de energía «Default».
 
-Todo está probado en el editor en las tres resoluciones y compila sin errores. Los gestos se probaron con el mouse en la vista Game, no con el dedo.
+Todo se probó en el editor en las tres resoluciones y compilaba sin errores antes del merge. Después del merge falta volver a compilar (ver abajo). Los gestos se probaron con el mouse en la vista Game, no con el dedo.
 
 **Pendiente:**
 
-- [ ] **Commit en Git:** los cambios de octubre siguen sin commit.
-  - Archivos nuevos (con sus `.meta`): `Marca/VeloSuave.cs`, `Marca/GiroSuave.cs`, `Marca/HojaDeslizable.cs` y `Marca/DeslizarParaCerrar.cs`.
-  - Archivos modificados: `MarcaUdB`, `AplicarMarcaUdB`, `AnimacionesUI`, `ToqueSuave`, `MenuDesplegable`, `GuiaVirtual`, `PanelInfo`, `FadeController`, `CargadorPanoramas`, `Assets/Settings/URP-Balanced.asset`, `ProjectSettings/ProjectSettings.asset` y la escena.
+- [ ] **Compilar `main` en Unity después del merge.** El trabajo del 13 de octubre entró a `main` con `GuiaVirtual.cs` lleno de marcas de conflicto de un stash. Se restauró desde el stash de ese día (`fbce74b`) y se subió en el commit `26d30e0`; el resto de los archivos se comparó contra el stash y está idéntico. Falta abrir Unity 2022.3.62f3, revisar que la consola no tenga errores y probar una pasada en celular vertical, incluidos los 4 lugares nuevos de Nicolás (Camino Edificio 12, Camino Portería, Frente Portería, Pasillo 502).
 - [ ] **Nuevo build WebGL** y publicarlo en el repositorio de Nicolás. Este equipo no tiene instalado *WebGL Build Support* para la 2022.3. Con los nombres con hash, borra la carpeta `Build` vieja antes de copiar la nueva.
 - [ ] **Probar en un celular real**, en vertical y en horizontal, incluido un equipo con muesca:
   - el área segura: la foto ahora llega hasta arriba y la hoja cubre la barra de gestos;
