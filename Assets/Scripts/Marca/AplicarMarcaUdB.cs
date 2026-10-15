@@ -183,6 +183,9 @@ public class AplicarMarcaUdB : MonoBehaviour
                 t.fontStyle &= ~FontStyles.Bold;
                 t.color = MarcaUdB.InkInverso;
             }
+
+            // Todos los «+» del mismo tamaño en pantalla, estén cerca o lejos en la foto
+            if (tp.GetComponent<TamanoEnPantalla>() == null) tp.gameObject.AddComponent<TamanoEnPantalla>();
         }
     }
 

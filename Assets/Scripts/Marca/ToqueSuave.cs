@@ -42,6 +42,17 @@ public class ToqueSuave : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
         if (tieneBase) transform.localScale = escalaBase;
     }
 
+    /// <summary>
+    /// Cambia el tamaño de reposo del botón sin perder la animación en curso. Lo usa TamanoEnPantalla, que
+    /// también maneja la escala de los botones del espacio: así los dos no se pisan.
+    /// </summary>
+    public void CambiarEscalaBase(Vector3 nueva)
+    {
+        escalaBase = nueva;
+        tieneBase = true;
+        transform.localScale = escalaBase * actual;
+    }
+
     // Las filas anchas de las listas se mueven menos que los botones pequeños
     void Medir()
     {

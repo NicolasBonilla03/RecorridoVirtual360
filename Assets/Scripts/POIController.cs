@@ -77,7 +77,7 @@ public class POIController : MonoBehaviour
                                         <TextMeshProUGUI>();
             if (texto != null)
             {
-                texto.text = dependencias[i];
+                texto.text = CatalogoInfo.NombreParaMostrar(dependencias[i], skyboxes != null && i < skyboxes.Length ? skyboxes[i] : null);
                 // Los nombres largos caben en la fila: dos renglones y letra más pequeña si hace falta
                 texto.margin = new Vector4(16f, 5f, 16f, 5f);
                 MarcaUdB.AjustarACaja(texto, true, 0.58f);
@@ -121,6 +121,15 @@ public class POIController : MonoBehaviour
     public void AbrirMenu()
     {
         if (menuAbierto) return;
+
+        // Los puntos de zona de Inicio abren el menú lateral en su sección: una sola estética para todas las
+        // listas de lugares. El panel 3D de este punto solo se usa si no hay menú lateral en la escena.
+        if (MenuDesplegable.AbrirEnZona(nombreEdificio))
+        {
+            if (FadeController.Instance != null && skyboxes != null)
+                CargadorPanoramas.AdelantarAlFrente(FadeController.Instance, skyboxes, 3);
+            return;
+        }
 
         if (abierto != null && abierto != this) abierto.CerrarMenu();
         MenuDesplegable.CerrarSiAbierto();

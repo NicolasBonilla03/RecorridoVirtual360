@@ -161,7 +161,7 @@ public class FadeController : MonoBehaviour
     {
         Material actual = RenderSettings.skybox;
         System.Collections.Generic.List<Material> vecinos = GestorTeleports.Instance != null
-            ? GestorTeleports.Instance.Vecinos(actual, Camera.main)
+            ? GestorTeleports.Instance.Vecinos(actual, CameraController.Principal)
             : null;
         CargadorPanoramas.AdelantarVecinos(this, actual, vecinos);
     }

@@ -3,7 +3,8 @@ using UnityEngine.EventSystems;
 
 /// <summary>
 /// Muestra una pequeña pista (por ejemplo «Ir al inicio») mientras el cursor está sobre un control,
-/// con un fundido corto. En pantallas táctiles aparece mientras dura el toque.
+/// con un fundido corto. Solo con mouse y en la vista de escritorio (AnimacionesUI.HoverConMouse): en el
+/// celular no hay «pasar encima».
 /// </summary>
 public class PistaAlPasar : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
@@ -25,6 +26,6 @@ public class PistaAlPasar : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
         pista.alpha = Mathf.MoveTowards(pista.alpha, objetivo, Rapidez * Mathf.Min(Time.unscaledDeltaTime, 0.05f));
     }
 
-    public void OnPointerEnter(PointerEventData datos) { dentro = true; }
+    public void OnPointerEnter(PointerEventData datos) { dentro = AnimacionesUI.HoverConMouse; }
     public void OnPointerExit(PointerEventData datos) { dentro = false; }
 }

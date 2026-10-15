@@ -824,6 +824,34 @@
     {
       "skybox": "Skybox360",
       "nombre": "Inicio · Vista general"
+    },
+    {
+      "skybox": "Skybox_AbajoMagna",
+      "nombre": "Hall de la Alegría"
+    },
+    {
+      "skybox": "Skybox_CaminoEdificio12",
+      "nombre": "Andén hacia la portería principal"
+    },
+    {
+      "skybox": "Skybox_CaminoPorteria",
+      "nombre": "Andén junto a la portería principal"
+    },
+    {
+      "skybox": "Skybox_FrentePorteria",
+      "nombre": "Portería principal"
+    },
+    {
+      "skybox": "Skybox_Entrada2-12",
+      "nombre": "Entrada alterna del Edificio 12"
+    },
+    {
+      "skybox": "Skybox_PolitecaBienestar",
+      "nombre": "Cruce entre Bienestar y la Politeca"
+    },
+    {
+      "skybox": "Skybox_Pasillo502",
+      "nombre": "Vicerrectoría Académica"
     }
   ],
   "preguntas": [

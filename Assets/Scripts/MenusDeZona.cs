@@ -47,7 +47,7 @@ public class MenusDeZona : MonoBehaviour
             return;
         }
 
-        Camera cam = Camera.main;
+        Camera cam = CameraController.Principal;
         Vector3 centro = cam != null ? cam.transform.position : Vector3.zero;
         GestorTeleports gestor = FindObjectOfType<GestorTeleports>();
 
@@ -90,7 +90,7 @@ public class MenusDeZona : MonoBehaviour
         foreach (LugarZona l in m.lugares)
         {
             if (l == null || l.skybox == null || string.IsNullOrEmpty(l.nombre)) continue;
-            nombres.Add(l.nombre);
+            nombres.Add(CatalogoInfo.NombreParaMostrar(l.nombre, l.skybox));
             skyboxes.Add(l.skybox);
         }
         poi.dependencias = nombres.ToArray();

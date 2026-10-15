@@ -29,10 +29,14 @@ public class AnimacionesUI : MonoBehaviour
     public const float DuracionPanelEntrada = 0.24f, DuracionPanelSalida = 0.18f;
 
     /// <summary>
-    /// true solo con mouse real. En pantallas táctiles el «pasar encima» se dispara al tocar y da falsos
-    /// positivos, así que allí los botones solo responden al presionar.
+    /// true solo con mouse real y en la vista de escritorio. En pantallas táctiles el «pasar encima» se
+    /// dispara al tocar y queda pegado, así que allí los botones solo responden al presionar. En la vista de
+    /// celular tampoco hay efectos al pasar, aunque se pruebe con mouse en el editor: es la versión para el dedo.
     /// </summary>
-    public static bool HoverConMouse { get { return !Application.isMobilePlatform && Input.mousePresent; } }
+    public static bool HoverConMouse
+    {
+        get { return !Application.isMobilePlatform && Input.mousePresent && !EscalaAdaptable.EsPantallaDeCelular; }
+    }
 
     /// <summary>Evalúa una curva cubic-bezier(x1, y1, x2, y2) como las de CSS, en t de 0 a 1.</summary>
     public static float Bezier(float x1, float y1, float x2, float y2, float x)

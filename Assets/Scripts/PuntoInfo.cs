@@ -198,6 +198,9 @@ public class PuntoInfo : MonoBehaviour
         RectTransform rtV = (RectTransform)visual.transform;
         rtV.SetParent(transform, false);
         rtV.sizeDelta = new Vector2(Diametro, Diametro);
+        // Tamaño parejo en pantalla, sin importar la distancia en la escena. Un poco menor que los «+»: el «i»
+        // lleva al lado su etiqueta (también se puede tocar) y a 80 px el nombre ocupaba media pantalla del celular
+        visual.AddComponent<TamanoEnPantalla>().diametro = MarcaUdB.DiametroHotspot * 0.75f;
 
         // Círculo con halo: el mismo hotspot de los botones de teletransporte, pero en el color
         // de la zona y con «i» en lugar de «+» (el rojo queda para ir a otro lugar)
@@ -263,7 +266,10 @@ public class PuntoInfo : MonoBehaviour
             // El chip se ajusta al nombre, con aire alrededor del texto. Los nombres largos pasan
             // a dos renglones y el chip crece en alto; el texto nunca se sale de su caja.
             texto.enableWordWrapping = true;
-            Vector2 medida = texto.GetPreferredValues(nombre, AnchoMaximoNombre, 0f);
+            // Arriba del nombre, en pequeño, la palabra INFORMACIÓN: deja claro para qué es el círculo «i»
+            string conEtiqueta = "<size=55%><color=" + MarcaUdB.HexRGB(MarcaUdB.InkMuted) + "><cspace=0.09em>INFORMACIÓN</cspace></color></size>\n" + nombre;
+            texto.text = conEtiqueta;
+            Vector2 medida = texto.GetPreferredValues(conEtiqueta, AnchoMaximoNombre, 0f);
             float anchoTexto = Mathf.Ceil(medida.x);
             float altoTexto = Mathf.Ceil(medida.y);
             // Si el texto aún no se puede medir (objeto inactivo), se estima por la cantidad de letras
@@ -271,7 +277,7 @@ public class PuntoInfo : MonoBehaviour
             {
                 float estimado = nombre.Length * TamanoNombre * 0.56f;
                 anchoTexto = Mathf.Min(estimado, AnchoMaximoNombre);
-                altoTexto = TamanoNombre * 1.25f * Mathf.Clamp(Mathf.Ceil(estimado / AnchoMaximoNombre), 1f, 2f);
+                altoTexto = TamanoNombre * 1.25f * (Mathf.Clamp(Mathf.Ceil(estimado / AnchoMaximoNombre), 1f, 2f) + 0.6f);
             }
             // Holgura de ancho: evita que un redondeo parta el texto en un renglón más
             anchoTexto = Mathf.Min(anchoTexto + 10f, AnchoMaximoNombre + 10f);

@@ -77,14 +77,14 @@ public static class MarcaUdB
     public const float OpacidadInactivo = 0.45f;
 
     /// <summary>
-    /// Resolución de referencia de los Canvas de interfaz. Los tamaños del sistema están en px CSS;
-    /// con 1536×864 un px del sistema se ve igual que en un navegador a escala 125 % sobre 1080p,
-    /// que es lo habitual en un portátil con Windows.
+    /// Resolución de referencia de los Canvas de interfaz en escritorio. Con 1280×720 un px del sistema se
+    /// ve como en un navegador a escala 150 % sobre 1080p: botones, textos y márgenes cómodos de leer y de
+    /// alcanzar con el mouse (con 1536×864, escala 125 %, se veían pequeños).
     /// </summary>
-    public static readonly Vector2 ResolucionReferencia = new Vector2(1536f, 864f);
+    public static readonly Vector2 ResolucionReferencia = new Vector2(1280f, 720f);
 
     /// <summary>
-    /// En un celular, 1536×864 deja la interfaz a la mitad de su tamaño (textos de 7 a 8 px reales).
+    /// En un celular, la referencia de escritorio deja la interfaz a la mitad de su tamaño (textos de 7 a 8 px reales).
     /// Por eso, en vertical el ancho de la pantalla equivale a AnchoMovil px del sistema y en horizontal
     /// la altura equivale a AltoMovilHorizontal: así un px del sistema se ve casi como un px CSS del teléfono.
     /// </summary>
@@ -104,6 +104,14 @@ public static class MarcaUdB
 
     /// <summary>Diámetro del botón redondo del guía en el celular vertical.</summary>
     public const float DiametroGuiaMovil = 64f;
+
+    /// <summary>
+    /// Tamaño en pantalla (px del sistema) de los botones que están en el espacio: los «+» para avanzar y los
+    /// círculos «i» de información. Todos se ven de este tamaño sin importar a qué distancia se pusieron en la
+    /// escena (TamanoEnPantalla), así son fáciles de alcanzar y tocar. Incluye el halo del sprite: el círculo
+    /// sólido mide cerca de 48 px, por encima del área táctil mínima de 44 px.
+    /// </summary>
+    public const float DiametroHotspot = 80f;
 
     /// <summary>
     /// Alto visible de la hoja inferior del celular vertical (lugar actual y «Ver más información»), medido
@@ -394,7 +402,9 @@ public static class MarcaUdB
         if (b.targetGraphic != null) b.targetGraphic.color = Color.white;
         ColorBlock cb = b.colors;
         cb.normalColor = normal;
-        cb.highlightedColor = hover;
+        // Sin mouse (o en la vista de celular) el color de «pasar encima» queda igual al normal: si no, después
+        // de tocar un botón se quedaría pintado como si el dedo siguiera encima
+        cb.highlightedColor = AnimacionesUI.HoverConMouse ? hover : normal;
         cb.pressedColor = presionado;
         cb.selectedColor = normal;
         cb.disabledColor = new Color(normal.r, normal.g, normal.b, normal.a * OpacidadInactivo);

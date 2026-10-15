@@ -636,7 +636,10 @@ public class GuiaVirtual : MonoBehaviour
     {
         if (burbujaRT == null || botonRT == null || textoBurbujaTMP == null || textoBurbujaRT == null) return;
         float margen = MarcaUdB.EsCompacto(canvasRT) ? MarcaUdB.Space4 : MargenAncho;
-        float escondido = botonRT.sizeDelta.x * 0.5f;   // lo que queda tapado por el botón
+        // Lo que queda tapado por el botón: medio alto, o sea el extremo redondo. En el celular (botón redondo)
+        // el globo sale de su centro; en la píldora de escritorio sale de su borde izquierdo, junto al «?»
+        // (si saliera de la mitad de la píldora, el primer tramo del despliegue quedaría escondido y no se vería)
+        float escondido = Mathf.Min(botonRT.sizeDelta.x, botonRT.sizeDelta.y) * 0.5f;
         float disponible = (zonaSegura.rect.width > 0f ? zonaSegura.rect.width : canvasRT.rect.width)
                            - margen * 2f - botonRT.sizeDelta.x - MarcaUdB.Space2;
         float derecha = escondido + MarcaUdB.Space4;
@@ -648,7 +651,8 @@ public class GuiaVirtual : MonoBehaviour
         anchoBurbuja = IzquierdaMensaje + anchoTexto + MarcaUdB.Space4 + derecha;
         burbujaRT.sizeDelta = new Vector2(anchoBurbuja + SombraMensaje * 2f, alto + SombraMensaje * 2f);
         // El borde derecho del globo queda en el centro del botón, a su misma altura
-        burbujaRT.anchoredPosition = botonRT.anchoredPosition + new Vector2(-escondido + SombraMensaje, botonRT.sizeDelta.y * 0.5f);
+        burbujaRT.anchoredPosition = botonRT.anchoredPosition
+                                     + new Vector2(-botonRT.sizeDelta.x + escondido + SombraMensaje, botonRT.sizeDelta.y * 0.5f);
         MarcaUdB.Pildora(fondoBurbuja, alto);
 
         textoBurbujaRT.anchorMin = new Vector2(0f, 0f);
@@ -818,7 +822,15 @@ public class GuiaVirtual : MonoBehaviour
             if (!BotonALaVista) { vez--; continue; }
 
             preguntaMensaje = ElegirMensaje(vez);
+            // El globo se activa (todavía recogido e invisible) antes de medir el texto: un texto apagado se mide
+            // mal y el mensaje podía salirse de su espacio
+            if (!burbujaRT.gameObject.activeSelf)
+            {
+                progresoBurbuja = 0f;
+                burbujaRT.gameObject.SetActive(true);
+            }
             textoBurbujaTMP.text = preguntaMensaje != null ? preguntaMensaje.pregunta : textoBurbuja;
+            textoBurbujaTMP.ForceMeshUpdate();
             AcomodarBurbuja();
             StartCoroutine(Saltar());
             StartCoroutine(Pulsar());

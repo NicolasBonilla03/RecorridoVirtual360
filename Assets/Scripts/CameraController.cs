@@ -9,6 +9,28 @@ using UnityEngine.EventSystems;
 /// </summary>
 public class CameraController : MonoBehaviour
 {
+    static Camera principal;
+
+    /// <summary>
+    /// La cámara del recorrido. No usa solo Camera.main porque el objeto «MainCamera» de la escena no tiene la
+    /// etiqueta MainCamera (y Camera.main volvía vacío): toma la cámara de este controlador y, si no hay,
+    /// Camera.main o la primera cámara de la escena.
+    /// </summary>
+    public static Camera Principal
+    {
+        get
+        {
+            if (principal == null)
+            {
+                CameraController c = FindObjectOfType<CameraController>();
+                if (c != null) principal = c.GetComponent<Camera>();
+                if (principal == null) principal = Camera.main;
+                if (principal == null) principal = FindObjectOfType<Camera>();
+            }
+            return principal;
+        }
+    }
+
     [Header("Mouse")]
     public float sensibilidad = 2f;
     [Tooltip("Qué tan rápido la cámara alcanza el objetivo con el mouse.")]
@@ -53,6 +75,7 @@ public class CameraController : MonoBehaviour
     private Camera cam;
     private float fovBase;      // el campo de visión de la cámara al iniciar
     private float zoom = 1f;    // 1 = sin zoom
+    private float distanciaPellizco; // distancia entre los dos dedos en el cuadro anterior (0 = sin pellizco)
     private float ultimoAspecto = -1f;
 
     void Start()
@@ -147,6 +170,7 @@ public class CameraController : MonoBehaviour
     void ManejarTactil()
     {
         usandoTactil = true;
+        if (Input.touchCount < 2) distanciaPellizco = 0f; // el próximo pellizco empieza de cero
 
         if (Input.touchCount == 1)
         {
@@ -191,12 +215,16 @@ public class CameraController : MonoBehaviour
             arrastreTactil = false;
             velocidad = Vector2.zero;
 
+            // La distancia anterior se guarda de un cuadro al siguiente en vez de calcularla con deltaPosition:
+            // en el navegador ese valor puede llegar con el signo al revés (por eso el arrastre de un dedo
+            // necesita invertirTactil) y el pellizco quedaba invertido. Separar los dedos acerca; juntarlos aleja.
             Touch a = Input.GetTouch(0);
             Touch b = Input.GetTouch(1);
             float distancia = Vector2.Distance(a.position, b.position);
-            float anterior = Vector2.Distance(a.position - a.deltaPosition, b.position - b.deltaPosition);
-            if (anterior > 1f && distancia > 1f)
-                CambiarZoom((anterior - distancia) / Mathf.Max(1f, Screen.height));
+            bool empieza = a.phase == TouchPhase.Began || b.phase == TouchPhase.Began || distanciaPellizco <= 0f;
+            if (!empieza && distancia > 1f)
+                CambiarZoom((distanciaPellizco - distancia) / Mathf.Max(1f, Screen.height));
+            distanciaPellizco = distancia;
         }
     }
 

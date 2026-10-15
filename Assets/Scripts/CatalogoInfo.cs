@@ -153,4 +153,15 @@ public static class CatalogoInfo
             if (n != null && n.skybox == sky.name && !string.IsNullOrEmpty(n.nombre)) return n.nombre;
         return null;
     }
+
+    /// <summary>
+    /// Nombre que ve el usuario para un lugar: el oficial del catálogo si lo tiene y, si no, el que trae la
+    /// escena. Así el catálogo manda en toda la interfaz (hoja, chip, menú y listas de los puntos de edificio)
+    /// y corregir un nombre no obliga a tocar la escena.
+    /// </summary>
+    public static string NombreParaMostrar(string nombreEscena, Material sky)
+    {
+        string oficial = NombreOficialDe(sky);
+        return !string.IsNullOrEmpty(oficial) ? oficial : nombreEscena;
+    }
 }

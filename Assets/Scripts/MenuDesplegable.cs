@@ -90,6 +90,8 @@ public class MenuDesplegable : MonoBehaviour
     Button botonInfoChip;
     FichaInfo fichaActual;
     const float LadoInfoChip = 32f;
+    const float AnchoInfoChip = 124f;  // píldora «ⓘ Información» del chip
+    TextMeshProUGUI letraInfoChip;
     const float AnchoIconoChip = 15f;
     Image puntoZonaChip;
     TextMeshProUGUI etiquetaChip;
@@ -130,7 +132,10 @@ public class MenuDesplegable : MonoBehaviour
     Button botonHojaRedondo;       // «i» redondo junto al título en la altura compacta
     CanvasGroup grupoBotonRedondo;
     TextMeshProUGUI letraHojaRedondo;
-    const float LadoBotonRedondo = MarcaUdB.AreaTactil;
+    Image circuloHojaRedondo;
+    TextMeshProUGUI textoHojaRedondo;
+    const float LadoBotonRedondo = MarcaUdB.AreaTactil;  // alto de la píldora «ⓘ Info» de la altura compacta
+    const float AnchoBotonCompacto = 84f;
     const float AltoBotonHoja = 48f;
     const float AnchoTirador = 36f;
     Vector2 ultimoTamano;
@@ -229,6 +234,89 @@ public class MenuDesplegable : MonoBehaviour
     }
 
     // ------------------------------------------------------------------ API pública
+
+    /// <summary>
+    /// Abre el menú con la sección de una zona desplegada y a la vista. Lo usan los puntos de zona de Inicio:
+    /// en vez de su antiguo panel 3D, abren este mismo menú. Devuelve false si no hay menú.
+    /// </summary>
+    public static bool AbrirEnZona(string titulo)
+    {
+        if (instancia == null || instancia.panelRaiz == null) return false;
+        instancia.AbrirSeccion(titulo);
+        return true;
+    }
+
+    void AbrirSeccion(string titulo)
+    {
+        Seccion elegida = secciones.Find(s => MismaZona(s.edificio.nombreEdificio, titulo));
+        Abrir();
+        if (elegida == null) return;
+        foreach (Seccion s in secciones)
+            if (s != elegida) PonerSeccion(s, false);
+        PonerSeccion(elegida, true);
+        DesplazarA(elegida);
+    }
+
+    // Lleva la lista hasta el encabezado de la sección (con un respiro arriba)
+    void DesplazarA(Seccion s)
+    {
+        if (scrollLista == null || scrollLista.content == null || s.encabezado == null) return;
+        RectTransform contenido = scrollLista.content;
+        Canvas.ForceUpdateCanvases();
+        LayoutRebuilder.ForceRebuildLayoutImmediate(contenido);
+        Vector3[] c = new Vector3[4], e = new Vector3[4];
+        contenido.GetWorldCorners(c);
+        s.encabezado.GetWorldCorners(e);
+        float escala = Mathf.Max(0.0001f, contenido.lossyScale.y);
+        float desdeArriba = (c[1].y - e[1].y) / escala - MarcaUdB.Space2;
+        RectTransform vista = scrollLista.viewport != null ? scrollLista.viewport : (RectTransform)scrollLista.transform;
+        float maximo = Mathf.Max(0f, contenido.rect.height - vista.rect.height);
+        contenido.anchoredPosition = new Vector2(contenido.anchoredPosition.x, Mathf.Clamp(desdeArriba, 0f, maximo));
+    }
+
+    // Edificios del menú: los de MenuNavegacion más los lugares de los menús de zona de Inicio (MenusDeZona).
+    // Cada menú de zona se suma a la sección de su misma zona (por ejemplo «Edificio Múltiple» y «Edificio
+    // Múltiple 2» comparten color) y, si no tiene, se vuelve una sección nueva, como «Exteriores».
+    List<EdificioRecorrido> EdificiosDelMenu()
+    {
+        List<EdificioRecorrido> lista = new List<EdificioRecorrido>();
+        if (origenDatos != null && origenDatos.edificios != null)
+            foreach (EdificioRecorrido ed in origenDatos.edificios)
+                if (ed != null)
+                    lista.Add(new EdificioRecorrido
+                    {
+                        nombreEdificio = ed.nombreEdificio,
+                        puntos = ed.puntos != null ? new List<PuntoRecorrido>(ed.puntos) : new List<PuntoRecorrido>()
+                    });
+
+        MenusDeZona zonas = FindObjectOfType<MenusDeZona>(true);
+        if (zonas != null && zonas.menus != null)
+        {
+            foreach (MenuDeZona m in zonas.menus)
+            {
+                if (m == null || m.lugares == null || string.IsNullOrEmpty(m.titulo)) continue;
+                EdificioRecorrido destino = lista.Find(e => MismaZona(e.nombreEdificio, m.titulo));
+                if (destino == null)
+                {
+                    destino = new EdificioRecorrido { nombreEdificio = m.titulo, puntos = new List<PuntoRecorrido>() };
+                    lista.Add(destino);
+                }
+                foreach (LugarZona l in m.lugares)
+                    if (l != null && l.skybox != null && !destino.puntos.Exists(p => p != null && p.skybox == l.skybox))
+                        destino.puntos.Add(new PuntoRecorrido { nombre = l.nombre, skybox = l.skybox });
+            }
+        }
+        return lista;
+    }
+
+    // Dos nombres son la misma sección si son iguales o si caen en la misma zona de color
+    static bool MismaZona(string a, string b)
+    {
+        if (string.IsNullOrEmpty(a) || string.IsNullOrEmpty(b)) return false;
+        if (string.Equals(a.Trim(), b.Trim(), System.StringComparison.OrdinalIgnoreCase)) return true;
+        ZonaRecorrido za, zb;
+        return MarcaUdB.BuscarZona(a, out za) && MarcaUdB.BuscarZona(b, out zb) && za.nombre == zb.nombre;
+    }
 
     public void Abrir()
     {
@@ -404,9 +492,9 @@ public class MenuDesplegable : MonoBehaviour
                 MarcarPunto(f, s.zona, actual);
                 if (actual && lugar == null)
                 {
-                    lugar = s.edificio.nombreEdificio + " · " + f.punto.nombre;
+                    lugar = s.edificio.nombreEdificio + " · " + CatalogoInfo.NombreParaMostrar(f.punto.nombre, f.punto.skybox);
                     edificioHoja = s.edificio.nombreEdificio;
-                    lugarHoja = f.punto.nombre;
+                    lugarHoja = CatalogoInfo.NombreParaMostrar(f.punto.nombre, f.punto.skybox);
                     zonaActual = s.zona;
                     tieneZona = true;
                 }
@@ -422,7 +510,8 @@ public class MenuDesplegable : MonoBehaviour
             zonaActual = MarcaUdB.Rojo;
             tieneZona = true;
         }
-        if (lugar == null) lugar = NombreDesdeGestor(sky);
+        // Lugares fuera del menú (pasillos, caminos): el nombre oficial del catálogo; si no tiene, el del gestor
+        if (lugar == null) lugar = CatalogoInfo.NombreParaMostrar(NombreDesdeGestor(sky), sky);
 
         // Ficha del lugar: el botón «i» del chip solo aparece si el catálogo tiene información
         fichaActual = CatalogoInfo.PorSkybox(sky);
@@ -434,8 +523,8 @@ public class MenuDesplegable : MonoBehaviour
                 // Blanco sobre el color de la zona; el «i» es un glifo suelto, así que basta un contraste de 3:1
                 Color ci = MarcaUdB.FondoParaBlanco(!string.IsNullOrEmpty(fichaActual.zona) ? fichaActual.ColorZona : MarcaUdB.Negro, MarcaUdB.ContrasteIcono);
                 MarcaUdB.ColoresBoton(botonInfoChip, ci, Color.Lerp(ci, MarcaUdB.Negro, 0.18f), Color.Lerp(ci, MarcaUdB.Negro, 0.32f));
-                TMP_Text ti = botonInfoChip.GetComponentInChildren<TMP_Text>(true);
-                if (ti != null) ti.color = MarcaUdB.InkInverso;
+                foreach (TMP_Text ti in botonInfoChip.GetComponentsInChildren<TMP_Text>(true))
+                    ti.color = ti == letraInfoChip ? ci : MarcaUdB.InkInverso;
             }
         }
 
@@ -562,7 +651,7 @@ public class MenuDesplegable : MonoBehaviour
                       + etiquetaChip.GetPreferredValues(etiquetaChip.text).x + MarcaUdB.Space2
                       + textoChip.GetPreferredValues(textoChip.text).x + 4f;
         if (botonInfoChip != null && botonInfoChip.gameObject.activeSelf)
-            ancho += MarcaUdB.Space2 + LadoInfoChip;
+            ancho += MarcaUdB.Space2 + AnchoInfoChip;
 
         float disponible = zonaSegura != null && zonaSegura.rect.width > 0f ? zonaSegura.rect.width : canvasRT.rect.width;
         float maximo = compacto
@@ -618,7 +707,9 @@ public class MenuDesplegable : MonoBehaviour
             letraHojaInfo.color = c;
             // El redondo es el mismo botón en pequeño: mismo color y la misma «i» en blanco
             MarcaUdB.ColoresBoton(botonHojaRedondo, c, Color.Lerp(c, MarcaUdB.Negro, 0.18f), Color.Lerp(c, MarcaUdB.Negro, 0.32f));
-            letraHojaRedondo.color = tinta;
+            circuloHojaRedondo.color = tinta;
+            letraHojaRedondo.color = c;
+            textoHojaRedondo.color = tinta;
         }
 
         // Sin ficha no hay nada que abrir: sin tirador y sin gesto (la hoja solo informa)
@@ -652,7 +743,7 @@ public class MenuDesplegable : MonoBehaviour
         // Con ficha, el título deja libre a su derecha el sitio del botón redondo de la altura compacta. Se
         // reserva también en la altura normal: así el título no cambia de renglones al pasar de una a otra.
         bool conBoton = botonHojaInfo.gameObject.activeSelf;
-        float anchoTitulo = conBoton ? ancho - LadoBotonRedondo - MarcaUdB.Space3 : ancho;
+        float anchoTitulo = conBoton ? ancho - AnchoBotonCompacto - MarcaUdB.Space3 : ancho;
         float inicioTitulo = y;
 
         RectTransform fila = (RectTransform)etiquetaHoja.transform.parent;
@@ -667,8 +758,8 @@ public class MenuDesplegable : MonoBehaviour
         if (conBoton)
         {
             float centro = (inicioTitulo + y) * 0.5f;
-            ColocarEnHoja((RectTransform)botonHojaRedondo.transform, lado + ancho - LadoBotonRedondo,
-                          centro - LadoBotonRedondo * 0.5f, LadoBotonRedondo, LadoBotonRedondo);
+            ColocarEnHoja((RectTransform)botonHojaRedondo.transform, lado + ancho - AnchoBotonCompacto,
+                          centro - LadoBotonRedondo * 0.5f, AnchoBotonCompacto, LadoBotonRedondo);
         }
 
         // Lo que sigue (botón ancho y descripción) es lo que la altura compacta esconde: la hoja baja justo eso
@@ -837,14 +928,30 @@ public class MenuDesplegable : MonoBehaviour
         botonHojaInfo.onClick.AddListener(AbrirFichaActual);
         grupoBotonHoja = botonHojaInfo.gameObject.AddComponent<CanvasGroup>();
 
-        // El mismo botón en pequeño para la altura compacta: círculo del color de la zona con «i» en blanco,
-        // a la derecha del título. Empieza invisible; MoverHoja lo muestra cuando la hoja baja.
+        // El mismo botón en pequeño para la altura compacta: píldora del color de la zona con «ⓘ Info» en
+        // blanco, a la derecha del título (la palabra deja claro que es información). Empieza invisible;
+        // MoverHoja la muestra cuando la hoja baja.
         Image imgRedondo;
-        botonHojaRedondo = CrearBoton("VerMasRedondo", cuerpo, out imgRedondo);
-        MarcaUdB.Redondear(imgRedondo, LadoBotonRedondo * 0.5f);
-        letraHojaRedondo = CrearTexto("i", botonHojaRedondo.transform, "i", MarcaUdB.TextoBold, MarcaUdB.CuerpoL + 3f, MarcaUdB.InkInverso);
+        botonHojaRedondo = CrearBoton("VerMasCompacto", cuerpo, out imgRedondo);
+        MarcaUdB.Pildora(imgRedondo, LadoBotonRedondo);
+        HorizontalLayoutGroup hlr = imgRedondo.gameObject.AddComponent<HorizontalLayoutGroup>();
+        hlr.spacing = 6f;
+        hlr.childAlignment = TextAnchor.MiddleCenter;
+        hlr.childControlWidth = true;
+        hlr.childControlHeight = true;
+        hlr.childForceExpandWidth = false;
+        hlr.childForceExpandHeight = false;
+        circuloHojaRedondo = CrearImagen("Icono", botonHojaRedondo.transform, MarcaUdB.InkInverso);
+        circuloHojaRedondo.raycastTarget = false;
+        MarcaUdB.Redondear(circuloHojaRedondo, 10f);
+        LayoutElement lcr = circuloHojaRedondo.gameObject.AddComponent<LayoutElement>();
+        lcr.minWidth = lcr.preferredWidth = 20f;
+        lcr.minHeight = lcr.preferredHeight = 20f;
+        letraHojaRedondo = CrearTexto("i", circuloHojaRedondo.transform, "i", MarcaUdB.TextoBold, MarcaUdB.UIControlS, MarcaUdB.Negro);
         letraHojaRedondo.alignment = TextAlignmentOptions.Center;
         Estirar((RectTransform)letraHojaRedondo.transform, 0f, 0f);
+        textoHojaRedondo = CrearTexto("Texto", botonHojaRedondo.transform, "Info", MarcaUdB.TextoBold, MarcaUdB.UIControl, MarcaUdB.InkInverso);
+        textoHojaRedondo.gameObject.AddComponent<LayoutElement>().flexibleWidth = 0f;
         botonHojaRedondo.onClick.AddListener(AbrirFichaActual);
         grupoBotonRedondo = botonHojaRedondo.gameObject.AddComponent<CanvasGroup>();
         grupoBotonRedondo.alpha = 0f;
@@ -982,17 +1089,33 @@ public class MenuDesplegable : MonoBehaviour
         ll.minWidth = 40f;
         ll.flexibleWidth = 1f;
 
-        // Botón «i»: abre la ficha del lugar actual (catálogo de información), si la hay
+        // Botón de información: píldora con el ícono «i» y la palabra «Información», para que no haya duda de
+        // qué hace. Abre la ficha del lugar actual (catálogo), si la hay.
         Image imgInfo;
         botonInfoChip = CrearBoton("Info", chipRT, out imgInfo);
-        MarcaUdB.Redondear(imgInfo, LadoInfoChip * 0.5f);
+        MarcaUdB.Pildora(imgInfo, LadoInfoChip);
         LayoutElement li = botonInfoChip.gameObject.AddComponent<LayoutElement>();
-        li.minWidth = li.preferredWidth = LadoInfoChip;
+        li.minWidth = li.preferredWidth = AnchoInfoChip;
         li.minHeight = li.preferredHeight = LadoInfoChip;
         li.flexibleWidth = 0f;
-        TextMeshProUGUI textoInfo = CrearTexto("i", botonInfoChip.transform, "i", MarcaUdB.TextoBold, MarcaUdB.CuerpoL, MarcaUdB.InkInverso);
-        textoInfo.alignment = TextAlignmentOptions.Center;
-        Estirar((RectTransform)textoInfo.transform, 0f, 0f);
+        HorizontalLayoutGroup hli = botonInfoChip.gameObject.AddComponent<HorizontalLayoutGroup>();
+        hli.spacing = 6f;
+        hli.childAlignment = TextAnchor.MiddleCenter;
+        hli.childControlWidth = true;
+        hli.childControlHeight = true;
+        hli.childForceExpandWidth = false;
+        hli.childForceExpandHeight = false;
+        Image circuloInfo = CrearImagen("Icono", botonInfoChip.transform, MarcaUdB.InkInverso);
+        circuloInfo.raycastTarget = false;
+        MarcaUdB.Redondear(circuloInfo, 9f);
+        LayoutElement lci = circuloInfo.gameObject.AddComponent<LayoutElement>();
+        lci.minWidth = lci.preferredWidth = 18f;
+        lci.minHeight = lci.preferredHeight = 18f;
+        letraInfoChip = CrearTexto("i", circuloInfo.transform, "i", MarcaUdB.TextoBold, MarcaUdB.UIControlS, MarcaUdB.Negro);
+        letraInfoChip.alignment = TextAlignmentOptions.Center;
+        Estirar((RectTransform)letraInfoChip.transform, 0f, 0f);
+        TextMeshProUGUI textoInfo = CrearTexto("Texto", botonInfoChip.transform, "Información", MarcaUdB.TextoBold, MarcaUdB.UIControlS, MarcaUdB.InkInverso);
+        textoInfo.gameObject.AddComponent<LayoutElement>().flexibleWidth = 0f;
         botonInfoChip.onClick.AddListener(() => { if (fichaActual != null) PanelInfo.Mostrar(fichaActual); });
         botonInfoChip.gameObject.SetActive(false);
 
@@ -1101,16 +1224,11 @@ public class MenuDesplegable : MonoBehaviour
         scrollLista = scroll;
         scroll.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
 
-        // --- Edificios, cada uno con su color de zona
-        if (origenDatos != null && origenDatos.edificios != null)
-        {
-            foreach (EdificioRecorrido ed in origenDatos.edificios)
-                if (ed != null) CrearSeccion(rtC, ed);
-        }
-        else
-        {
-            Debug.LogWarning("[MenuDesplegable] No se encontró MenuNavegacion: el menú solo tendrá el botón de inicio.");
-        }
+        // --- Edificios y zonas, cada uno con su color. Incluye los lugares de los menús de zona de Inicio
+        List<EdificioRecorrido> edificios = EdificiosDelMenu();
+        foreach (EdificioRecorrido ed in edificios) CrearSeccion(rtC, ed);
+        if (edificios.Count == 0)
+            Debug.LogWarning("[MenuDesplegable] No se encontró MenuNavegacion ni MenusDeZona: el menú solo tendrá el botón de inicio.");
 
         // --- Pie: aviso del registro anónimo y código de la sesión (para la encuesta)
         textoPie = CrearTexto("Pie", panel, "", MarcaUdB.Texto, MarcaUdB.CuerpoS, MarcaUdB.InkMuted);
@@ -1237,7 +1355,7 @@ public class MenuDesplegable : MonoBehaviour
                 LayoutElement lp = fila.boton.gameObject.AddComponent<LayoutElement>();
                 lp.minHeight = lp.preferredHeight = AltoPunto;
                 fila.acento = CrearAcento(fila.boton.transform, s.zona, AltoPunto);
-                fila.texto = CrearTexto("Texto", fila.boton.transform, p.nombre, MarcaUdB.Texto, MarcaUdB.Cuerpo, MarcaUdB.Ink);
+                fila.texto = CrearTexto("Texto", fila.boton.transform, CatalogoInfo.NombreParaMostrar(p.nombre, p.skybox), MarcaUdB.Texto, MarcaUdB.Cuerpo, MarcaUdB.Ink);
                 Estirar((RectTransform)fila.texto.transform, MarcaUdB.Space6, MarcaUdB.Space4);
                 // Nombres largos: hasta dos renglones dentro de la fila antes de recortar
                 MarcaUdB.AjustarACaja(fila.texto, true, 0.78f);

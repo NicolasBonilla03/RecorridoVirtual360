@@ -48,14 +48,14 @@ Para publicar la web: *Recorrido → Web y móvil → 1. Preparar ajustes para w
 
 | Script | Qué hace |
 | --- | --- |
-| `CameraController` | Mirar alrededor (arrastrar o rueda en escritorio; dedo o pellizco en móvil). En vertical amplía el campo de visión. |
+| `CameraController` | Mirar alrededor (arrastrar o rueda en escritorio; dedo o pellizco en móvil). En vertical amplía el campo de visión. El pellizco guarda la distancia real entre los dedos de un cuadro al siguiente (separar acerca, juntar aleja); no usa `Touch.deltaPosition`, que en el navegador puede llegar invertido (por eso `invertirTactilX/Y` están activados en la escena). |
 | `GestorTeleports`, `TeleportPoint` | Saltos entre panorámicas (skyboxes) |
 | `CargadorPanoramas` | En web descarga cada foto 360 al entrar y precarga las vecinas |
 | `FadeController` | Pantalla de carga y fundido entre escenas (su lienzo va por encima de todo) |
-| `MenuDesplegable` | Menú lateral por edificio, botón de menú y chip «Estás en» (horizontal y escritorio). En celular vertical arma la hoja inferior del lugar y publica su alto en `MarcaUdB.AltoHojaMovil`. Añade `GuiaVirtual` solo. |
+| `MenuDesplegable` | Menú lateral por edificio y zona, botón de menú y chip «Estás en» con la píldora «ⓘ Información» (horizontal y escritorio). Suma a sus secciones los lugares de los menús de zona de Inicio (`MenusDeZona`), emparejados por color de zona, y crea la sección «Exteriores». `AbrirEnZona(titulo)` lo abre desplegado en una sección. En celular vertical arma la hoja inferior del lugar y publica su alto en `MarcaUdB.AltoHojaMovil`. Añade `GuiaVirtual` solo. |
 | `GuiaVirtual` | Guía con preguntas predefinidas, «Ver ficha» y «Llévame». Botón flotante, halo y mensajes que salen del botón: el primero es la invitación general y los siguientes son preguntas del catálogo, de preferencia del lugar actual. Se repiten durante todo el recorrido: uno cada 25 s, o al llegar a un lugar nuevo si ya pasaron 10 s desde el anterior. Cuando el usuario ya abrió el guía, cada 60 s, o 30 s al cambiar de lugar. La invitación vuelve cada cinco mensajes, y las preguntas no se repiten hasta haber salido todas. Tocar el mensaje abre el guía con esa respuesta desplegada. |
-| `PanelInfo`, `PuntoInfo`, `CatalogoInfo` | Fichas de información. En celular vertical la ficha sube desde abajo y se cierra con la X, tocando fuera o arrastrando el encabezado hacia abajo. El catálogo está en `Assets/Resources/PuntosInfo/catalogo.json` (fichas, con su `resumen`, y preguntas del guía) y se edita sin abrir Unity. |
-| `POIController`, `MenusDeZona` | Puntos de edificio en el espacio, con su lista de lugares |
+| `PanelInfo`, `PuntoInfo`, `CatalogoInfo` | Fichas de información. En celular vertical la ficha sube desde abajo y se cierra con la X, tocando fuera o arrastrando el encabezado hacia abajo. El catálogo está en `Assets/Resources/PuntosInfo/catalogo.json` (fichas, con su `resumen`, preguntas del guía y nombres oficiales) y se edita sin abrir Unity. **Los nombres oficiales del catálogo mandan en toda la interfaz** (hoja, chip, menú y listas de los puntos de edificio) mediante `CatalogoInfo.NombreParaMostrar`: para corregir el nombre de un lugar basta editar la lista `nombres`, sin tocar la escena. |
+| `POIController`, `MenusDeZona` | Puntos de zona de Inicio (Edificio 12, Edificio Central, Múltiple y Exteriores). Al tocarlos abren el menú lateral en su sección: ya no se usa su panel 3D rosado, que solo queda de respaldo si no hay menú lateral. |
 | `RegistroUso` | Registro anónimo de uso (completitud, tiempo por espacio, uso de fichas y guía). Ver `Docs/registro-de-uso.md` (Google Apps Script). |
 | `Editor/HerramientasRecorrido` | Menú «Recorrido»: crear y mover botones de teletransporte (Ctrl+Alt+T), puntos de información (Ctrl+Alt+I), revisiones y nombres oficiales |
 | `Editor/ConstruccionWeb` | Build WebGL con fotos por demanda |
@@ -67,11 +67,11 @@ Para publicar la web: *Recorrido → Web y móvil → 1. Preparar ajustes para w
   - Tipografía: Raleway para títulos, Lato para texto e interfaz.
   - Espaciado: escala de 4 px (`Space1`–`Space10`). Radios: 4, 8 y 16, más píldora. Área táctil mínima de 44 px.
   - Funciones: `EsCompacto` (ancho menor a 900) y `EsMovilVertical` (compacto y alto mayor a 1.2 veces el ancho).
-  - Medidas compartidas: `AltoControlFlotante` (48) y `DiametroGuiaMovil` (64). Hay dos que publican otros scripts: `AltoFilaSuperior`, que publica `AplicarMarcaUdB` para alinear el menú con el logo, y `AltoHojaMovil`, que publica `MenuDesplegable` para apoyar encima de la hoja el botón del guía y la pista.
+  - Medidas compartidas: `AltoControlFlotante` (48), `DiametroGuiaMovil` (64) y `DiametroHotspot` (80, tamaño en pantalla de los «+» y los «i» del espacio, halo incluido). Hay dos que publican otros scripts: `AltoFilaSuperior`, que publica `AplicarMarcaUdB` para alinear el menú con el logo, y `AltoHojaMovil`, que publica `MenuDesplegable` para apoyar encima de la hoja el botón del guía y la pista.
   - Áreas seguras: `InsetSuperior` (muesca) e `InsetInferior` (barra de gestos).
   - **Texto sobre color de zona:** siempre en blanco. Usa `FondoParaBlanco(color)`, que oscurece el relleno lo justo para llegar a 4.5:1, o 3:1 con `ContrasteIcono` para glifos sueltos como «i» o «+». No uses `TintaSobre` en botones de zona: elige negro sobre los colores claros y se ve sucio.
   - Ícono de ubicación dibujado en código: `IconoUbicacion`.
-- `EscalaAdaptable.cs`: CanvasScaler adaptable. En escritorio usa la referencia 1536×864. En celular vertical el ancho equivale a 400 px y en horizontal el alto equivale a 400 px.
+- `EscalaAdaptable.cs`: CanvasScaler adaptable. En escritorio usa la referencia 1280×720 (como un navegador al 150 %; con 1536×864 todo se veía pequeño). En celular vertical el ancho equivale a 400 px y en horizontal el alto equivale a 400 px.
 - `AplicarMarcaUdB.cs`: logo oficial (mínimo 152 px de ancho, con área de protección de 1.5x), nota «Vigilada Mineducación» (obligatoria, no se esconde; en celular vertical va bajo el logo y en el resto abajo a la izquierda). La placa del logo se dibuja encima de la nota, para que su pista «Ir al inicio» no quede tapada, pista de uso, hotspots y fuentes.
 - **Gestos:**
   - `HojaDeslizable.cs`: la hoja del celular vertical tiene tres alturas.
@@ -84,6 +84,7 @@ Para publicar la web: *Recorrido → Web y móvil → 1. Preparar ajustes para w
   - Los dos cambian de estado con un gesto rápido (más de 0.11 px/ms) aunque sea corto.
   - **Ojo:** cuando un mismo objeto maneja toque y arrastre, Unity manda también el toque al soltar un arrastre, y antes que `OnEndDrag`. En `OnPointerClick` hay que ignorarlo con `if (datos.dragging) return;`.
 - **Animación:** `AnimacionesUI.cs` (curvas y duraciones), `ToqueSuave.cs` (respuesta al toque), `VeloSuave.cs` (fundido del velo de los paneles), `GiroSuave.cs` (flechas de las listas) y `PistaAlPasar.cs`.
+- `TamanoEnPantalla.cs`: todos los botones del espacio se ven del mismo tamaño en pantalla: los «+» de `DiametroHotspot` px del sistema y los «i» de información de tres cuartos de eso (llevan al lado su etiqueta «INFORMACIÓN · nombre»), estén a la distancia que estén en la foto, y se giran de frente a la cámara. Solo recalcula cuando cambia el campo de visión o la pantalla, y cuando el botón aparece. En los botones con `ToqueSuave` cambia su escala base (`CambiarEscalaBase`) para no pisar el encogimiento al presionar.
 
 ## Reglas de animación (filosofía de Emil Kowalski)
 
@@ -97,7 +98,7 @@ Las skills de Emil están instaladas en este equipo, en `~/.agents/skills/`: `em
   - Paneles: 240 ms al entrar y 180 ms al salir (`DuracionPanelEntrada` / `DuracionPanelSalida`).
   - Velo: 160 ms al entrar y 140 ms al salir. Los controles flotantes (botón de menú, chip, hoja y botón del guía) se funden con ese mismo ritmo, mediante `VeloSuave`, cuando se abre o cierra un panel. Nunca se apagan de golpe.
   - Saltos entre lugares: ningún control se esconde por su cuenta. La pantalla del fundido los tapa a todos a la vez, así aparecen y desaparecen junto con la foto.
-  - Mensaje del guía: se despliega en 280 ms y se recoge en 200 ms. Se queda 8 s. El «?» gira una vuelta a la izquierda mientras el mensaje sale y regresa a la derecha mientras se recoge; el giro va atado al mismo progreso. Además da un salto de 300 ms y el halo late dos veces.
+  - Mensaje del guía: sale del extremo izquierdo del botón (en la píldora de escritorio, junto al «?»; si saliera de su centro, el primer tramo quedaría escondido). Se mide con el globo activo, nunca apagado. Se despliega en 280 ms y se recoge en 200 ms. Se queda 8 s. El «?» gira una vuelta a la izquierda mientras el mensaje sale y regresa a la derecha mientras se recoge; el giro va atado al mismo progreso. Además da un salto de 300 ms y el halo late dos veces.
   - Flechas: 150 ms. Panel del guía en móvil: 220 ms al abrir y 150 ms al cerrar.
   - Lugares de un edificio en el menú: fundido de 150 ms al abrirlo.
   - Salto entre lugares: si la foto ya está en memoria, 250 ms para tapar y 350 ms para destapar. Si hay que descargarla, se usa el fundido lineal de `velocidadFade`.
@@ -108,8 +109,11 @@ Las skills de Emil están instaladas en este equipo, en `~/.agents/skills/`: `em
   - El mensaje del guía sale de detrás del botón, de derecha a izquierda, con un recorte (`RectMask2D.padding`) que se abre, y se recoge de izquierda a derecha hasta meterse en él.
   - La ficha en celular vertical sube desde la hoja donde está su botón.
 - **Todo se puede interrumpir:** cada animación parte del valor actual.
-- Al presionar, los botones se encogen a 0.97 (0.96 en el espacio). El crecimiento al pasar es solo con mouse (`AnimacionesUI.HoverConMouse`).
+- Al presionar, los botones se encogen a 0.97 (0.96 en el espacio).
+- **Sin hovers en celular:** `AnimacionesUI.HoverConMouse` solo es true con un mouse real y en la vista de escritorio (`EscalaAdaptable.EsPantallaDeCelular` en falso). En celular no hay crecimiento al pasar ni pista «Ir al inicio», y el color de «pasar encima» de los botones es igual al normal, para que no se quede pegado después de tocar.
 - **Rendimiento:** anima solo posición, escala, rotación, transparencia (CanvasGroup) y recortes (`RectMask2D.padding`), nunca tamaños. Respeta `AnimacionesUI.Activas`, que es el interruptor de movimiento reducido. Nada debe trabajar en cada cuadro cuando la pantalla está quieta: el recorrido va dentro de otra página web.
+- **Lección aprendida (botones que se ven pero no responden):** los lienzos del mundo tienen `ignoreReversedGraphics` activado, así que Unity descarta los toques sobre un gráfico que le da la espalda a la cámara, aunque se dibuje bien (la interfaz se ve por los dos lados). Así fallaba el «+» de «Entrada principal y portería» hacia «Escaleras principales». `TamanoEnPantalla` gira todos los botones del espacio de frente a la cámara al aparecer.
+- **Lección aprendida (cámara):** el objeto `MainCamera` de la escena tiene la etiqueta *Untagged*, así que `Camera.main` es null. En código usa `CameraController.Principal`. Si alguien le pone la etiqueta MainCamera en el editor, no pasa nada: `Principal` sigue funcionando.
 - **Lección aprendida:** no pongas un `Canvas` anidado en el halo del botón del guía. Al probarlo, el botón en forma de píldora dejó de recibir clics en escritorio y en horizontal. La causa exacta no se identificó.
 
 ## Estado actual (13 de octubre de 2026)
@@ -142,7 +146,8 @@ Todo se probó en el editor en las tres resoluciones. Después del merge, `main`
 - [ ] **Incrustar en la web de la universidad:** usar un `<iframe>` que apunte al `index.html` del build. Si se mete de otra forma, hay que cambiar `streamingAssetsUrl` en `Assets/WebGLTemplates/RecorridoUdB/index.html` para que las fotos 360 se sigan encontrando.
 - [ ] **Teletransporte que falló:** en la validación del 7 de octubre un punto de teletransporte no funcionó y no se identificó cuál. Usa *Recorrido → Revisar botones sin destino*.
 - [ ] **Tamaño del botón redondo del guía:** está en 64 px; en la maqueta medía cerca de 110 px. Se ajusta en `MarcaUdB.DiametroGuiaMovil`.
-- [ ] **Opcional:** los puntos de avanzar del espacio (círculos de color con «+») se ven grandes en vertical cuando la cámara mira hacia abajo. Se podrían escalar solo en vertical.
+- [ ] **Probar `TamanoEnPantalla`** en el editor y en un celular real: que los «+» y los «i» se vean parejos y fáciles de tocar en las tres vistas, también al hacer zoom. Si quedan grandes o pequeños, se ajusta `MarcaUdB.DiametroHotspot`.
+- [ ] **Probar el pellizco en un celular real:** separar los dedos debe acercar.
 
 ## Documentos
 
