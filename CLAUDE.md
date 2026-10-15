@@ -36,7 +36,7 @@ En la vista Game hay tres resoluciones guardadas, y cada una activa un modo dist
 
 | Resolución | Modo | Cómo se ve |
 | --- | --- | --- |
-| Celular vertical (1080×2340) | móvil vertical, estilo Street View | Foto a pantalla completa. Arriba flotan el botón redondo de menú (vidrio) y el logo con «Vigilada Mineducación» debajo. Abajo, la hoja del lugar (edificio, lugar, resumen y «Ver más información»). Botón redondo «?» del guía encima de la hoja |
+| Celular vertical (1080×2340) | móvil vertical, estilo Street View | Foto a pantalla completa. Arriba flotan el botón redondo de menú (vidrio) y el logo con «Vigilada Mineducación» debajo. Abajo, la hoja del lugar con tres alturas: compacta (edificio y lugar, con un botón redondo «i» a la derecha), normal (además el resumen) y completa (la ficha). Botón redondo «?» del guía encima de la hoja |
 | Celular horizontal (2340×1080) | compacto | Botón negro «Menú», chip debajo, botón «Guía» |
 | Full HD (1920×1080) | escritorio | «Menú» y chip en fila, logo a la derecha, botón «Pregúntale al guía» |
 
@@ -73,7 +73,16 @@ Para publicar la web: *Recorrido → Web y móvil → 1. Preparar ajustes para w
   - Ícono de ubicación dibujado en código: `IconoUbicacion`.
 - `EscalaAdaptable.cs`: CanvasScaler adaptable. En escritorio usa la referencia 1536×864. En celular vertical el ancho equivale a 400 px y en horizontal el alto equivale a 400 px.
 - `AplicarMarcaUdB.cs`: logo oficial (mínimo 152 px de ancho, con área de protección de 1.5x), nota «Vigilada Mineducación» (obligatoria, no se esconde; en celular vertical va bajo el logo y en el resto abajo a la izquierda). La placa del logo se dibuja encima de la nota, para que su pista «Ir al inicio» no quede tapada, pista de uso, hotspots y fuentes.
-- **Gestos:** `HojaDeslizable.cs` (tocar o deslizar hacia arriba la hoja abre la ficha) y `DeslizarParaCerrar.cs` (arrastrar hacia abajo el encabezado de la ficha la cierra). Los dos abren o cierran con un gesto rápido (más de 0.11 px/ms) aunque sea corto.
+- **Gestos:**
+  - `HojaDeslizable.cs`: la hoja del celular vertical tiene tres alturas.
+    - Arrastrar hacia abajo la lleva a compacta.
+    - Hacia arriba, pasa de compacta a normal y de normal abre la ficha.
+    - Tocarla en compacta la sube a normal; en normal abre la ficha.
+    - En compacta el botón ancho «Ver más información» se convierte en un botón redondo «i» (44 px, color de la zona) a la derecha del título. El cambio va atado a la posición de la hoja: primero se desvanece el resumen, luego el botón ancho, y el redondo aparece en la segunda mitad del recorrido. El título deja reservado el sitio del botón redondo en las dos alturas, para no cambiar de renglones. La escala del botón redondo no se anima, porque la maneja `ToqueSuave`.
+    - El orden de la hoja es título → botón → resumen. La hoja nunca cambia de tamaño: en compacta baja lo que miden el botón ancho y el resumen, que quedan bajo el borde de la pantalla. Recuerda la altura al cambiar de lugar.
+  - `DeslizarParaCerrar.cs`: arrastrar hacia abajo el encabezado de la ficha la cierra.
+  - Los dos cambian de estado con un gesto rápido (más de 0.11 px/ms) aunque sea corto.
+  - **Ojo:** cuando un mismo objeto maneja toque y arrastre, Unity manda también el toque al soltar un arrastre, y antes que `OnEndDrag`. En `OnPointerClick` hay que ignorarlo con `if (datos.dragging) return;`.
 - **Animación:** `AnimacionesUI.cs` (curvas y duraciones), `ToqueSuave.cs` (respuesta al toque), `VeloSuave.cs` (fundido del velo de los paneles), `GiroSuave.cs` (flechas de las listas) y `PistaAlPasar.cs`.
 
 ## Reglas de animación (filosofía de Emil Kowalski)
@@ -111,6 +120,7 @@ Las skills de Emil están instaladas en este equipo, en `~/.agents/skills/`: `em
 - Pasada de animaciones con los criterios de Emil.
 - Celular vertical rediseñado al estilo de Street View. Reemplaza a la versión de la maqueta «Frame 10», que tenía barra blanca y chip colgando.
 - Mensajes del guía que salen de su botón, con gestos para abrir la ficha (deslizar arriba) y cerrarla (deslizar abajo).
+- 15 de octubre: hoja del celular con tres alturas (compacta con botón redondo «i», normal y ficha). Probada en el editor con el mouse: bajar a compacta, tocar el botón redondo, subir a normal, subir a la ficha y tocar en compacta.
 - Optimización para web:
   - La búsqueda de botones nuevos ya no corre cada 0,75 s.
   - El halo solo late mientras hay un mensaje.
@@ -119,11 +129,11 @@ Las skills de Emil están instaladas en este equipo, en `~/.agents/skills/`: `em
   - HDR apagado y volumen «Via Scripting» en `URP-Balanced`.
   - En los ajustes WebGL: nombres de archivo con hash y preferencia de energía «Default».
 
-Todo se probó en el editor en las tres resoluciones y compilaba sin errores antes del merge. Después del merge falta volver a compilar (ver abajo). Los gestos se probaron con el mouse en la vista Game, no con el dedo.
+Todo se probó en el editor en las tres resoluciones. Después del merge, `main` se volvió a compilar sin errores el 15 de octubre. Los gestos se probaron con el mouse en la vista Game, no con el dedo.
 
 **Pendiente:**
 
-- [ ] **Compilar `main` en Unity después del merge.** El trabajo del 13 de octubre entró a `main` con `GuiaVirtual.cs` lleno de marcas de conflicto de un stash. Se restauró desde el stash de ese día (`fbce74b`) y se subió en el commit `26d30e0`; el resto de los archivos se comparó contra el stash y está idéntico. Falta abrir Unity 2022.3.62f3, revisar que la consola no tenga errores y probar una pasada en celular vertical, incluidos los 4 lugares nuevos de Nicolás (Camino Edificio 12, Camino Portería, Frente Portería, Pasillo 502).
+- [ ] **Recorrer los 4 lugares nuevos de Nicolás** (Camino Edificio 12, Camino Portería, Frente Portería, Pasillo 502) en celular vertical. `main` ya compila sin errores en Unity 2022.3 (probado el 15 de octubre, después del arreglo de `GuiaVirtual.cs` en `26d30e0`), pero esos lugares no se han visitado con la interfaz nueva.
 - [ ] **Nuevo build WebGL** y publicarlo en el repositorio de Nicolás. Este equipo no tiene instalado *WebGL Build Support* para la 2022.3. Con los nombres con hash, borra la carpeta `Build` vieja antes de copiar la nueva.
 - [ ] **Probar en un celular real**, en vertical y en horizontal, incluido un equipo con muesca:
   - el área segura: la foto ahora llega hasta arriba y la hoja cubre la barra de gestos;

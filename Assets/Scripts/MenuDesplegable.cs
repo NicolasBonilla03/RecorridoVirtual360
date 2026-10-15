@@ -114,6 +114,9 @@ public class MenuDesplegable : MonoBehaviour
     // de la ficha y «Ver más información». Reemplaza al chip «Estás en» en ese modo.
     RectTransform hojaRT;
     HojaDeslizable hojaGesto;
+    CanvasGroup grupoResumenHoja;
+    float altoHojaNormal;          // alto visible de la hoja en su altura normal
+    float bajadaHojaCompacta;      // cuánto baja en la compacta (lo que mide la descripción)
     Image tiradorHoja;
     Image pinHoja;
     TextMeshProUGUI etiquetaHoja;
@@ -123,6 +126,11 @@ public class MenuDesplegable : MonoBehaviour
     Image circuloHojaInfo;
     TextMeshProUGUI letraHojaInfo;
     TextMeshProUGUI textoHojaInfo;
+    CanvasGroup grupoBotonHoja;
+    Button botonHojaRedondo;       // «i» redondo junto al título en la altura compacta
+    CanvasGroup grupoBotonRedondo;
+    TextMeshProUGUI letraHojaRedondo;
+    const float LadoBotonRedondo = MarcaUdB.AreaTactil;
     const float AltoBotonHoja = 48f;
     const float AnchoTirador = 36f;
     Vector2 ultimoTamano;
@@ -599,6 +607,7 @@ public class MenuDesplegable : MonoBehaviour
         // El botón toma el color de la zona de la ficha, como el «i» del chip (el rojo queda para el guía),
         // oscurecido lo justo para que el texto en blanco se lea bien
         botonHojaInfo.gameObject.SetActive(conFicha);
+        botonHojaRedondo.gameObject.SetActive(conFicha);
         if (conFicha)
         {
             Color c = MarcaUdB.FondoParaBlanco(!string.IsNullOrEmpty(fichaActual.zona) ? fichaActual.ColorZona : MarcaUdB.Negro);
@@ -607,6 +616,9 @@ public class MenuDesplegable : MonoBehaviour
             textoHojaInfo.color = tinta;
             circuloHojaInfo.color = tinta;
             letraHojaInfo.color = c;
+            // El redondo es el mismo botón en pequeño: mismo color y la misma «i» en blanco
+            MarcaUdB.ColoresBoton(botonHojaRedondo, c, Color.Lerp(c, MarcaUdB.Negro, 0.18f), Color.Lerp(c, MarcaUdB.Negro, 0.32f));
+            letraHojaRedondo.color = tinta;
         }
 
         // Sin ficha no hay nada que abrir: sin tirador y sin gesto (la hoja solo informa)
@@ -637,36 +649,84 @@ public class MenuDesplegable : MonoBehaviour
         float ancho = (canvasRT.rect.width > 0f ? canvasRT.rect.width : MarcaUdB.AnchoMovil) - lado * 2f;
         float y = MarcaUdB.Space5; // deja sitio al tirador
 
+        // Con ficha, el título deja libre a su derecha el sitio del botón redondo de la altura compacta. Se
+        // reserva también en la altura normal: así el título no cambia de renglones al pasar de una a otra.
+        bool conBoton = botonHojaInfo.gameObject.activeSelf;
+        float anchoTitulo = conBoton ? ancho - LadoBotonRedondo - MarcaUdB.Space3 : ancho;
+        float inicioTitulo = y;
+
         RectTransform fila = (RectTransform)etiquetaHoja.transform.parent;
-        ColocarEnHoja(fila, lado, y, ancho, 18f);
+        ColocarEnHoja(fila, lado, y, anchoTitulo, 18f);
         y += 18f + MarcaUdB.Space1;
 
-        float altoTitulo = AltoTexto(tituloHoja, ancho, 2);
-        ColocarEnHoja((RectTransform)tituloHoja.transform, lado, y, ancho, altoTitulo);
+        float altoTitulo = AltoTexto(tituloHoja, anchoTitulo, 2);
+        ColocarEnHoja((RectTransform)tituloHoja.transform, lado, y, anchoTitulo, altoTitulo);
         y += altoTitulo;
 
-        if (resumenHoja.gameObject.activeSelf)
+        // Botón redondo de la altura compacta: a la derecha, centrado en el bloque del edificio y el título
+        if (conBoton)
         {
-            y += MarcaUdB.Space2;
-            float altoResumen = AltoTexto(resumenHoja, ancho, 2);
-            ColocarEnHoja((RectTransform)resumenHoja.transform, lado, y, ancho, altoResumen);
-            y += altoResumen;
+            float centro = (inicioTitulo + y) * 0.5f;
+            ColocarEnHoja((RectTransform)botonHojaRedondo.transform, lado + ancho - LadoBotonRedondo,
+                          centro - LadoBotonRedondo * 0.5f, LadoBotonRedondo, LadoBotonRedondo);
         }
 
-        if (botonHojaInfo.gameObject.activeSelf)
+        // Lo que sigue (botón ancho y descripción) es lo que la altura compacta esconde: la hoja baja justo eso
+        // y queda bajo el borde de la pantalla. Lo de arriba no cambia de lugar dentro de la hoja.
+        float alTitulo = y;
+        if (conBoton)
         {
             y += MarcaUdB.Space4;
             ColocarEnHoja((RectTransform)botonHojaInfo.transform, lado, y, ancho, AltoBotonHoja);
             y += AltoBotonHoja;
         }
+
+        if (resumenHoja.gameObject.activeSelf)
+        {
+            float altoResumen = AltoTexto(resumenHoja, ancho, 2);
+            y += MarcaUdB.Space3;
+            ColocarEnHoja((RectTransform)resumenHoja.transform, lado, y, ancho, altoResumen);
+            y += altoResumen;
+        }
+        float bajadaCompacta = y - alTitulo; // con el margen de abajo, bajo el título queda el mismo espacio
         y += MarcaUdB.Space4;
 
         // La hoja baja hasta el borde de la pantalla (cubre la barra de gestos) y un poco más, para que solo
         // se vean redondeadas las esquinas de arriba
         float inset = MarcaUdB.InsetInferior(canvasRT);
         hojaRT.sizeDelta = new Vector2(0f, y + inset + MarcaUdB.RadiusLg);
-        hojaGesto.FijarBase(-MarcaUdB.RadiusLg);
-        MarcaUdB.AltoHojaMovil = Mathf.Ceil(y);
+        altoHojaNormal = Mathf.Ceil(y);
+        bajadaHojaCompacta = bajadaCompacta;
+        hojaGesto.FijarBase(-MarcaUdB.RadiusLg, bajadaCompacta); // publica el alto visible con MoverHoja
+    }
+
+    // Cada vez que la hoja se mueve (gesto o animación): el botón del guía y la pista se apoyan en lo que
+    // queda a la vista. El cambio de altura va atado a la misma posición, así se puede interrumpir y sigue
+    // al dedo: primero se va la descripción, luego el botón ancho, y el redondo aparece junto al título.
+    void MoverHoja(float bajada)
+    {
+        if (!vertical) return;
+        MarcaUdB.AltoHojaMovil = Mathf.Ceil(altoHojaNormal - bajada);
+        float p = bajadaHojaCompacta > 0f ? Mathf.Clamp01(bajada / bajadaHojaCompacta) : 0f;
+
+        if (grupoResumenHoja != null) grupoResumenHoja.alpha = 1f - Mathf.Clamp01(p / 0.4f);
+        if (grupoBotonHoja != null) grupoBotonHoja.alpha = 1f - Mathf.Clamp01((p - 0.2f) / 0.4f);
+
+        if (grupoBotonRedondo != null)
+        {
+            // Aparece con fundido en la segunda mitad del recorrido, mientras la hoja baja. Su escala no se
+            // toca: la maneja ToqueSuave para el encogimiento al presionar
+            float r = AnimacionesUI.SalidaFuerte(Mathf.Clamp01((p - 0.45f) / 0.55f));
+            grupoBotonRedondo.alpha = r;
+            // Solo se bloquean los toques: con «interactable» el botón tomaría su color de deshabilitado
+            bool activo = r > 0.5f;
+            grupoBotonRedondo.blocksRaycasts = activo;
+        }
+        if (grupoBotonHoja != null)
+        {
+            bool activo = grupoBotonHoja.alpha > 0.5f;
+            grupoBotonHoja.blocksRaycasts = activo;
+        }
     }
 
     // Alto de un texto con un tope de renglones (lo que no cabe termina en «…»)
@@ -700,6 +760,7 @@ public class MenuDesplegable : MonoBehaviour
         hojaRT.pivot = new Vector2(0.5f, 0f);
         // El gesto va en la raíz: los toques del fondo y del texto suben hasta ella
         hojaGesto = goHoja.AddComponent<HojaDeslizable>();
+        hojaGesto.alMover = MoverHoja;
 
         // Fondo y sombra estirados dentro de la raíz: los dos siguen el alto de la hoja y se esconden con ella
         Image fondo = CrearImagen("Fondo", hojaRT, MarcaUdB.Surface100);
@@ -740,10 +801,13 @@ public class MenuDesplegable : MonoBehaviour
         tituloHoja.enableWordWrapping = true;
         tituloHoja.alignment = TextAlignmentOptions.TopLeft;
 
-        // Resumen de la ficha: dos renglones como máximo, el resto está en «Ver más información»
+        // Resumen de la ficha: dos renglones como máximo, el resto está en «Ver más información». Va al final
+        // de la hoja y se desvanece cuando la hoja baja a su altura compacta
         resumenHoja = CrearTexto("Resumen", cuerpo, "", MarcaUdB.Texto, MarcaUdB.Cuerpo, MarcaUdB.InkMuted);
         resumenHoja.enableWordWrapping = true;
         resumenHoja.alignment = TextAlignmentOptions.TopLeft;
+        grupoResumenHoja = resumenHoja.gameObject.AddComponent<CanvasGroup>();
+        grupoResumenHoja.blocksRaycasts = false;
 
         // «Ver más información»: a todo el ancho y con relleno de color para que se vea a primera vista
         Image imgBoton;
@@ -771,6 +835,20 @@ public class MenuDesplegable : MonoBehaviour
         LayoutElement lt = textoHojaInfo.gameObject.AddComponent<LayoutElement>();
         lt.flexibleWidth = 0f;
         botonHojaInfo.onClick.AddListener(AbrirFichaActual);
+        grupoBotonHoja = botonHojaInfo.gameObject.AddComponent<CanvasGroup>();
+
+        // El mismo botón en pequeño para la altura compacta: círculo del color de la zona con «i» en blanco,
+        // a la derecha del título. Empieza invisible; MoverHoja lo muestra cuando la hoja baja.
+        Image imgRedondo;
+        botonHojaRedondo = CrearBoton("VerMasRedondo", cuerpo, out imgRedondo);
+        MarcaUdB.Redondear(imgRedondo, LadoBotonRedondo * 0.5f);
+        letraHojaRedondo = CrearTexto("i", botonHojaRedondo.transform, "i", MarcaUdB.TextoBold, MarcaUdB.CuerpoL + 3f, MarcaUdB.InkInverso);
+        letraHojaRedondo.alignment = TextAlignmentOptions.Center;
+        Estirar((RectTransform)letraHojaRedondo.transform, 0f, 0f);
+        botonHojaRedondo.onClick.AddListener(AbrirFichaActual);
+        grupoBotonRedondo = botonHojaRedondo.gameObject.AddComponent<CanvasGroup>();
+        grupoBotonRedondo.alpha = 0f;
+        grupoBotonRedondo.blocksRaycasts = false;
 
         hojaRT.gameObject.SetActive(false);
     }
